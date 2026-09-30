@@ -172,16 +172,22 @@ button{font-family:inherit}
 .gitem{position:absolute;display:flex;align-items:center;justify-content:center}
 .gitem img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(4px 8px 10px rgba(90,74,58,.20))}
 .gcap{position:absolute;font-family:"Caveat","Marck Script",cursive;font-size:19px;line-height:1.12;color:#6B5B4C;pointer-events:none;text-shadow:0 0 7px #fff,0 0 12px #fff,0 0 3px #fff}
-.nav{position:absolute;top:calc(50% - 17px);width:34px;height:34px;border:none;background:#fff;border-radius:50%;box-shadow:0 4px 12px rgba(90,74,58,.22);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:8;padding:0}
+.nav{position:absolute;top:calc(50% - 17px);width:34px;height:34px;border:none;background:#fff;border-radius:50%;box-shadow:0 4px 12px rgba(90,74,58,.22);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;padding:0}
 #bband{position:absolute;left:0;right:0;bottom:62px;height:var(--bb,148px);background:var(--band);z-index:6;transition:background .5s ease}
 #bottom{position:absolute;left:20px;right:20px;bottom:75px;z-index:8;display:flex;flex-direction:column;gap:6px}
 #bottom .row1{display:flex;align-items:baseline;gap:10px;min-width:0}
 #bottom .row1 b{font-size:26px;font-weight:800;letter-spacing:-.025em;color:var(--ink-strong);white-space:nowrap;flex:none}
 #bottom .row1 i{font-style:normal;font-family:"Caveat","Marck Script",cursive;font-size:19px;color:#7A6450;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
-#items{font-size:12px;font-weight:700;color:var(--ink-strong);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-#tip{background:rgba(255,255,255,.82);border-radius:15px;padding:10px 13px;display:flex;gap:10px;align-items:flex-start}
-#tip em{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--accent);flex:none;padding-top:2px}
-#tip span{font-size:11.5px;font-weight:600;color:var(--ink);line-height:1.34;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#items{font-size:12.5px;font-weight:700;color:var(--ink-strong);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#tipBtn{flex:none;width:22px;height:22px;border-radius:50%;border:none;background:rgba(255,255,255,.7);
+  color:var(--accent);font-family:Georgia,serif;font-style:italic;font-weight:800;font-size:13px;cursor:pointer;
+  box-shadow:0 2px 6px rgba(90,74,58,.14);padding:0;line-height:22px}
+#tipPop{position:absolute;left:20px;right:20px;bottom:78px;z-index:14;background:rgba(48,38,30,.95);
+  color:#fff;border-radius:16px;padding:13px 15px;box-shadow:0 10px 30px rgba(48,38,30,.3);
+  display:none;transform:translateY(6px);transition:opacity .2s,transform .2s;opacity:0}
+#tipPop.on{display:block;opacity:1;transform:none}
+#tipPop em{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--sun);display:block;margin-bottom:4px}
+#tipPop span{font-size:12.5px;font-weight:600;line-height:1.4}
 
 /* ---------- sheet ---------- */
 #sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:26px 26px 0 0;box-shadow:0 -10px 40px rgba(70,56,44,.24);z-index:30;padding:18px 20px 26px;transform:translateY(105%);transition:transform .32s cubic-bezier(.3,.8,.3,1)}
@@ -580,10 +586,11 @@ button{font-family:inherit}
 
   <div id="bband"></div>
   <div id="bottom">
-    <div class="row1"><b id="bTitle">Холодно</b><i id="bName">с флисом</i></div>
-    <div id="items">Флис · шерстяное боди · демисезонный комбинезон · 68</div>
-    <div id="tip"><em>СОВЕТ</em><span id="tipText">Дождевик — на коляску, а не на малыша: ему важнее не перегреться.</span></div>
+    <div class="row1"><b id="bTitle">Холодно</b><i id="bName">с флисом</i>
+      <button id="tipBtn" onclick="toggleTip(event)" aria-label="Совет">i</button></div>
+    <div id="items">Флис · шерстяное боди · демисезонный комбинезон</div>
   </div>
+  <div id="tipPop"><em>СОВЕТ</em><span id="tipText"></span></div>
 
   <button id="grandBtn" onclick="openCard()">показать бабушке</button>
 
@@ -1287,7 +1294,7 @@ function paintMain(){
   document.getElementById('bName').textContent=personize(set.name);
   const ins=insFor(effTemp());
   document.getElementById('items').textContent=
-    set.it.map(([k,l])=>l+(INSKEYS.includes(k)?' '+ins.g:'')).join(' · ')+' · '+sz;
+    set.it.map(([k,l])=>l+(INSKEYS.includes(k)?' '+ins.g:'')).join(' · ');
   const ef=effTemp();
   let tipTxt=(ef<=-8||ef>=22)?b.tip:(WTIPS[S.weather]||b.tip);
   const insN=insFor(ef).note;
@@ -1295,8 +1302,8 @@ function paintMain(){
   if(S.ctx==='car')tipTxt='В автокресле комбинезон лучше снять: в нём ремни не притянутся плотно, а малышу быстро станет жарко.';
   if(S.ctx==='sling')tipTxt='В слинге малыша греет ваше тело — проверяйте шею сзади, чтобы он не перегрелся под курткой.';
   tipTxt=personize(tipTxt);
-  document.getElementById('tipText').textContent=tipTxt;
   S.tipText=tipTxt;
+  const tpEl=document.getElementById('tipText'); if(tpEl)tpEl.textContent=tipTxt;
 
   const dots=document.getElementById('setDots');
   dots.innerHTML=list.map((_,i)=>`<i class="${i===S.setIdx%list.length?'a':''}"></i>`).join('');
@@ -1312,6 +1319,7 @@ function dayWish(key,label,quiet){
   paintMain();
 }
 function flip(d){
+  const p=document.getElementById('tipPop');if(p)p.classList.remove('on');
   const n=setsFor(bandFor(effTemp())).length;
   S.setIdx=(S.setIdx+d+n)%n;
   paintMain();
@@ -1326,30 +1334,32 @@ function flip(d){
    движение по диагонали. Нижний левый угол всегда свободен — там подпись.
    z-порядок: плоское (муслин, плед) уходит вниз, аксессуары ложатся сверху. */
 const MAG={
- 2:[{x:.36,y:.42,w:.62,h:.70,r:-6,z:5,cap:1},
-    {x:.74,y:.64,w:.48,h:.54,r:9, z:6}],
+ /* стопка внахлёст: центры близко к центру арки, боксы крупные и заходят
+    друг на друга; каждая следующая вещь перекрывается соседней */
+ 2:[{x:.46,y:.50,w:.66,h:.78,r:-5,z:6,cap:1},
+    {x:.62,y:.56,w:.54,h:.60,r:9, z:4}],
 
- 3:[{x:.34,y:.40,w:.58,h:.64,r:-6,z:5,cap:1},
-    {x:.76,y:.30,w:.46,h:.50,r:8, z:4},
-    {x:.75,y:.74,w:.36,h:.38,r:-7,z:7}],
+ 3:[{x:.44,y:.48,w:.62,h:.72,r:-5,z:6,cap:1},
+    {x:.60,y:.34,w:.52,h:.58,r:9, z:4},
+    {x:.60,y:.66,w:.44,h:.48,r:-6,z:5}],
 
- 4:[{x:.34,y:.38,w:.56,h:.62,r:-6,z:5,cap:1},
-    {x:.78,y:.28,w:.44,h:.48,r:8, z:4},
-    {x:.79,y:.68,w:.34,h:.36,r:-7,z:7},
-    {x:.56,y:.82,w:.26,h:.26,r:9, z:8}],
+ 4:[{x:.43,y:.48,w:.60,h:.68,r:-5,z:6,cap:1},
+    {x:.60,y:.33,w:.50,h:.56,r:9, z:4},
+    {x:.63,y:.66,w:.42,h:.46,r:-6,z:5},
+    {x:.33,y:.68,w:.30,h:.32,r:8, z:7}],
 
- 5:[{x:.34,y:.37,w:.54,h:.58,r:-6,z:5,cap:1},
-    {x:.79,y:.26,w:.42,h:.46,r:8, z:4},
-    {x:.80,y:.62,w:.32,h:.34,r:-7,z:7},
-    {x:.57,y:.82,w:.26,h:.26,r:9, z:8},
-    {x:.17,y:.83,w:.22,h:.22,r:-10,z:8}],
+ 5:[{x:.43,y:.46,w:.58,h:.66,r:-5,z:6,cap:1},
+    {x:.60,y:.31,w:.48,h:.54,r:9, z:4},
+    {x:.64,y:.64,w:.40,h:.44,r:-6,z:5},
+    {x:.33,y:.66,w:.29,h:.31,r:8, z:7},
+    {x:.35,y:.35,w:.26,h:.28,r:-9,z:7}],
 
- 6:[{x:.33,y:.36,w:.52,h:.56,r:-6,z:5,cap:1},
-    {x:.79,y:.25,w:.40,h:.44,r:8, z:4},
-    {x:.81,y:.58,w:.30,h:.32,r:-7,z:7},
-    {x:.56,y:.81,w:.25,h:.25,r:9, z:8},
-    {x:.17,y:.82,w:.21,h:.21,r:-10,z:8},
-    {x:.84,y:.83,w:.20,h:.20,r:5, z:8}]
+ 6:[{x:.43,y:.45,w:.56,h:.64,r:-5,z:6,cap:1},
+    {x:.61,y:.30,w:.46,h:.52,r:9, z:4},
+    {x:.66,y:.62,w:.38,h:.42,r:-6,z:5},
+    {x:.32,y:.64,w:.28,h:.30,r:8, z:7},
+    {x:.34,y:.34,w:.25,h:.27,r:-9,z:7},
+    {x:.55,y:.76,w:.24,h:.26,r:6, z:8}]
 };
 const FLAT=['muslin','blanket','wrap','wrapbody'];      // плоское кладём под низ стопки
 function stageBox(){
@@ -1381,7 +1391,7 @@ function drawStage(set,sz){
     const sl=slots[i]; if(!sl)return;
     const key=it[0], label=it[1];
     const bw=sl.w*U, bh=sl.h*U;
-    const SIDE=34;                             // слева и справа живут стрелки
+    const SIDE=10;                             // стрелки лежат поверх (z-index выше)
     const cx=Math.max(bw/2+SIDE,Math.min(B.w-bw/2-SIDE,sl.x*B.w));
     const cy=Math.max(bh/2+2,Math.min(B.h-bh/2-2,sl.y*B.h));
     /* стопка как в журнале: плоское снизу, аксессуары сверху */
@@ -1397,7 +1407,7 @@ function drawStage(set,sz){
 
     if(sl.cap){
       /* единственная подпись — сразу под главной вещью, как в журнале */
-      const cap=(SHORT[key]||label)+', '+sz;
+      const cap=(SHORT[key]||label);
       const cw=Math.round(B.w*0.60);
       const fs=Math.max(12,Math.min(capFs,(cw-6)/(cap.length*0.45)));
       const cl=Math.max(6,Math.min(B.w-cw-6,cx-bw/2+4));
@@ -1439,8 +1449,7 @@ function sceneArt(w){
 }
 
 /* ================= карточка «показать бабушке» ================= */
-function openCard(){ shotMake('look'); }
-function openCardOld(){
+function openCard(){
   const sc=SCENES[S.weather]||SCENES.cloud, fl=S.live?S.feels:Math.round(S.temp-(S.wind>4?3:1));
   document.getElementById('gHd').style.background=sc.grad;
   document.getElementById('gHd').innerHTML=
@@ -1458,6 +1467,9 @@ function cardText(){
     +`${document.getElementById('items').textContent}\n\n`
     +`${S.whyText||''}\n\n${S.tipText||''}\n\n— Lookaboo`;
 }
+function toggleTip(e){if(e)e.stopPropagation();const p=document.getElementById('tipPop');
+  const sp=document.getElementById('tipText'); if(sp)sp.textContent=S.tipText||'';
+  p.classList.toggle('on');}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('on');
   setTimeout(()=>el.classList.remove('on'),1800);}
 async function shareText(title,text){
@@ -2118,7 +2130,7 @@ function evRender(){
     const noSize=!direct&&NOTLAYER.includes(k);
     return `<div class="evcell${on?' in':''}" onclick="evWish('${k}','${String(label).replace(/'/g,'')}',${direct?1:0})">
       ${src?`<img src="${src}" alt="">`:'<div class="ph">♡</div>'}
-      <b>${label}</b><s>${noSize?'размер не нужен':'размер '+sz}</s>
+      <b>${label}</b>${noSize?'':`<s>размер ${sz}</s>`}
       ${on?'<div class="heart" style="right:4px;top:4px">♥</div>':''}
     </div>`;}).join('');
 
@@ -2480,9 +2492,9 @@ function wdRender(){
       const have=wdHave(key,WDSZ), norm=NORM[key]||1;
       const short=have==null?0:norm-have;
       if(short>0)missing.push([key,label,short]);
-      const note = have==null ? 'не отмечали'
-        : (have===0 ? `нет ни одной — нужна ${norm>1?norm:'одна'}`
-        : (short>0 ? `есть ${have} из ${norm} — добрать ${short}` : `есть ${have} · хватает`));
+      const note = have==null ? 'сколько есть?'
+        : (have===0 ? `нет · обычно берут ${norm}`
+        : (short>0 ? `есть ${have} · обычно ${norm}` : `есть ${have} · хватает`));
       return `<div class="wrow2">
         <img src="${pickImg(key,0)}" alt="">
         <div class="t"><b>${label}</b><s class="${short>0?'need':''}">${note}</s></div>
@@ -2684,6 +2696,8 @@ let SWIPED=false;
 
 /* ===== макет: ширина всегда 390, высота подстраивается под экран ===== */
 function fit(){
+  const ae=document.activeElement;
+  if(ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName))return;
   const vv=window.visualViewport;
   const w=vv?vv.width:window.innerWidth, h=vv?vv.height:window.innerHeight;
   let s=w/390, H=h/s;
