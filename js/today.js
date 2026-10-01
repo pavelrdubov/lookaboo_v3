@@ -11,12 +11,19 @@ const CTX={
   sling:   {d:+3, why:'в слинге малышу достаётся ваше тепло'},
   car:     {d:+6, why:'в машине малышу быстро становится жарко'}
 };
+/* коляска бывает разной: в люльке малыш лежит закрытый от ветра (капюшон, накидка), в прогулочной —
+   сидит открыто, ветер достаёт до ног. По умолчанию: до 6 месяцев люлька, потом прогулочная; можно выбрать в профиле */
+function strollerKind(){ const s=kid().stroller||'auto'; return s==='auto'?(ageMonths()<6?'cot':'seat'):s; }
+function ctxNow(){
+  if(S.ctx!=='stroller')return CTX[S.ctx];
+  return strollerKind()==='cot'?{d:-2,why:'малыш лежит в люльке'}:{d:-4,why:'малыш сидит в прогулочной коляске'};
+}
 function setCtx(c){S.ctx=c;store.set('mpp-ctx',c);
   document.querySelectorAll('#ctxRow .c').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
   S.setIdx=0;paintMain();}
 function effTemp(){
   let e=(S.live?S.feels:S.temp);
-  e+=CTX[S.ctx].d;
+  e+=ctxNow().d;
   if(S.weather==='sun')e+=2;
   if(S.weather==='rain')e-=1;
   return Math.round(e);
@@ -62,7 +69,7 @@ function paintMain(){
 
   /* объяснение с причиной: почему малышу там ощущается иначе */
   const ef0=effTemp();
-  const why=personize(CTX[S.ctx].why);
+  const why=personize(ctxNow().why);
   const named=!!kidName(kid());                       // без имени «малыш … для неё» звучит странно
   const pron=!named?'это как':S.gender==='girl'?'для неё это как':S.gender==='boy'?'для него это как':'это как';
   // погода («облачно») уже написана рядом с температурой — здесь только про малыша
@@ -76,7 +83,7 @@ function paintMain(){
   if(S.wind>=5)full.push(`ветер ${S.wind} м/с`);
   if(S.weather==='rain')full.push('дождь');
   if(S.weather==='sun')full.push('на солнце теплее');
-  full.push(personize(CTX[S.ctx].why));
+  full.push(personize(ctxNow().why));
   S.whyText=`${full.join(' · ')} — для ${babyCases().gen} это как ${ef0>0?'+':''}${ef0}°`;
   document.querySelectorAll('#ctxRow .c').forEach(b=>b.classList.toggle('on',b.dataset.c===S.ctx));
 

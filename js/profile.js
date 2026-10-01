@@ -65,6 +65,17 @@ function profPaint(){
     </div>
 
     <div class="card">
+      <h3>Коляска</h3>
+      <div class="sub">Сейчас считаем как ${strollerKind()==='cot'?'<b>люльку</b>':'<b>прогулочную</b>'}${(kid().stroller||'auto')==='auto'?' — по возрасту':''}.</div>
+      <div class="seg">
+        <button class="${kid().stroller==='cot'?'on':''}" onclick="profStroller('cot')">люлька</button>
+        <button class="${kid().stroller==='seat'?'on':''}" onclick="profStroller('seat')">прогулочная</button>
+        <button class="${(kid().stroller||'auto')==='auto'?'on':''}" onclick="profStroller('auto')">по возрасту</button>
+      </div>
+      <div class="pfnote">В люльке малыш закрыт от ветра — ему теплее. В прогулочной ветер достаёт до ног, поэтому лишний слой добавим чуть раньше. По возрасту: до 6 месяцев — люлька, потом прогулочная.</div>
+    </div>
+
+    <div class="card">
       <h3>Напоминания</h3>
       <div class="sub">За сколько подсвечивать в «Плане», что пора покупать.</div>
       <div class="seg">
@@ -105,6 +116,7 @@ function profCities(q){
   citySearch(q,5,(list,wait)=>{ l.innerHTML=list.map((c,i)=>`<button class="ghost2" style="margin:0;text-align:left;padding:0 14px" onclick="${cityPickJs('pickCity',i)}">${esc2(c.name)} · ${esc2(c.sub)}</button>`).join('')
     || `<div class="pfnote">${wait?'Ищем…':'Такой город не нашёлся — проверьте написание.'}</div>`; });
 }
+function profStroller(v){kid().stroller=v==='auto'?undefined:v;kidsSave();profPaint();paintMain();}
 function profSetKid(i){KI=i;kidsSave();profPaint();paintDate();syncHeight();paintMain();}
 function profAddKid(){KIDS.push(blankKid());KI=KIDS.length-1;kidsSave();profPaint();paintDate();paintMain();}
 function profDelKid(){
