@@ -9,16 +9,16 @@ function sizeOn(dateStr){return sizeFor(heightAt(Math.max(0,monthsUntil(dateStr)
 function inFuture(d){return new Date(d)>=new Date(todayStr());}
 
 const SEASONS=[
-  {m:9, d:15, end:[2,15], endY:1, wear:4.5, name:'Готовность к зиме',  need:['зимний комбинезон 250–300 г','тёплая шапка','варежки','шерстяное боди','тёплые носки'],
+  {m:9, d:15, mid:[0,15], midY:1, name:'Готовность к зиме',  need:['зимний комбинезон 250–300 г','тёплая шапка','варежки','шерстяное боди','тёплые носки'],
    keys:[['ovWinter','зимний комбинезон'],['hatWarm','тёплая шапка'],['mittens','варежки'],['bodyL','шерстяное боди'],['socks','тёплые носки']],
    why:'Зимние вещи разбирают к ноябрю, а в октябре ещё есть выбор и скидки. Смотрите не только на размер, но и на граммы утеплителя.'},
-  {m:2, d:1,  end:[5,1],  endY:0, wear:2,   name:'Готовность к весне', need:['демисезонный комбинезон 100–150 г','непромокаемые штаны','флисовая кофта','тонкая шапка'],
+  {m:2, d:1,  mid:[3,15], midY:0, name:'Готовность к весне', need:['демисезонный комбинезон 100–150 г','непромокаемые штаны','флисовая кофта','тонкая шапка'],
    keys:[['ovDemi','демисезонный комбинезон'],['pants','непромокаемые штаны'],['ovFleece','флисовый комбинезон'],['hat','тонкая шапка']],
    why:'Весной главное не тепло, а то, что всё мокрое: лужи, мокрый снег, грязь.'},
-  {m:4, d:1,  end:[8,31], endY:0, wear:3,   name:'Готовность к лету',  need:['боди к/р','панамка','муслин','лёгкие штанишки'],
+  {m:4, d:1,  mid:[6,15], midY:0, name:'Готовность к лету',  need:['боди к/р','панамка','муслин','лёгкие штанишки'],
    keys:[['bodyS','боди к/р'],['panama','панамка'],['muslin','муслин от солнца'],['shorts','лёгкие шорты']],
    why:'Малышу до года крем от солнца не подходит — защищает только тень и ткань.'},
-  {m:7, d:10, end:[10,30],endY:0, wear:2.5, name:'Готовность к осени', need:['флисовый комбинезон','демисезонный 100–150 г','боди д/р','дождевик на коляску'],
+  {m:7, d:10, mid:[9,5],  midY:0, name:'Готовность к осени', need:['флисовый комбинезон','демисезонный 100–150 г','боди д/р','дождевик на коляску'],
    keys:[['ovFleece','флисовый комбинезон'],['ovDemi','демисезонный'],['bodyL','боди д/р'],['blanket','плед в коляску']],
    why:'В сентябре разница между утром и днём доходит до десяти градусов.'}
 ];
@@ -84,20 +84,18 @@ function tlEvents(){
       let keys=x.keys, need=x.need, why=x.why;
       if(x.name==='Готовность к зиме'){const g=winterGear(cs.peakT);keys=g.keys;
         need=g.keys.map(k=>k[1]+(k[0]==='ovWinter'&&g.grams?' '+g.grams:''));why=g.note+' '+x.why;}
-      // размер — на конец сезона: сезонную вещь носят месяцами, к разгару она уже должна быть «на вырост»
-      const end=new Date(cs.onset); end.setDate(end.getDate()+Math.round(x.wear*MDAYS));
-      const szDate=locISO(end), sz=sizeOn(szDate);
-      ev.push({d:cs.card,type:'season',title:x.name,szDate,onset:cs.onset,
-        sub:`${why} Берите размер ${sz} — чтобы хватило до конца сезона, а не только на сегодня.`,
+      const sz=sizeOn(cs.peak);
+      ev.push({d:cs.card,type:'season',title:x.name,szDate:cs.peak,onset:cs.onset,
+        sub:`${why} Берите размер ${sz} — такой будет к середине сезона, а не сегодня.`,
         chips:need,size:sz,why:why,items:keys});
     }else{
       for(const y of [y0,y0+1]){
         const d=dISO(y,x.m,x.d);
         if(!inFuture(d)||new Date(d)>horizon)continue;
-        const szDate=dISO(y+x.endY,x.end[0],x.end[1]);   // конец сезона
+        const szDate=x.mid?dISO(y+x.midY,x.mid[0],x.mid[1]):d;
         const sz=sizeOn(szDate);
         ev.push({d,type:'season',title:x.name,szDate,
-          sub:`${x.why} Берите размер ${sz} — чтобы хватило до конца сезона, а не только на сегодня.`,
+          sub:`${x.why} Берите размер ${sz} — такой будет к середине сезона, а не сегодня.`,
           chips:x.need,size:sz,why:x.why,items:x.keys||[]});
       }
     }
@@ -184,8 +182,8 @@ function evRender(){
         :`<div class="pfnote" style="margin-top:10px">Картинок для этого события пока нет. Размер к этой дате: <b>${sz}</b>.</div>`}
     </div>
     <div class="card">
-      <h3>${e.type==='season'?'Размер на весь сезон':'Размер к этой дате'}${szI(sz)}</h3>
-      <div class="sub">${e.type==='season'&&e.szDate?`Вещи проносите примерно до ${fmtF(e.szDate)} — к этому времени `:''}${personize(e.type==='season'&&e.szDate?'малышу будет':'Малышу будет')} ${ageWordAt(e.szDate||e.d)} — берите <b>${sz}</b>, а не тот, что впору сейчас.</div>
+      <h3>${e.type==='season'?'Размер к середине сезона':'Размер к этой дате'}${szI(sz)}</h3>
+      <div class="sub">${e.type==='season'&&e.szDate&&e.szDate!==e.d?`К середине сезона, ${fmtF(e.szDate)}, `:''}${personize('малышу будет')} ${ageWordAt(e.szDate||e.d)} — берите <b>${sz}</b>, а не тот, что впору сейчас.</div>
     </div>
     ${e.type==='size'?`<button class="ghost2" onclick="wdOpen(${sz},'ev')">Отметить, что уже есть в ${sz}</button>`:''}
     ${evCanDel(e)?`<button class="ghost2" style="color:#C06A4A;border-color:#E8CBBF" onclick="evDel()">Удалить событие</button>`:''}
