@@ -2616,7 +2616,8 @@ function evWish(k,label,direct){
   evRender();
 }
 
-const TLCOL={trip:'#6E8FA8',size:'#C4613C',season:'#7A8C5A',holiday:'#B87A9C',month:'#C98AA6',custom:'#B87A9C'};
+const TLCOL={trip:'#6E8FA8',size:'#7A8C5A',season:'#7A8C5A',   // размер и сезон — один «План», один цвет
+ holiday:'#B87A9C',month:'#C98AA6',custom:'#B87A9C'};
 /* три рода записей: события (праздники, месяцы, свои) — можно удалить; поездки; план (смена размера/сезона) — не удаляется */
 const TLKIND={trip:'Поездка',size:'План',season:'План',holiday:'Событие',month:'Событие',custom:'Событие'};
 const evCanDel=e=>['holiday','month','custom'].includes(e.type);
@@ -2670,11 +2671,12 @@ function tlCal(ev,card){
   for(let i=0;i<lead;i++)cells+='<div></div>';
   for(let d=1;d<=nd;d++){
     const iso=dISO(y,m,d), l=by[iso]||[];
-    const dots=[...new Set(l.map(i=>TLCOL[ev[i].type]))].slice(0,3).map(c=>`<i style="background:${c}"></i>`).join('');
+    const KC={'Событие':TLCOL.holiday,'Поездка':TLCOL.trip,'План':TLCOL.season};   // по точке на род записи
+    const dots=[...new Set(l.map(i=>TLKIND[ev[i].type]))].map(k=>`<i style="background:${KC[k]}"></i>`).join('');
     cells+=`<button class="cd${iso===todayStr()?' today':''}${iso===TLDAY?' sel':''}${l.length?' has':''}"${l.length?` onclick="tlDay('${iso}')"`:''}>${d}<span>${dots}</span></button>`;
   }
   const dayList=TLDAY&&by[TLDAY]?by[TLDAY].map(i=>card(ev[i],i)).join(''):'';
-  const legend=[['holiday','Событие'],['trip','Поездка'],['size','План: размер'],['season','План: сезон']]
+  const legend=[['holiday','Событие'],['trip','Поездка'],['season','План']]
     .map(([t,n])=>`<span><i style="background:${TLCOL[t]}"></i>${n}</span>`).join('');
   return `<div class="cal">
       <div class="calh"><button onclick="tlMonth(-1)"${TLCM?'':' disabled'}>‹</button><b>${MONN[m]} ${y}</b><button onclick="tlMonth(1)"${TLCM<6?'':' disabled'}>›</button></div>
