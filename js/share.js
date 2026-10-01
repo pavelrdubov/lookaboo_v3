@@ -240,15 +240,17 @@ async function renderLookPNG(){
   });
   (rects.notes||[]).forEach(n=>{
     const ox=AX+padX, oy=AY+padY;
-    x.save(); x.strokeStyle='#A08F7B'; x.fillStyle='#A08F7B'; x.lineWidth=2.4; x.lineCap='round';
-    x.beginPath(); x.arc(ox+n.ax,oy+n.ay,4.5,0,7); x.fill();
-    x.beginPath(); x.moveTo(ox+n.ax,oy+n.ay); x.lineTo(ox+n.ex,oy+n.ey); x.stroke();
-    x.fillStyle='#6B5B4C'; x.font=`600 ${noteFs}px Caveat, cursive`; x.textBaseline='top';
+    const ar=noteArrow(n,0);
+    x.save(); x.translate(ox,oy); x.strokeStyle='#9C8A75'; x.lineCap='round'; x.lineJoin='round';
+    x.lineWidth=2.6; x.setLineDash([6,7]); x.beginPath(); x.moveTo(ar.sx,ar.sy); x.quadraticCurveTo(ar.qx,ar.qy,ar.tx,ar.ty); x.stroke();
+    x.setLineDash([]); x.lineWidth=3; x.beginPath(); x.moveTo(ar.l1x,ar.l1y); x.lineTo(ar.tx,ar.ty); x.lineTo(ar.l2x,ar.l2y); x.stroke();
+    x.restore(); x.save();
+    x.fillStyle='#6B5B4C'; x.font=`600 ${n.fs}px Caveat, cursive`; x.textBaseline='top';
     x.shadowColor='#fff'; x.shadowBlur=10;
     // перенос по словам в ширину пометки
     const words=n.text.split(' '), lines=[]; let cur='';
     words.forEach(w=>{const t=cur?cur+' '+w:w; if(x.measureText(t).width>n.w&&cur){lines.push(cur);cur=w;}else cur=t;}); lines.push(cur);
-    lines.forEach((l,i)=>x.fillText(l,ox+n.x,oy+n.y+i*noteFs*1.08));
+    lines.forEach((l,i)=>x.fillText(l,ox+n.x,oy+n.y+i*n.fs*1.08));
     x.restore();
   });
 

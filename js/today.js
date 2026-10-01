@@ -252,10 +252,10 @@ function drawStage(set,sz){
   const notes=rects.notes||[];
   if(notes.length){
     html+=`<svg class="gnotes" width="${B.w}" height="${B.h}" viewBox="0 0 ${B.w} ${B.h}">`
-      +notes.map(n=>{const x1=SIDE+n.ax,y1=n.ay,x2=SIDE+n.ex,y2=n.ey,mx=(x1+x2)/2+(y2-y1)*.18,my=(y1+y2)/2-(x2-x1)*.18;
-        return `<circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="2.4"></circle><path d="M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}"></path>`;}).join('')
+      +notes.map(n=>{ const a=noteArrow(n,SIDE);
+        return `<path class="ln" d="${a.curve}"></path><path class="hd" d="${a.head}"></path>`; }).join('')
       +`</svg>`
-      +notes.map(n=>`<div class="gnote" style="left:${Math.round(SIDE+n.x)}px;top:${Math.round(n.y)}px;width:${Math.round(n.w)}px;font-size:${noteFs.toFixed(1)}px">${n.text}</div>`).join('');
+      +notes.map(n=>`<div class="gnote" style="left:${Math.round(SIDE+n.x)}px;top:${Math.round(n.y)}px;width:${Math.round(n.w)}px;font-size:${n.fs.toFixed(1)}px">${n.text}</div>`).join('');
   }
   st.innerHTML=html;
 }

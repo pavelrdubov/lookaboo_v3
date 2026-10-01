@@ -24,7 +24,7 @@ function layoutLook(items,W,H,seed,notes,arch){
   const n=Math.min(6,Math.max(2,items.length)), tpls=MAGV[n]||MAGV[4], tpl=tpls[seed%tpls.length];
   const ck=[items.map(i=>i.src).join(','),Math.round(W),Math.round(H),seed%tpls.length,(notes||[]).map(x=>x.key+x.text+x.fs).join(';'),arch&&arch.r].join('|');
   if(LAYOUT_CACHE[ck])return LAYOUT_CACHE[ck];
-  let R=solveLayout(items,tpl,W,H,arch), placed=[];
+  let R=solveLayout(items,tpl,W,H,arch,(notes||[]).map(x=>x.key)), placed=[];
   // 1) сначала вещи, 2) потом пометка — на свободное место; нет места — чуть уменьшаем коллаж (до 80%)
   for(const nt of (notes||[])){
     // первая пометка может чуть уменьшить коллаж; следующие — только в готовой раскладке и не на другие пометки
@@ -37,11 +37,29 @@ function layoutLook(items,W,H,seed,notes,arch){
   return LAYOUT_CACHE[ck]=finishRects(R,placed);
 }
 
-function solveLayout(items,tpl,W,H,arch){
+function solveLayout(items,tpl,W,H,arch,noteKeys){
   const U=Math.min(W,H*.99);                       // базовый модуль шаблона, как раньше
   // крупные вещи — в крупные слоты шаблона
   const order=items.map((it,i)=>i).sort((a,b)=>roleOf(items[b].key)-roleOf(items[a].key));
   const slots=tpl.slice(0,items.length).sort((a,b)=>b.w*b.h-a.w*a.h);
+  /* место под подпись в шаблоне: у какого слота больше свободного места снизу или сверху
+     (по номинальным размерам слотов). Вещь с пометкой ставим в такой слот, если он соседний
+     по величине с её «родным» — композиция почти не меняется, а тексту есть где встать */
+  const room=sl=>{ const x0=sl.x-sl.w*U/W/2, x1=sl.x+sl.w*U/W/2, top=sl.y-sl.h*U/H/2-.05, bot=sl.y+sl.h*U/H/2-.05;
+    let below=1-bot, above=top;
+    slots.forEach(o=>{ if(o===sl)return; const ox0=o.x-o.w*U/W/2, ox1=o.x+o.w*U/W/2; if(ox1<=x0||ox0>=x1)return;
+      const ot=o.y-o.h*U/H/2-.05, ob=o.y+o.h*U/H/2-.05;
+      if(ot>=bot)below=Math.min(below,ot-bot); if(ob<=top)above=Math.min(above,top-ob); });
+    return Math.max(0,below,above)*(x1-x0); };
+  const used=new Set();
+  (noteKeys||[]).forEach(k=>{
+    const pos=order.findIndex(ii=>items[ii].key===k); if(pos<0||used.has(pos))return;
+    let best=pos, bestRoom=room(slots[Math.min(pos,slots.length-1)]);
+    [pos-1,pos+1].forEach(q=>{ if(q<1&&pos!==0||q<0||q>=order.length||q>=slots.length||used.has(q))return;   // главный слот не трогаем
+      const rm=room(slots[q]); if(rm>bestRoom*1.25){best=q;bestRoom=rm;} });
+    if(best!==pos){const t=order[pos];order[pos]=order[best];order[best]=t;}
+    used.add(best);
+  });
   const R=items.map(()=>null);
   order.forEach((ii,rank)=>{
     const it=items[ii], sl=slots[Math.min(rank,slots.length-1)], bx=BOX[it.src]||{b:[0,0,1,1],r:1};
@@ -121,7 +139,11 @@ function scaleRects(R,k,W,H){
 /* пометка — только на полностью свободное место: рядом с её вещью (под, над, сбоку, по углам),
    ни на какую вещь не заходит (с запасом PAD), внутри поля и арки. Нет такого места — null */
 function fitNote(R,nt,W,H,arch,obst){
-  obst=obst||[];
+  // текст крупнее, если есть место (журнально: подписи разного размера), мельче — если тесно
+  for(const sc of [1.3,1.15,1,.88]){ const p=fitNoteAt(R,Object.assign({},nt,{fs:nt.fs*sc}),W,H,arch,obst||[]); if(p)return p; }
+  return null;
+}
+function fitNoteAt(R,nt,W,H,arch,obst){
   const m=R.find(r=>r.key===nt.key); if(!m)return null;
   const M=6, PAD=5, fs=nt.fs;
   const full=nt.text.length*fs*.5+8, maxW=W*.5, lines=Math.min(2,Math.ceil(full/maxW));   // длинное — в две строки
@@ -154,16 +176,27 @@ function fitNote(R,nt,W,H,arch,obst){
   }
   if(!best)return null;
   const x0=best.cx-w/2, y0=best.cy-h/2;
-  // линия от вещи (чуть внутрь — вещи не прямоугольные) к ближнему краю текста
-  let ax,ay,ex,ey;
-  if(best.side==='b'||best.side==='t'){
-    ax=Math.max(L+m.w*.15,Math.min(Rr-m.w*.15,best.cx)); ex=ax;
-    ay=best.side==='b'?B-m.h*.08:T+m.h*.08; ey=best.side==='b'?y0:y0+h;
-  }else{
-    ey=best.cy; ay=Math.max(T+m.h*.15,Math.min(B-m.h*.15,ey));
-    ax=best.side==='r'?Rr-m.w*.08:L+m.w*.08; ex=best.side==='r'?x0-2:x0+w+2;
-  }
-  return {key:nt.key,text:nt.text,x:x0,y:y0,w,h,ax,ay,ex,ey,side:best.side};
+  // стрелка: из угла текста, ближнего к вещи, дугой по диагонали; остриё — чуть внутри вещи (на вещь заходить можно)
+  const sx=best.cx<m.x?x0+w:x0, sy=best.cy<m.y?y0+h:y0;                       // угол текста к вещи
+  // остриё — внутри вещи; если текст совсем рядом, ведём глубже, чтобы стрелка была заметной (≥ ~2 строк текста)
+  const exX=Math.max(L,Math.min(Rr,sx)), exY=Math.max(T,Math.min(B,sy)), minLen=Math.max(30,nt.fs*1.9);
+  let f=.55, tx, ty;
+  do{ tx=m.x+(exX-m.x)*f; ty=m.y+(exY-m.y)*f; f-=.08; }while(f>.1&&Math.hypot(tx-sx,ty-sy)<minLen);
+  const mx=(sx+tx)/2, my=(sy+ty)/2, len=Math.hypot(tx-sx,ty-sy)||1;
+  const bend=(best.cx<m.x?1:-1)*Math.min(26,len*.35);                         // завиток в сторону от центра
+  const qx=mx+(-(ty-sy)/len)*bend, qy=my+((tx-sx)/len)*bend;
+  const ax=tx, ay=ty, ex=sx, ey=sy;
+  return {key:nt.key,text:nt.text,fs:nt.fs,x:x0,y:y0,w,h,ax,ay,ex,ey,qx,qy,side:best.side};
+}
+
+/* стрелка пометки: пунктирная дуга от текста к вещи и остриё; ox — сдвиг поля по x */
+function noteArrow(n,ox){
+  ox=ox||0; const f=v=>v.toFixed(1);
+  const sx=n.ex+ox, sy=n.ey, qx=n.qx+ox, qy=n.qy, tx=n.ax+ox, ty=n.ay;
+  const dx=tx-qx, dy=ty-qy, d=Math.hypot(dx,dy)||1, ux=dx/d, uy=dy/d, k=Math.max(6,(n.fs||16)*.4);
+  const l1x=tx-ux*k-uy*k*.55, l1y=ty-uy*k+ux*k*.55, l2x=tx-ux*k+uy*k*.55, l2y=ty-uy*k-ux*k*.55;
+  return {curve:`M${f(sx)} ${f(sy)}Q${f(qx)} ${f(qy)} ${f(tx)} ${f(ty)}`,
+          head:`M${f(l1x)} ${f(l1y)}L${f(tx)} ${f(ty)}L${f(l2x)} ${f(l2y)}`,sx,sy,qx,qy,tx,ty,l1x,l1y,l2x,l2y};
 }
 
 /* в координаты картинки: вещь (без полей) — в прямоугольник r, картинка вокруг неё */
