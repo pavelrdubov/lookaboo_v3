@@ -34,6 +34,9 @@ button{font-family:inherit}
 .screen.on{opacity:1;pointer-events:auto}
 
 /* ---------- общее ---------- */
+#mbrand{top:12px}
+#mbrand img{height:40px}                 /* на главном ниже сразу температура */
+.brand img{display:block;height:54px;width:auto;filter:drop-shadow(0 2px 6px rgba(45,58,70,.22))}
 .brand{position:absolute;left:20px;top:20px;font-family:"Playfair Display",Georgia,serif;font-size:15px;font-weight:900;letter-spacing:.14em;color:#fff;z-index:9;text-transform:uppercase;text-shadow:0 1px 7px rgba(45,58,70,.30)}
 .arch{position:absolute;left:14px;right:14px;background:var(--arch);border-radius:140px 140px 28px 28px;box-shadow:0 10px 28px rgba(90,74,58,.12);z-index:3}
 /* карточка-арка с гибким содержимым: подстраивается под высоту экрана */
@@ -438,6 +441,7 @@ button{font-family:inherit}
 /* просмотр списка по ссылке */
 #shared{overflow-y:auto;background:var(--bg)}
 #shHead{background:linear-gradient(160deg,#C4613C,#E8A87C);padding:46px 22px 22px;color:#fff}
+.shbrand img{display:block;height:64px;width:auto;margin-bottom:8px;filter:drop-shadow(0 3px 8px rgba(90,50,30,.22))}
 .shbrand{font-family:"Playfair Display",Georgia,serif;font-weight:900;letter-spacing:.22em;font-size:15px;opacity:.95}
 #shHead h2{font-size:30px;font-weight:800;margin:12px 0 4px}
 #shHead p{font-family:"Caveat",cursive;font-size:20px;opacity:.92}
@@ -498,7 +502,7 @@ button{font-family:inherit}
       <circle cx="372" cy="206" r="4.4" fill="var(--sun)" opacity=".85"></circle>
     </g>
   </svg>
-  <span class="brand">Lookaboo</span>
+  <span class="brand"><img src="img/logo.webp" alt="Lookaboo"></span>
   <div class="headline" style="right:90px;top:calc(var(--ot,250px)*.43)"><h1>Давайте<br>познакомимся</h1><p>с вашим малышом</p></div>
 
   <div class="blob" style="left:-46px;top:372px;width:132px;height:132px;background:var(--mint);opacity:.55"></div>
@@ -548,7 +552,7 @@ button{font-family:inherit}
     <path d="M322 196c-8 0-15 7-15 15 0 11 15 25 15 25s15-14 15-25c0-8-7-15-15-15z" fill="var(--accent)"></path>
     <circle cx="322" cy="211" r="5.4" fill="#FFF6EF"></circle>
   </svg>
-  <span class="brand">Lookaboo</span>
+  <span class="brand"><img src="img/logo.webp" alt="Lookaboo"></span>
   <div class="headline" style="right:120px;top:calc(var(--ot,250px)*.45)"><h1>Погода<br>с вашей улицы</h1><p style="color:#F0F5F8">а не средняя по городу</p></div>
 
   <div class="card2">
@@ -609,7 +613,7 @@ button{font-family:inherit}
     <g stroke="#7E9268" stroke-width="2.4" stroke-linecap="round" opacity=".6"><path d="M272 144h22M272 168h32M272 192h22M272 216h32M272 240h22"></path></g>
     <g fill="#fff" opacity=".55"><circle cx="196" cy="182" r="2.6"></circle><circle cx="228" cy="230" r="2.4"></circle><circle cx="172" cy="120" r="2.2"></circle></g>
   </svg>
-  <span class="brand">Lookaboo</span>
+  <span class="brand"><img src="img/logo.webp" alt="Lookaboo"></span>
   <div class="headline" style="right:118px;top:calc(var(--ot,250px)*.45)"><h1>Размер<br>малыша</h1><p style="color:#F3F7EE">какой впору сейчас?</p></div>
 
   <div class="card2">
@@ -647,7 +651,7 @@ button{font-family:inherit}
 <section class="screen" id="main">
   <div id="wband"></div>
   <div id="wart"></div>
-  <span class="brand" id="mbrand">Lookaboo</span>
+  <span class="brand" id="mbrand"><img src="img/logo.webp" alt="Lookaboo"></span>
   <button id="mchip" onclick="go('prof')"><span class="av" id="mav"></span><b id="mchipT">5 мес · 68</b></button>
   <div id="temp" onclick="openSheet()">
     <div class="trow">
@@ -803,7 +807,7 @@ button{font-family:inherit}
 <!-- ============ ПРОСМОТР СПИСКА ПО ССЫЛКЕ ============ -->
 <section class="screen" id="shared">
   <div id="shHead">
-    <div class="shbrand">LOOKABOO</div>
+    <div class="shbrand"><img src="img/logo.webp" alt="Lookaboo"></div>
     <h2 id="shTitle">Список вещей</h2>
     <p id="shSub"></p>
   </div>
