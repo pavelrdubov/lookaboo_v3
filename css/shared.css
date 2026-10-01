@@ -1,0 +1,17 @@
+/* просмотр списка по ссылке */
+/* просмотр списка по ссылке */
+#shared{overflow-y:auto;background:var(--bg)}
+#shHead{background:linear-gradient(160deg,#C4613C,#E8A87C);padding:46px 22px 22px;color:#fff}
+.shbrand img{display:block;height:64px;width:auto;margin-bottom:8px;filter:drop-shadow(0 3px 8px rgba(90,50,30,.22))}
+.shbrand{font-family:"Playfair Display",Georgia,serif;font-weight:900;letter-spacing:.22em;font-size:15px;opacity:.95}
+#shHead h2{font-size:30px;font-weight:800;margin:12px 0 4px}
+#shHead p{font-family:"Caveat",cursive;font-size:20px;opacity:.92}
+#shBody{padding:16px 18px 0}
+.shsect{font-size:11px;font-weight:800;letter-spacing:.08em;color:#A9987F;text-transform:uppercase;margin:14px 4px 8px}
+.shwi{display:flex;align-items:center;gap:14px;background:#fff;border-radius:18px;padding:12px 14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(90,74,58,.08)}
+.shwi img{width:56px;height:64px;object-fit:contain;flex:none;filter:drop-shadow(2px 5px 6px rgba(90,74,58,.18))}
+.shwi .shph{width:56px;height:64px;display:flex;align-items:center;justify-content:center;color:#D8CCB9;font-size:24px;flex:none}
+.shwi .sht b{display:block;font-size:16px;font-weight:800;color:var(--ink-strong)}
+.shwi .sht s{display:block;text-decoration:none;font-size:12.5px;font-weight:700;color:#A9987F;margin-top:3px}
+.shopen{display:block;width:calc(100% - 36px);margin:16px 18px 6px;border:none;background:var(--accent);color:#fff;border-radius:999px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+.shfoot{text-align:center;font-size:11px;font-weight:700;color:#BCAF9B;padding:6px 0 22px}

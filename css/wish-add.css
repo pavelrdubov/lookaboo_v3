@@ -1,0 +1,24 @@
+/* добавить / изменить вещь в вишлисте */
+/* ---------- добавить в вишлист ---------- */
+#wladd{position:absolute;inset:0;z-index:45;background:var(--cream);display:none;flex-direction:column}
+#wladd.on{display:flex}
+.wa-head{flex:none;height:56px;display:flex;align-items:center;gap:10px;padding:0 14px;background:#fff;border-bottom:1px solid #EFE7DA}
+.wa-head b{font-size:15px;font-weight:800;color:var(--ink-strong)}
+.wa-x{width:34px;height:34px;border-radius:50%;border:none;background:#F4EFE6;color:#8A7864;font-size:15px;font-weight:800;cursor:pointer;padding:0;flex:none}
+.wa-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 26px}
+.catrow{display:flex;gap:6px;overflow-x:auto;padding:0 0 10px}
+.catrow button{flex:none;height:34px;border-radius:999px;border:2px solid #E6DCCC;background:#fff;font-family:inherit;font-size:11.5px;font-weight:800;color:#8A7864;cursor:pointer;padding:0 13px;white-space:nowrap}
+.catrow button.on{border-color:var(--accent);background:#FFF9F2;color:var(--accent)}
+.pickgrid{display:flex;flex-wrap:wrap;gap:8px}
+.pickgrid button{flex:1 1 30%;min-width:92px;border:2px solid transparent;background:#fff;border-radius:16px;padding:9px 6px 8px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(90,74,58,.06)}
+.pickgrid button.on{border-color:var(--accent);background:#FFF9F2}
+.pickgrid img{width:100%;height:64px;object-fit:contain;filter:drop-shadow(2px 4px 5px rgba(90,74,58,.16))}
+.pickgrid span{display:block;font-size:10.5px;font-weight:800;color:var(--ink-strong);margin-top:5px;line-height:1.2}
+.wa-f{background:#fff;border-radius:16px;padding:12px 14px;margin-top:12px;box-shadow:0 3px 12px rgba(90,74,58,.07)}
+.wa-f label{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;color:#A9987F;margin-bottom:6px}
+.wa-f input{width:100%;height:44px;border:2px solid #E6DCCC;border-radius:13px;background:#FDFAF5;padding:0 12px;font-family:inherit;font-size:14px;font-weight:700;color:var(--ink-strong);outline:none}
+.wa-sz{display:flex;gap:4px;flex-wrap:wrap}
+.wa-sz button{width:40px;height:40px;border-radius:12px;border:2px solid #E6DCCC;background:#FDFAF5;font-family:inherit;font-size:13px;font-weight:800;color:#8A7864;cursor:pointer;padding:0}
+.wa-sz button.on{border-color:var(--accent);background:#FFF9F2;color:var(--accent)}
+.wa-save{width:100%;height:52px;border:none;border-radius:999px;background:var(--accent);color:#FFF6EF;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;margin-top:14px}
+.wa-save[disabled]{background:#E2D8C8;color:#fff}

@@ -1,0 +1,49 @@
+/* план (таймлайн и календарь) */
+/* ---------- таймлайн ---------- */
+#tl{background:var(--cream)}
+#tlHead{position:absolute;left:0;right:0;top:0;height:150px;background:linear-gradient(168deg,#8C7FA8,#CBC3DC);z-index:2}
+#tlBody{position:absolute;left:0;right:0;top:150px;bottom:62px;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:5;padding:18px 18px 30px}
+.tlrow{position:relative;padding-left:34px;padding-bottom:14px}
+.tlrow:before{content:"";position:absolute;left:9px;top:20px;bottom:-4px;width:2px;background:#E7DFD2}
+.tlrow:last-child:before{display:none}
+.tldot{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1.5px #E7DFD2}
+.tlcard{background:#fff;border-radius:18px;padding:13px 15px;box-shadow:0 3px 12px rgba(90,74,58,.08);cursor:default}
+.tlcard.tap{cursor:pointer}
+.tlcard.soon{border:2px solid #EBD3BE;background:#FFFBF4;box-shadow:0 4px 16px rgba(176,112,90,.16)}
+.tldate{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:#A9987F;margin-bottom:3px}
+.tlcard h4{margin:0 0 4px;font-size:15px;font-weight:800;color:var(--ink-strong);letter-spacing:-.01em}
+.tlcard .d{font-size:12px;font-weight:600;color:var(--muted);line-height:1.4}
+.tlcard .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tlcard .chips span{background:#F4EFE6;border-radius:999px;padding:4px 9px;font-size:10.5px;font-weight:700;color:#7A6450}
+#wlSzBtn{position:absolute;left:64px;top:27px;z-index:9;display:flex;align-items:center;gap:6px;border:none;background:#fff;color:#B5603C;border-radius:999px;padding:6px 12px;
+  font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(120,60,30,.18)}
+#tlViewRow{position:absolute;left:64px;top:27px;z-index:9;display:flex;gap:5px}
+#tlViewRow .c{border:none;background:rgba(255,255,255,.24);color:#fff;border-radius:999px;padding:6px 11px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}
+#tlViewRow .c.on{background:#fff;color:#6E6290}
+.cal{background:#fff;border-radius:18px;padding:12px 10px 10px;box-shadow:0 3px 12px rgba(90,74,58,.08)}
+.calh{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+.calh b{font-size:15px;font-weight:800;color:var(--ink-strong)}
+.calh button{width:34px;height:34px;border-radius:50%;border:none;background:#F6F0E6;color:#7A6450;font-size:20px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1}
+.calh button:disabled{opacity:.3;cursor:default}
+.calw,.calg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.calw span{font-size:10px;font-weight:800;color:#BCAF9B;text-transform:uppercase;padding:2px 0 4px}
+.cd{height:44px;border:none;background:transparent;border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;color:#8A7A66;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0;cursor:default}
+.cd.has{color:var(--ink-strong);font-weight:800;cursor:pointer}
+.cd.today{box-shadow:inset 0 0 0 2px #EBD3BE}
+.cd.sel{background:#FAF1E6;box-shadow:inset 0 0 0 2px var(--accent)}
+.cd span{display:flex;gap:2px;height:6px}
+.cd i,.call i{width:6px;height:6px;border-radius:50%;display:block}
+.call{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;margin-top:10px;padding-top:9px;border-top:1px solid #F0E8DA}
+.call span{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:#8A7A66}
+.tlkind{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;margin:0 6px 1px 0;vertical-align:1px}
+.szi{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1.5px solid #D9CDBB;background:#fff;
+  color:#8A7A66;font-family:Georgia,serif;font-style:italic;font-size:12px;font-weight:700;cursor:pointer;padding:0;margin-left:6px;vertical-align:2px;line-height:1}
+.szcardbtn{display:flex;align-items:center;gap:12px;width:100%;border:none;background:#fff;border-radius:16px;padding:11px 14px;margin:0 0 14px;
+  box-shadow:0 3px 12px rgba(90,74,58,.08);font-family:inherit;text-align:left;cursor:pointer}
+.szcardbtn span{flex:1;min-width:0}
+.szcardbtn b{display:block;font-size:13.5px;font-weight:800;color:var(--ink-strong)}
+.szcardbtn s{display:block;text-decoration:none;font-size:11px;font-weight:700;color:#8A7A66;margin-top:2px}
+.szcardbtn em{font-style:normal;font-size:20px;font-weight:800;color:#7C6BA6}
+.sztbl tr.tgt td{background:rgba(124,107,166,.14);color:#6C5A98;font-weight:800}
+.tlnow{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--accent)}

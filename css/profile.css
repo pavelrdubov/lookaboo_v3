@@ -1,0 +1,26 @@
+/* профиль */
+/* ---------- профиль ---------- */
+#prof{background:var(--cream)}
+#pfHead{position:absolute;left:0;right:0;top:0;height:150px;background:linear-gradient(168deg,#B0705A,#E3B18E);z-index:2}
+#pfBody{position:absolute;left:0;right:0;top:150px;bottom:62px;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:5;padding:16px 18px 30px}
+.kidrow{display:flex;gap:10px;overflow-x:auto;padding:2px 0 8px;margin-bottom:6px}
+.kidchip{flex:none;width:76px;border:none;background:transparent;font-family:inherit;cursor:pointer;padding:0;text-align:center}
+.kidchip .av{width:60px;height:60px;border-radius:50%;margin:0 auto 5px;background:#EFE7D9;border:3px solid transparent;
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#B3A08A;overflow:hidden}
+.kidchip.on .av{border-color:var(--accent);box-shadow:0 3px 10px rgba(150,80,50,.22)}
+.kidchip .av img{width:100%;height:100%;object-fit:cover}
+.kidchip s{display:block;text-decoration:none;font-size:11px;font-weight:800;color:#8A7864;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kidchip.on s{color:var(--accent)}
+.pfphoto{width:86px;height:86px;border-radius:50%;margin:0 auto 10px;background:#F4EFE6;border:2px dashed #DDD2BF;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative}
+.pfphoto img{width:100%;height:100%;object-fit:cover}
+.pfphoto span{font-size:10.5px;font-weight:800;color:#B3A08A;text-align:center;line-height:1.2;padding:0 8px}
+.seg{display:flex;gap:6px;margin-top:9px}
+.seg button{flex:1;height:42px;border-radius:13px;border:2px solid #E6DCCC;background:#FDFAF5;font-family:inherit;
+  font-size:12px;font-weight:800;color:#8A7864;cursor:pointer;padding:0 4px}
+.seg button.on{border-color:var(--accent);background:#FFF9F2;color:var(--accent)}
+.lnk{display:flex;align-items:center;justify-content:space-between;gap:10px;height:48px;border-radius:15px;
+  background:#FDFAF5;border:2px solid #E6DCCC;padding:0 14px;margin-top:9px;cursor:pointer;width:100%;font-family:inherit}
+.lnk b{font-size:12.5px;font-weight:800;color:#8A7864}
+.lnk s{text-decoration:none;font-size:13px;font-weight:800;color:var(--ink-strong)}
+.pfnote{font-size:11px;font-weight:600;color:#A9987F;line-height:1.4;margin-top:8px}

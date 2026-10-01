@@ -1,0 +1,43 @@
+/* общее: переменные, экраны, арка-карточка */
+:root{
+  --accent:#C4613C; --ink:#40372F; --ink-strong:#3B2E22; --muted:#8A7864;
+  --cream:#FCF7F0; --band:#E3CFAE; --sun:#F5B942; --mint:#6FC4A2; --sky:#6BA6CC; --plum:#B87A9C;
+  --arch:#FFFFFF;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#E8E2D8;font-family:"Nunito",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+body{display:flex;align-items:center;justify-content:center;width:100vw;height:100vh;height:100dvh;overflow:hidden}
+button{font-family:inherit}
+
+#phone{position:relative;width:390px;height:844px;flex:none;overflow:hidden;background:var(--cream);box-shadow:0 20px 60px rgba(70,56,44,.28);transform-origin:center center}
+@media(max-width:820px){#phone{box-shadow:none}}
+
+.screen{position:absolute;inset:0;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .34s ease}
+.screen.on{opacity:1;pointer-events:auto}
+
+/* ---------- общее ---------- */
+#mbrand{top:12px}
+#mbrand img{height:40px}                 /* на главном ниже сразу температура */
+.brand img{display:block;height:54px;width:auto;filter:drop-shadow(0 2px 6px rgba(45,58,70,.22))}
+.brand{position:absolute;left:20px;top:20px;font-family:"Playfair Display",Georgia,serif;font-size:15px;font-weight:900;letter-spacing:.14em;color:#fff;z-index:9;text-transform:uppercase;text-shadow:0 1px 7px rgba(45,58,70,.30)}
+.arch{position:absolute;left:14px;right:14px;background:var(--arch);border-radius:140px 140px 28px 28px;box-shadow:0 10px 28px rgba(90,74,58,.12);z-index:3}
+/* карточка-арка с гибким содержимым: подстраивается под высоту экрана */
+.card2{position:absolute;left:14px;right:14px;top:var(--ot,250px);bottom:calc(var(--obb,172px) + 10px);background:var(--arch);
+  border-radius:140px 140px 28px 28px;box-shadow:0 10px 28px rgba(90,74,58,.12);z-index:5;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;
+  padding:20px 26px 16px;overflow:hidden;text-align:center}
+.card2>*{flex:none;width:100%;max-width:100%}
+.card2 .qsub{margin-top:6px}
+.hand{font-family:"Caveat","Marck Script",cursive;color:var(--muted)}
+.cta{position:absolute;left:20px;right:20px;height:56px;border:none;border-radius:999px;background:var(--accent);color:#FFF6EF;font-size:16px;font-weight:800;letter-spacing:-.01em;cursor:pointer;box-shadow:0 6px 16px rgba(150,80,50,.28);z-index:9}
+.cta:active{transform:translateY(1px)}
+.link{position:absolute;left:20px;right:20px;height:34px;border:none;background:transparent;color:#7A6450;font-size:13.5px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;z-index:9}
+.dots{position:absolute;left:0;right:0;display:flex;justify-content:center;gap:7px;z-index:8}
+.dots i{width:8px;height:8px;border-radius:50%;background:#DCD3C6;display:block}
+.dots i.a{width:22px;border-radius:999px;background:var(--accent)}
+.headline{position:absolute;left:20px;z-index:7;color:#fff}
+.headline h1{margin:0;font-size:42px;font-weight:800;line-height:.96;letter-spacing:-.03em}
+.headline p{margin:10px 0 0;font-family:"Caveat","Marck Script",cursive;font-size:22px;line-height:1.1;color:#FFF3E6}
+.qtitle{font-size:20px;font-weight:800;letter-spacing:-.015em;color:var(--ink-strong);text-align:center}
+.qsub{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:8px;line-height:1.4;text-align:center}
+.pill{display:inline-block;border-radius:999px;padding:7px 16px;font-size:12px;font-weight:800}

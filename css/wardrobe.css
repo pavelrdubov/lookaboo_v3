@@ -1,0 +1,22 @@
+/* гардероб */
+/* ---------- гардероб ---------- */
+#wd{background:var(--cream)}
+#wdHead{position:absolute;left:0;right:0;top:0;height:158px;background:linear-gradient(168deg,#7A8C5A,#C6D5AC);z-index:2}
+#wdBack{position:absolute;left:14px;top:20px;width:40px;height:40px;border:none;background:rgba(255,255,255,.24);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9;padding:0}
+#wdBody{position:absolute;left:0;right:0;top:158px;bottom:62px;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:5;padding:16px 18px 30px}
+.szpick{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px}
+.szpick button{flex:none;min-width:52px;height:40px;border-radius:13px;border:2px solid #E6DCCC;background:#fff;font-family:inherit;font-size:13px;font-weight:800;color:#8A7864;cursor:pointer;padding:0 10px}
+.szpick button.on{border-color:var(--accent);background:#FFF9F2;color:var(--accent)}
+.szpick button.now:after{content:" •"}
+.wrow2{display:flex;align-items:center;gap:10px;background:#fff;border-radius:15px;padding:9px 11px;margin-bottom:7px;box-shadow:0 2px 8px rgba(90,74,58,.06)}
+.wrow2 img{width:38px;height:44px;object-fit:contain;flex:none;filter:drop-shadow(2px 3px 4px rgba(90,74,58,.16))}
+.wrow2 .t{flex:1;min-width:0}
+.wrow2 .t b{display:block;font-size:12.5px;font-weight:800;color:var(--ink-strong);line-height:1.25}
+.wrow2 .t s{display:block;text-decoration:none;font-size:10.5px;font-weight:700;color:#A9987F;margin-top:2px}
+.wrow2 .t s.need{color:#B0705A}
+.cnt{display:flex;align-items:center;gap:6px;flex:none}
+.cnt button{width:30px;height:30px;border-radius:50%;border:2px solid #E6DCCC;background:#FDFAF5;font-family:inherit;font-size:15px;font-weight:800;color:#8A7864;cursor:pointer;padding:0;line-height:1}
+.cnt b{min-width:20px;text-align:center;font-size:15px;font-weight:800;color:var(--ink-strong)}
+.cnt b.zero{color:#C9BCA6}
+.gap{position:absolute;left:4px;top:4px;background:#E8C79A;color:#6B4A2A;border-radius:999px;
+  padding:2px 7px;font-size:9.5px;font-weight:800;pointer-events:none;box-shadow:0 2px 5px rgba(90,74,58,.2)}
