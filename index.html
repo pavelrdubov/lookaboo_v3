@@ -261,6 +261,10 @@ button{font-family:inherit}
 .tlcard .d{font-size:12px;font-weight:600;color:var(--muted);line-height:1.4}
 .tlcard .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .tlcard .chips span{background:#F4EFE6;border-radius:999px;padding:4px 9px;font-size:10.5px;font-weight:700;color:#7A6450}
+.tlkind{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;margin:0 6px 1px 0;vertical-align:1px}
+.szi{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1.5px solid #D9CDBB;background:#fff;
+  color:#8A7A66;font-family:Georgia,serif;font-style:italic;font-size:12px;font-weight:700;cursor:pointer;padding:0;margin-left:6px;vertical-align:2px;line-height:1}
+.sztbl tr.tgt td{background:rgba(124,107,166,.14);color:#6C5A98;font-weight:800}
 .tlnow{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--accent)}
 
 /* ---------- поездка ---------- */
@@ -601,6 +605,7 @@ button{font-family:inherit}
 
     <div>
       <span class="pill" id="sizePill" style="background:var(--band);color:#6B5540;font-size:13px;padding:8px 18px">Через 2 месяца — 74</span>
+      <button class="szi" aria-label="Все размеры" onclick="openSizes('o3')">i</button>
       <div class="qsub" id="hNote"></div>
     </div>
     <button class="swlink" id="swBtn" onclick="swapMode()">Знаю точный рост в сантиметрах</button>
@@ -2271,10 +2276,13 @@ const SIZETBL=[[50,'до 50','Newborn'],[56,'50–56','0–1 мес'],[62,'57–
  [98,'93–98','2–3 года'],[104,'99–104','3–4 года']];
 function sizesData(){const k=kid(),m=ageMonths(),h=Math.round(heightNow());
   return {nm:kidName(k)||'',m,h,cloth:sizeFor(heightNow()),hat:hatSizeFor(m),sock:sockSizeFor(m),mit:mittenSizeFor(m)};}
-function openSizes(){renderSizes(sizesData(),false);go('sizes');}
-function szBack(){go('prof');if(typeof profPaint==='function')profPaint();}
+let SZFROM='prof';
+/* таблица размеров открывается отовсюду, где мы называем размер; tgt — размер «к дате» */
+function openSizes(from,tgt){SZFROM=from||'prof';const d=sizesData();if(tgt&&tgt!==d.cloth)d.tgt=tgt;renderSizes(d,false);go('sizes');}
+function szBack(){go(SZFROM);}
+function szI(tgt){return `<button class="szi" aria-label="Все размеры" onclick="event.stopPropagation();openSizes(S.screen${tgt?','+tgt:''})">i</button>`;}
 function renderSizes(d,shared){
-  const rows=SIZETBL.map(r=>`<tr class="${r[0]===d.cloth?'cur':''}"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+  const rows=SIZETBL.map(r=>`<tr class="${r[0]===d.cloth?'cur':(r[0]===d.tgt?'tgt':'')}"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
   document.getElementById('szTitle').textContent=d.nm?('Размеры '+d.nm):'Размеры малыша';
   document.getElementById('szBody').innerHTML=
     `<div class="szcard"><div class="sznow">Сейчас впору</div><div class="szbig">${d.cloth}</div>`
@@ -2284,7 +2292,7 @@ function renderSizes(d,shared){
     +`<div class="szrow"><span>Варежки (обхват ладони)</span><b>${d.mit}</b></div></div>`
     +`<div class="szsecth">Одежда — РФ, рост и US</div>`
     +`<table class="sztbl"><thead><tr><th>РФ</th><th>рост, см</th><th>US</th></tr></thead><tbody>${rows}</tbody></table>`
-    +`<div class="szhint">Российский размер одежды равен росту в сантиметрах (как и в Европе). US — по возрасту. Ваш размер выделен.</div>`;
+    +`<div class="szhint">Российский размер одежды равен росту в сантиметрах (как и в Европе). US — по возрасту. Ваш размер выделен${d.tgt?`, размер к дате — <b style="color:#6C5A98">${d.tgt}</b> — сиреневым`:''}.</div>`;
   // в шапке — фото малыша, если есть (по ссылке фото не передаём — там ростомер)
   const ph=!shared&&kid().photo, av=document.getElementById('szAv');
   av.innerHTML=ph?`<img src="${ph}" alt="">`:''; av.style.display=ph?'block':'none';
@@ -2499,7 +2507,7 @@ function tlEvents(){
       why:'Ваше событие — нарядное берите на размер, который будет к этой дате.',
       items:fancyItems(),fancy:true});
   });
-  return ev.sort((a,b)=>a.d<b.d?-1:1);
+  return ev.filter(e=>!EVHIDE.includes(evKey(e))).sort((a,b)=>a.d<b.d?-1:1);
 }
 function tripCount(t){return Object.keys(t.done||{}).length;}
 
@@ -2515,7 +2523,7 @@ function evRender(){
   const when=days<=0?'сегодня':(days<7?`через ${days} дн.`:(days<45?`через ${Math.round(days/7)} нед.`:`через ${Math.round(days/30)} мес.`));
   document.getElementById('evHead').style.background=EVGRAD[e.type]||EVGRAD.season;
   document.getElementById('evTitle').textContent=e.title;
-  document.getElementById('evSub').textContent=`${fmtF(e.d)} · ${when}`;
+  document.getElementById('evSub').textContent=`${TLKIND[e.type]||'Событие'} · ${fmtF(e.d)} · ${when}`;
 
   const sz=e.size||sizeOn(e.d);
   const em=Math.max(0,monthsUntil(e.szDate||e.d));
@@ -2541,11 +2549,11 @@ function evRender(){
         :`<div class="pfnote" style="margin-top:10px">Картинок для этого события пока нет — добавлю, когда нагенерим нарядные комплекты. Размер к этой дате: <b>${sz}</b>.</div>`}
     </div>
     <div class="card">
-      <h3>${e.type==='season'?'Размер к разгару сезона':'Размер к этой дате'}</h3>
+      <h3>${e.type==='season'?'Размер к разгару сезона':'Размер к этой дате'}${szI(sz)}</h3>
       <div class="sub">${e.type==='season'&&e.szDate&&e.szDate!==e.d?`К ${fmtF(e.szDate)} `:''}${personize('малышу будет')} ${ageWordAt(e.szDate||e.d)} — берите <b>${sz}</b>, а не тот, что впору сейчас.</div>
     </div>
     ${e.type==='size'?`<button class="ghost2" onclick="wdOpen(${sz},'ev')">Отметить, что уже есть в ${sz}</button>`:''}
-    ${e.custom?`<button class="ghost2" style="color:#C06A4A;border-color:#E8CBBF" onclick="custDel('${e.custom}')">Удалить событие</button>`:''}
+    ${evCanDel(e)?`<button class="ghost2" style="color:#C06A4A;border-color:#E8CBBF" onclick="evDel()">Удалить событие</button>`:''}
     <button class="ghost2" onclick="go('tl')">Назад в план</button>
     <div style="height:14px"></div>`;
 }
@@ -2566,6 +2574,20 @@ function evWish(k,label,direct){
 }
 
 const TLCOL={trip:'#6E8FA8',size:'#C4613C',season:'#7A8C5A',holiday:'#B87A9C',month:'#C98AA6',custom:'#B87A9C'};
+/* три рода записей: события (праздники, месяцы, свои) — можно удалить; поездки; план (смена размера/сезона) — не удаляется */
+const TLKIND={trip:'Поездка',size:'Смена размера',season:'Смена сезона',holiday:'Событие',month:'Событие',custom:'Событие'};
+const evCanDel=e=>['holiday','month','custom'].includes(e.type);
+const evKey=e=>e.type+'|'+e.title+'|'+e.d;
+let EVHIDE=[]; (function(){try{const a=JSON.parse(store.get('mpp-evhide')||'[]');if(Array.isArray(a))EVHIDE=a;}catch(e){}})();
+function evHideSave(){try{store.set('mpp-evhide',JSON.stringify(EVHIDE));}catch(e){}}
+function evDel(){
+  const e=EVCUR; if(!e||!evCanDel(e))return;
+  if(!confirm(`Удалить событие «${e.title}» из плана?`))return;
+  if(e.custom){CUSTEV=CUSTEV.filter(c=>c.id!==e.custom);custSave();}
+  else{EVHIDE.push(evKey(e));evHideSave();}
+  go('tl');toast('Событие удалено');
+}
+function evUnhide(){EVHIDE=[];evHideSave();tlRender();toast('События вернулись');}
 let CUSTEV=[]; (function(){try{const a=JSON.parse(store.get('mpp-custev')||'[]');if(Array.isArray(a))CUSTEV=a;}catch(e){}})();
 function custSave(){try{store.set('mpp-custev',JSON.stringify(CUSTEV));}catch(e){}}
 function evNew(){
@@ -2573,7 +2595,7 @@ function evNew(){
   box.innerHTML=`<div class="card"><h3>Своё событие</h3>
     <div class="fld"><span>Название</span><input id="ceName" placeholder="например, крестины" maxlength="40"></div>
     <div class="fld"><span>Дата</span><input type="date" id="ceDate" min="${todayStr()}"></div>
-    <button class="ghost2" style="margin-top:10px;border-color:var(--accent);color:var(--accent)" onclick="evAddSave()">Добавить в план</button></div>`;
+    <button class="ghost2" style="margin-top:10px;border-color:var(--accent);color:var(--accent)" onclick="evAddSave()">Добавить событие</button></div>`;
   box.style.display='block';
 }
 function evAddSave(){
@@ -2583,7 +2605,6 @@ function evAddSave(){
   CUSTEV.push({id:'ce'+Date.now(),d,name:nm}); custSave();
   document.getElementById('evAddBox').style.display='none'; tlRender(); toast('Событие добавлено');
 }
-function custDel(id){CUSTEV=CUSTEV.filter(c=>c.id!==id);custSave();go('tl');}
 let TLEV=[];
 function tlRender(){
   climoFetch();                       // подтянет историю города и перерисует, когда готово
@@ -2596,7 +2617,7 @@ function tlRender(){
     return `<div class="tlrow">
       <div class="tldot" style="background:${TLCOL[e.type]}"></div>
       <div class="tlcard tap${soon?' soon':''}" ${e.type==='trip'?`onclick="tripOpen(${e.id})"`:`onclick="evOpen(${i})"`}>
-        <div class="tldate">${fmtF(e.d).toUpperCase()} · <span class="tlnow">${when}</span>${soon?' · <span class="tlnow" style="color:#B0705A">ПОРА ПОКУПАТЬ</span>':''}</div>
+        <div class="tldate"><span class="tlkind" style="color:${TLCOL[e.type]};background:${TLCOL[e.type]}1F">${TLKIND[e.type]}</span>${fmtF(e.d).toUpperCase()} · <span class="tlnow">${when}</span>${soon?' · <span class="tlnow" style="color:#B0705A">ПОРА ПОКУПАТЬ</span>':''}</div>
         <h4>${e.title}</h4>
         <div class="d">${personize(e.sub)}</div>
         ${e.chips.length?`<div class="chips">${e.chips.map(c=>`<span>${c}</span>`).join('')}</div>`:''}
@@ -2609,7 +2630,8 @@ function tlRender(){
      </div>
      <div id="evAddBox" style="display:none;margin-bottom:12px"></div>`
     + (html||`<div class="card"><div class="sub">Пока пусто. Добавьте поездку или своё событие — и здесь появятся напоминания про размеры и сезоны.</div></div>`)
-    + `<div class="sub" style="text-align:center;margin:14px 6px 20px">Окно двигается вперёд вместе с малышом — новые события появляются сами.</div>`;
+    + `<div class="sub" style="text-align:center;margin:14px 6px ${EVHIDE.length?6:20}px">Окно двигается вперёд вместе с малышом — новые события появляются сами.</div>`
+    + (EVHIDE.length?`<div style="text-align:center;margin-bottom:20px"><button class="swlink" style="width:auto" onclick="evUnhide()">Вернуть удалённые события (${EVHIDE.length})</button></div>`:'');
 }
 
 /* ================= ПОЕЗДКА ================= */
@@ -2623,6 +2645,7 @@ function tripSave(){
 }
 function tripNew(){TRIP=blankTrip();go('trip');}
 function tripOpen(id){const t=TRIPS.find(x=>x.id===id);if(t){TRIP=t;TRIP.mode='result';go('trip');}}
+function tripDel(){if(!confirm(`Удалить поездку в ${TRIP.city} из плана? Вещи из неё останутся в вишлисте.`))return;tripDrop(TRIP.id);go('tl');toast('Поездка удалена');}
 function tripDrop(id){TRIPS=TRIPS.filter(t=>t.id!==id);try{store.set('mpp-trips',JSON.stringify(TRIPS));}catch(e){}tlRender();}
 
 function fmtD(d){const x=new Date(d);return x.getDate()+' '+['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'][x.getMonth()];}
@@ -2839,7 +2862,7 @@ function tripRender(){
     </div>
 
     <div class="card">
-      <h3>Размер к поездке</h3>
+      <h3>Размер к поездке${szI(sz)}</h3>
       <div class="sub">${personize('Малышу будет')} ${mm} ${monthsWord(mm)} — берите размер <b>${sz}</b>, а не тот, что впору сейчас.</div>
     </div>
 
@@ -2857,6 +2880,7 @@ function tripRender(){
         <button class="add" onclick="tripUnwish('${id}')">×</button></div>`).join(''):''}
 
     <button class="ghost2" onclick="TRIP.mode='form';tripSave();tripRender()">Изменить поездку</button>
+    ${TRIPS.some(t=>t.id===TRIP.id)?`<button class="ghost2" style="color:#C06A4A;border-color:#E8CBBF" onclick="tripDel()">Удалить поездку</button>`:''}
     <div style="height:10px"></div>`;
 }
 function tripTick(id){TRIP.done[id]=!TRIP.done[id];tripSave();tripRender();}
