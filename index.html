@@ -301,6 +301,11 @@ button{font-family:inherit}
 .wtile s{display:block;text-decoration:none;font-size:10px;font-weight:800;letter-spacing:.06em;color:#A9987F;margin-top:2px}
 .tag{display:inline-block;border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:800;margin-top:8px}
 .sect{font-size:11px;font-weight:800;letter-spacing:.1em;color:#A9987F;margin:16px 4px 8px}
+.wlsect{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.wlsect button{flex:none;border:none;background:none;padding:2px 0;font-family:inherit;font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#C06A4A;cursor:pointer}
+.wlflt{position:relative;margin:0 0 4px}
+.wlflt select{width:100%;height:44px;border:2px solid #EAE2D4;border-radius:999px;background:#fff;font-family:inherit;font-size:13px;font-weight:800;color:#7A6450;padding:0 38px 0 18px;-webkit-appearance:none;appearance:none;cursor:pointer}
+.wlflt:after{content:'';position:absolute;right:19px;top:16px;width:7px;height:7px;border-right:2.5px solid #7A6450;border-bottom:2.5px solid #7A6450;transform:rotate(45deg);pointer-events:none}
 .item{display:flex;align-items:center;gap:11px;background:#fff;border-radius:15px;padding:11px 13px;margin-bottom:7px;box-shadow:0 2px 8px rgba(90,74,58,.06)}
 .item .bx{width:23px;height:23px;border-radius:8px;border:2px solid #DDD2BF;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff}
 .item.on .bx{background:var(--accent);border-color:var(--accent)}
@@ -1879,7 +1884,7 @@ async function renderLookPNG(){
 
 async function renderWishPNG(){
   await fontsReady();
-  const ids=Object.keys(WISH).filter(i=>inList(WISH[i]));
+  const ids=wishOutIds();
   const W=1080;
   const rowH=132, headH=300;
   const groups={};
@@ -1962,7 +1967,7 @@ async function shotShare(){
 }
 function shotText(){ closeShot(); shareText('Lookaboo', SHOTTEXT); }
 function wishText(){
-  const ids=Object.keys(WISH).filter(id=>inList(WISH[id]));
+  const ids=wishOutIds();
   const groups={};
   ids.forEach(id=>{const g=WISH[id].src||'Разное';(groups[g]=groups[g]||[]).push(WISH[id]);});
   return personize('Что нужно малышу:')+'\n\n'+Object.keys(groups).map(g=>
@@ -2024,6 +2029,9 @@ let WISH={};
 function inList(x){return x.keep!==false;}          // в списке = отмечено
 function wishSave(){try{store.set('mpp-wish',JSON.stringify(WISH));}catch(e){}wishBadge();}
 function wishCount(){return Object.values(WISH).filter(inList).length;}
+let WLF='';                                           // фильтр вишлиста: '' — все списки, иначе название раздела
+function wishGrp(w){return w.src||'Разное';}
+function wishOutIds(){return Object.keys(WISH).filter(id=>inList(WISH[id])&&(!WLF||wishGrp(WISH[id])===WLF));}
 function wishBadge(){
   const n=wishCount();
   const t=document.getElementById('tabBdg');
@@ -2035,14 +2043,23 @@ function wishToggle(id,rec){
   return !!WISH[id];
 }
 function wishKeep(id){if(WISH[id]){WISH[id].keep=!inList(WISH[id]);wishSave();wlRender();}}
-function wishDel(id){
+function wishDel(id){wishDrop(id);wishSave();wlRender();}
+function wishDrop(id){
   delete WISH[id];
   // синхронизация с поездками: снять отметку и в TRIP.wish, чтобы сердечки/счётчик обновились
   const m=id.match(/^trip(\d+):(.+)$/);
   if(m){const t=TRIPS.find(x=>String(x.id||0)===m[1]);if(t&&t.wish)delete t.wish[m[2]];
     if(TRIP&&String(TRIP.id||0)===m[1]&&TRIP.wish)delete TRIP.wish[m[2]];
     try{store.set('mpp-trips',JSON.stringify(TRIPS));}catch(e){}}
-  wishSave();wlRender();
+}
+let WLG=[];                                           // разделы в порядке отрисовки (для onclick по индексу)
+function wlFilter(i){WLF=i<0?'':(WLG[i]||'');wlRender();}
+function wlGroupDel(i){
+  const g=WLG[i]; if(g==null)return;
+  const ids=Object.keys(WISH).filter(id=>wishGrp(WISH[id])===g);
+  if(!confirm(`Удалить раздел «${g}» целиком? ${ids.length} ${ids.length===1?'вещь':(ids.length<5?'вещи':'вещей')} пропадут из вишлиста.`))return;
+  ids.forEach(wishDrop); if(WLF===g)WLF='';
+  wishSave();wlRender();toast('Раздел удалён');
 }
 
 function wlRender(){
@@ -2057,9 +2074,15 @@ function wlRender(){
     return;
   }
   const groups={};
-  ids.forEach(id=>{const g=WISH[id].src||'Разное';(groups[g]=groups[g]||[]).push(id);});
-  const body=Object.keys(groups).map(g=>
-    `<div class="sect">${g.toUpperCase()}</div>`+
+  ids.forEach(id=>{const g=wishGrp(WISH[id]);(groups[g]=groups[g]||[]).push(id);});
+  WLG=Object.keys(groups);
+  if(WLF&&!groups[WLF])WLF='';
+  const flt=WLG.length>1?`<div class="wlflt"><select onchange="wlFilter(+this.value)">
+      <option value="-1"${WLF?'':' selected'}>Все списки · ${ids.length}</option>
+      ${WLG.map((g,i)=>`<option value="${i}"${g===WLF?' selected':''}>${esc2(g)} · ${groups[g].length}</option>`).join('')}
+    </select></div>`:'';
+  const body=WLG.map((g,gi)=>WLF&&g!==WLF?'':
+    `<div class="sect wlsect"><span>${esc2(g.toUpperCase())}</span><button onclick="wlGroupDel(${gi})">удалить раздел</button></div>`+
     groups[g].map(id=>{const w=WISH[id];
       const sub=[szTxt(w.size),(w.qty>1?'×'+w.qty:''),w.note||''].filter(Boolean).join(' · ');
       const keep=inList(w);
@@ -2070,7 +2093,7 @@ function wlRender(){
         <button class="del" onclick="wishDel('${id}')">×</button>
       </div>`;}).join('')
   ).join('');
-  document.getElementById('wlBody').innerHTML=addBtn+body+
+  document.getElementById('wlBody').innerHTML=addBtn+flt+body+
     `<button class="ghost2" style="margin-top:12px" onclick="wishShare()">Отправить картинкой</button>
      <button class="ghost2" style="margin-top:8px;border-color:var(--accent);color:var(--accent)" onclick="copyListLink()">Поделиться ссылкой на список</button>
      <div style="height:12px"></div>`;
@@ -2185,13 +2208,13 @@ function waSave(){
 function waDel(){if(WA.id){delete WISH[WA.id];wishSave();}waClose();wlRender();}
 
 function wishShare(){
-  if(!Object.keys(WISH).filter(id=>inList(WISH[id])).length){toast('Список пуст');return;}
+  if(!wishOutIds().length){toast('Список пуст');return;}
   shotMake('wish');
 }
 
 /* ===== ссылка на список: пакуем в хэш URL, без сервера; картинки берутся из приложения ===== */
 function buildListLink(){
-  const ids=Object.keys(WISH).filter(id=>inList(WISH[id]));
+  const ids=wishOutIds();
   const it=ids.map(id=>{const w=WISH[id];return {l:w.label,s:w.size||'',n:w.note||'',q:w.qty||1,k:w.key||'',g:w.src||''};});
   const k=kid();
   const payload={v:1,nm:kidName(k)||'',sz:sizeFor(heightNow()),it};
@@ -2199,7 +2222,7 @@ function buildListLink(){
   return location.origin+location.pathname+'#list='+encodeURIComponent(enc);
 }
 async function copyListLink(){
-  if(!Object.keys(WISH).filter(id=>inList(WISH[id])).length){toast('Список пуст');return;}
+  if(!wishOutIds().length){toast('Список пуст');return;}
   const url=buildListLink();
   try{ if(navigator.share){await navigator.share({title:'Список Lookaboo',url});return;} }catch(e){if(e&&e.name==='AbortError')return;}
   try{ await navigator.clipboard.writeText(url); toast('Ссылка скопирована'); return; }catch(e){}
@@ -2570,7 +2593,7 @@ function tlRender(){
      </div>
      <div id="evAddBox" style="display:none;margin-bottom:12px"></div>`
     + (html||`<div class="card"><div class="sub">Пока пусто. Добавьте поездку или своё событие — и здесь появятся напоминания про размеры и сезоны.</div></div>`)
-    + `<div class="sub" style="text-align:center;margin:14px 6px 20px">Показываем ближайшие полгода — окно двигается вперёд вместе с малышом, новые события появляются сами.</div>`;
+    + `<div class="sub" style="text-align:center;margin:14px 6px 20px">Окно двигается вперёд вместе с малышом — новые события появляются сами.</div>`;
 }
 
 /* ================= ПОЕЗДКА ================= */
