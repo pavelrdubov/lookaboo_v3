@@ -225,9 +225,9 @@ async function renderLookPNG(){
   const padX=44,padY=34;
   const BW=AW-padX*2, BH=AH-padY*2;
   const LOOK=lookImgs(ordered.map(x=>x[0]));
-  const noteFs=Math.max(30,Math.min(40,Math.min(BW,BH)*0.062));
+  const noteFs=Math.max(40,Math.min(52,Math.min(BW,BH)*0.08));
   /* та же раскладка и та же пометка, что на экране (js/layout.js) */
-  const NOTES=pickNotes(ordered,effTemp(),S.setIdx).map(n=>Object.assign({fs:n.style==='fact'?noteFs*.62:noteFs},n));
+  const NOTES=pickNotes(ordered,effTemp(),S.setIdx).map(n=>Object.assign({fs:n.style==='fact'?noteFs*.86:noteFs},n));
   const rects=layoutLook(ordered.map(x=>({key:x[0],src:LOOK[x[0]]})),BW,BH,(S.setIdx||0)+new Date().getDate(),NOTES,{r:380,ox:padX,oy:padY});
   const srcs=await Promise.all(rects.map(r=>loadImg(r.src)));
   rects.slice().sort((a,b)=>a.z-b.z).forEach(r=>{
@@ -245,14 +245,13 @@ async function renderLookPNG(){
     x.lineWidth=2.6; x.setLineDash([6,7]); x.beginPath(); x.moveTo(ar.sx,ar.sy); x.quadraticCurveTo(ar.qx,ar.qy,ar.tx,ar.ty); x.stroke();
     x.setLineDash([]); x.lineWidth=3; x.beginPath(); x.moveTo(ar.l1x,ar.l1y); x.lineTo(ar.tx,ar.ty); x.lineTo(ar.l2x,ar.l2y); x.stroke();
     x.restore(); x.save();
-    const fact=n.style==='fact', txt=fact?n.text.toUpperCase():n.text;
-    x.fillStyle=fact?'#8A7A66':'#6B5B4C'; x.font=fact?`800 ${n.fs}px Nunito, sans-serif`:`600 ${n.fs}px Caveat, cursive`; x.textBaseline='top';
-    if('letterSpacing' in x)x.letterSpacing=fact?(n.fs*.09).toFixed(1)+'px':'0px';
+    const txt=n.text;
+    x.fillStyle='#6B5B4C'; x.font=`600 ${n.fs}px Caveat, cursive`; x.textBaseline='top';
     x.shadowColor='#fff'; x.shadowBlur=10;
     // перенос по словам в ширину пометки
     const words=txt.split(' '), lines=[]; let cur='';
     words.forEach(w=>{const t=cur?cur+' '+w:w; if(x.measureText(t).width>n.w&&cur){lines.push(cur);cur=w;}else cur=t;}); lines.push(cur);
-    lines.forEach((l,i)=>x.fillText(l,ox+n.x,oy+n.y+i*n.fs*(fact?1.35:1.08)));
+    lines.forEach((l,i)=>x.fillText(l,ox+n.x,oy+n.y+i*n.fs*1.08));
     x.restore();
   });
 

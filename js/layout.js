@@ -140,14 +140,14 @@ function scaleRects(R,k,W,H){
    ни на какую вещь не заходит (с запасом PAD), внутри поля и арки. Нет такого места — null */
 function fitNote(R,nt,W,H,arch,obst){
   // текст крупнее, если есть место (журнально: подписи разного размера), мельче — если тесно
-  const scales=nt.style==='fact'?[1.1,1,.9]:[1.3,1.15,1,.88,.76];
+  const scales=nt.style==='fact'?[1,.9,.8]:[1.3,1.15,1,.88,.76];
   for(const sc of scales){ const p=fitNoteAt(R,Object.assign({},nt,{fs:nt.fs*sc}),W,H,arch,obst||[]); if(p)return p; }
   return null;
 }
 function fitNoteAt(R,nt,W,H,arch,obst){
   const m=R.find(r=>r.key===nt.key); if(!m)return null;
   const M=6, PAD=5, BOT=22, fs=nt.fs;              // BOT — нижняя полоса под кнопками
-  const cw=nt.style==='fact'?.82:.52, lh=nt.style==='fact'?1.35:1.15;   // ширина с запасом: заглавные в разрядку шире
+  const cw=.44, lh=1.12;                            // Caveat ≈ 0,39–0,42 em на символ — берём с запасом
   const full=nt.text.length*fs*cw+8, maxW=W*.5, lines=Math.min(2,Math.ceil(full/maxW));   // длинное — в две строки
   const w=Math.min(maxW,full), h=fs*lh*lines+2;
   const L=m.x-m.w/2, Rr=m.x+m.w/2, T=m.y-m.h/2, B=m.y+m.h/2, g=fs*.45;
@@ -219,7 +219,7 @@ function finishRects(R,placed){
    (стрелки) — разные пометки, чтобы, листая, прочитать все. Нечего сказать — текста нет. */
 function lookNotes(items,eff){
   const has=k=>items.some(x=>x[0]===k), out=[];
-  // факт с цифрами («250 г утеплителя») — мелкими заглавными, как журнальная этикетка; совет — рукописным
+  // все пометки рукописные; факт с цифрами («250 г утеплителя») — чуть мельче, совет — крупнее, если есть место
   const add=(k,text,pr)=>{ if(has(k)&&!out.some(n=>n.key===k))out.push({key:k,text,pr,style:/\d/.test(text)?'fact':'hand'}); };
   if(has('ovWinter')||has('ovDemi')){ const g=insFor(eff).g; add(has('ovWinter')?'ovWinter':'ovDemi',/пух/.test(g)?g:g+' утеплителя',10); }
   if(S.ctx==='car')add('blanket','поверх ремней, не под них',9);

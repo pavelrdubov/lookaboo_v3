@@ -231,10 +231,10 @@ function drawStage(set,sz){
 
   const LOOK=lookImgs(list.map(x=>x[0]));      // картинки подобраны по сочетанию цветов
   const SHADOW='drop-shadow(6px 12px 15px rgba(90,74,58,.26))';
-  const noteFs=Math.max(15,Math.min(19,Math.min(B.w,B.h)*0.058));
+  const noteFs=Math.max(19,Math.min(24,Math.min(B.w,B.h)*0.072));
   /* раскладка по правилам (js/layout.js); по бокам место под стрелки */
   const SIDE=18, ARCH={r:140,ox:SIDE,oy:0};
-  const NOTES=pickNotes(list,effTemp(),S.setIdx).map(n=>Object.assign({fs:n.style==='fact'?noteFs*.62:noteFs},n));
+  const NOTES=pickNotes(list,effTemp(),S.setIdx).map(n=>Object.assign({fs:n.style==='fact'?noteFs*.86:noteFs},n));
   const rects=layoutLook(list.map(x=>({key:x[0],src:LOOK[x[0]]})),B.w-2*SIDE,B.h-14,(S.setIdx||0)+new Date().getDate(),NOTES,ARCH);
   let html='';
   rects.forEach(r=>{
@@ -255,7 +255,7 @@ function drawStage(set,sz){
       +notes.map(n=>{ const a=noteArrow(n,SIDE);
         return `<path class="ln" d="${a.curve}"></path><path class="hd" d="${a.head}"></path>`; }).join('')
       +`</svg>`
-      +notes.map(n=>`<div class="gnote${n.style==='fact'?' fact':''}" style="left:${Math.round(SIDE+n.x)}px;top:${Math.round(n.y)}px;width:${Math.round(n.w)}px;font-size:${n.fs.toFixed(1)}px">${n.text}</div>`).join('');
+      +notes.map(n=>`<div class="gnote" style="left:${Math.round(SIDE+n.x)}px;top:${Math.round(n.y)}px;width:${Math.round(n.w)}px;font-size:${n.fs.toFixed(1)}px">${n.text}</div>`).join('');
   }
   st.innerHTML=html;
 }
