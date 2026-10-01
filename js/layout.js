@@ -24,20 +24,28 @@ function layoutLook(items,W,H,seed,notes,arch){
   const n=Math.min(6,Math.max(2,items.length)), tpls=MAGV[n]||MAGV[4], tpl=tpls[seed%tpls.length];
   const ck=[items.map(i=>i.src).join(','),Math.round(W),Math.round(H),seed%tpls.length,(notes||[]).map(x=>x.key+x.text+x.fs).join(';'),arch&&arch.r].join('|');
   if(LAYOUT_CACHE[ck])return LAYOUT_CACHE[ck];
-  let R=solveLayout(items,tpl,W,H,arch,(notes||[]).map(x=>x.key)), placed=[];
-  // 1) сначала вещи, 2) потом пометка — на свободное место; нет места — чуть уменьшаем коллаж (до 80%)
-  for(const nt of (notes||[])){
-    // первая пометка может чуть уменьшить коллаж; следующие — только в готовой раскладке и не на другие пометки
-    const obst=placed.map(q=>({x:q.x+q.w/2,y:q.y+q.h/2,w:q.w,h:q.h}));
-    let p=null;
-    for(let k=1;k>=.8&&!p;k-=.04){ if(k<1&&placed.length)break;
-      const S2=k<1?scaleRects(R,k,W,H):R; p=fitNote(S2,nt,W,H,arch,obst); if(p)R=S2; }
-    if(p)placed.push(p);
-  }
+  const keys=(notes||[]).map(x=>x.key);
+  const place=R=>{ const placed=[];
+    // 1) сначала вещи, 2) потом пометка — на свободное место; нет места — чуть уменьшаем коллаж (до 80%)
+    for(const nt of (notes||[])){
+      // первая пометка может чуть уменьшить коллаж; следующие — только в готовой раскладке и не на другие пометки
+      const obst=placed.map(q=>({x:q.x+q.w/2,y:q.y+q.h/2,w:q.w,h:q.h}));
+      let p=null;
+      for(let k=1;k>=.8&&!p;k-=.04){ if(k<1&&placed.length)break;
+        const S2=k<1?scaleRects(R,k,W,H):R; p=fitNote(S2,nt,W,H,arch,obst); if(p)R=S2; }
+      if(p)placed.push(p);
+    }
+    return {R,placed}; };
+  let res=place(solveLayout(items,tpl,W,H,arch,keys));
+  // первой пометке не нашлось места со стрелкой не сквозь вещи — меняем её вещь местами с другими (кроме главной)
+  if(keys.length&&!res.placed.some(p=>p.key===keys[0]))
+    for(let q=1;q<items.length;q++){ const r2=place(solveLayout(items,tpl,W,H,arch,keys,q));
+      if(r2.placed.some(p=>p.key===keys[0])){res=r2;break;} }
+  const R=res.R, placed=res.placed;
   return LAYOUT_CACHE[ck]=finishRects(R,placed);
 }
 
-function solveLayout(items,tpl,W,H,arch,noteKeys){
+function solveLayout(items,tpl,W,H,arch,noteKeys,swapTo){
   const U=Math.min(W,H*.99);                       // базовый модуль шаблона, как раньше
   // крупные вещи — в крупные слоты шаблона
   const order=items.map((it,i)=>i).sort((a,b)=>roleOf(items[b].key)-roleOf(items[a].key));
@@ -60,6 +68,9 @@ function solveLayout(items,tpl,W,H,arch,noteKeys){
     if(best!==pos){const t=order[pos];order[pos]=order[best];order[best]=t;}
     used.add(best);
   });
+  // запасной ход: вещь с первой пометкой — в слот swapTo (главную вещь с места не сдвигаем)
+  if(swapTo!=null&&noteKeys&&noteKeys.length){ const pos=order.findIndex(ii=>items[ii].key===noteKeys[0]);
+    if(pos>0&&swapTo!==pos&&swapTo<order.length&&swapTo<slots.length){const t=order[pos];order[pos]=order[swapTo];order[swapTo]=t;} }
   const R=items.map(()=>null);
   order.forEach((ii,rank)=>{
     const it=items[ii], sl=slots[Math.min(rank,slots.length-1)], bx=BOX[it.src]||{b:[0,0,1,1],r:1};
@@ -151,44 +162,48 @@ function fitNoteAt(R,nt,W,H,arch,obst){
   const full=nt.text.length*fs*cw+8, maxW=W*.5, lines=Math.min(2,Math.ceil(full/maxW));   // длинное — в две строки
   const w=Math.min(maxW,full), h=fs*lh*lines+2;
   const L=m.x-m.w/2, Rr=m.x+m.w/2, T=m.y-m.h/2, B=m.y+m.h/2, g=fs*.45;
-  const cand=[                                     // центр текста
+  /* другие вещи для проверки стрелки — «ужатые» на 15% с каждой стороны: вещи не прямоугольные,
+     и касание по краю допустимо, а сквозь вещь — нет */
+  const others=R.filter(r=>r!==m).map(r=>({x0:r.x-r.w*.35,x1:r.x+r.w*.35,y0:r.y-r.h*.35,y1:r.y+r.h*.35}));
+  const arrowFor=(cx,cy,flip)=>{
+    const x0=cx-w/2, y0=cy-h/2;
+    const sx=cx<m.x?x0+w:x0, sy=cy<m.y?y0+h:y0;                                 // угол текста к вещи
+    // остриё — внутри вещи; если текст совсем рядом, ведём глубже, чтобы стрелка была заметной
+    const exX=Math.max(L,Math.min(Rr,sx)), exY=Math.max(T,Math.min(B,sy)), minLen=Math.max(30,fs*1.9);
+    let f=.55, tx, ty;
+    do{ tx=m.x+(exX-m.x)*f; ty=m.y+(exY-m.y)*f; f-=.08; }while(f>.1&&Math.hypot(tx-sx,ty-sy)<minLen);
+    const len=Math.hypot(tx-sx,ty-sy)||1, bend=(cx<m.x?1:-1)*(flip?-1:1)*Math.min(26,len*.35);   // завиток
+    return {sx,sy,tx,ty,qx:(sx+tx)/2-(ty-sy)/len*bend,qy:(sy+ty)/2+(tx-sx)/len*bend};
+  };
+  const crosses=a=>{ let n=0;                                                    // сколько точек дуги внутри чужих вещей
+    for(let i=0;i<=20;i++){ const t=i/20, u=1-t, px=u*u*a.sx+2*u*t*a.qx+t*t*a.tx, py=u*u*a.sy+2*u*t*a.qy+t*t*a.ty;
+      if(others.some(o=>px>o.x0&&px<o.x1&&py>o.y0&&py<o.y1))n++; }
+    return n; };
+  const okArrow=(cx,cy)=>{ for(const fl of [false,true]){ const a=arrowFor(cx,cy,fl); if(crosses(a)<=1)return a; } return null; };
+  const free=(cx,cy)=>{ const c={x:cx,y:cy,w:w+2*PAD,h:h+2*PAD};
+    return !(cx-w/2<M||cx+w/2>W-M||cy-h/2<M||cy+h/2>H-BOT)                    // в поле и не на кнопках внизу
+      &&!archOut({x:cx,y:cy,w,h},W,arch,M,0).length                            // не за скруглением арки
+      &&!R.some(r=>overlap(r,c)>0)&&!obst.some(o=>overlap(o,c)>0); };          // не на вещах и не на пометках
+  const cand=[                                     // центр текста — вплотную к вещи
     [L+w/2,B+g+h/2,'b'],[Rr-w/2,B+g+h/2,'b'],[m.x,B+g+h/2,'b'],
     [Rr+g+w/2,m.y,'r'],[L-g-w/2,m.y,'l'],[Rr+g+w/2,B-h/2,'r'],[L-g-w/2,B-h/2,'l'],
     [Rr+g+w/2,T+h/2,'r'],[L-g-w/2,T+h/2,'l'],[L+w/2,T-g-h/2,'t'],[Rr-w/2,T-g-h/2,'t']];
   let best=null;
-  cand.forEach(([cx,cy,side],i)=>{
-    const c={x:cx,y:cy,w:w+2*PAD,h:h+2*PAD};
-    if(cx-w/2<M||cx+w/2>W-M||cy-h/2<M||cy+h/2>H-BOT)return;             // за краем поля или на кнопках внизу
-    if(archOut({x:cx,y:cy,w,h},W,arch,M,0).length)return;                 // за скруглением арки
-    if(R.some(r=>overlap(r,c)>0)||obst.some(o=>overlap(o,c)>0))return;  // заходит на вещь или другую пометку — нельзя
-    const d=i*.5;                                                          // ближе к началу списка — лучше
-    if(!best||d<best.d)best={d,cx,cy,side};
-  });
-  // вплотную места нет — ищем ближайшее свободное место подальше (линия будет длиннее), но не дальше 40% поля
+  cand.forEach(([cx,cy,side],i)=>{ if(best||!free(cx,cy))return; const a=okArrow(cx,cy); if(a)best={cx,cy,side,a}; });
+  // вплотную места нет — ближайшее свободное место рядом (не дальше 25% поля), стрелка — не сквозь вещи
   if(!best){
-    const step=fs*.6, maxD=Math.max(W,H)*.4;
+    const step=fs*.6, maxD=Math.max(W,H)*.25; let bd=1e9;
     for(let cy=M+h/2;cy<=H-BOT-h/2;cy+=step)for(let cx=M+w/2;cx<=W-M-w/2;cx+=step){
-      const c={x:cx,y:cy,w:w+2*PAD,h:h+2*PAD};
-      if(archOut({x:cx,y:cy,w,h},W,arch,M,0).length||R.some(r=>overlap(r,c)>0)||obst.some(o=>overlap(o,c)>0))continue;
       const dx=Math.max(0,Math.max(L-(cx+w/2),(cx-w/2)-Rr)), dy=Math.max(0,Math.max(T-(cy+h/2),(cy-h/2)-B)), d=Math.hypot(dx,dy);
-      if(d>maxD)continue;
-      const side=dy>=dx?(cy<m.y?'t':'b'):(cx<m.x?'l':'r');
-      if(!best||d<best.d)best={d,cx,cy,side};
+      if(d>maxD||d>=bd||!free(cx,cy))continue;
+      const a=okArrow(cx,cy); if(!a)continue;
+      bd=d; best={cx,cy,side:dy>=dx?(cy<m.y?'t':'b'):(cx<m.x?'l':'r'),a};
     }
   }
   if(!best)return null;
-  const x0=best.cx-w/2, y0=best.cy-h/2;
-  // стрелка: из угла текста, ближнего к вещи, дугой по диагонали; остриё — чуть внутри вещи (на вещь заходить можно)
-  const sx=best.cx<m.x?x0+w:x0, sy=best.cy<m.y?y0+h:y0;                       // угол текста к вещи
-  // остриё — внутри вещи; если текст совсем рядом, ведём глубже, чтобы стрелка была заметной (≥ ~2 строк текста)
-  const exX=Math.max(L,Math.min(Rr,sx)), exY=Math.max(T,Math.min(B,sy)), minLen=Math.max(30,nt.fs*1.9);
-  let f=.55, tx, ty;
-  do{ tx=m.x+(exX-m.x)*f; ty=m.y+(exY-m.y)*f; f-=.08; }while(f>.1&&Math.hypot(tx-sx,ty-sy)<minLen);
-  const mx=(sx+tx)/2, my=(sy+ty)/2, len=Math.hypot(tx-sx,ty-sy)||1;
-  const bend=(best.cx<m.x?1:-1)*Math.min(26,len*.35);                         // завиток в сторону от центра
-  const qx=mx+(-(ty-sy)/len)*bend, qy=my+((tx-sx)/len)*bend;
-  const ax=tx, ay=ty, ex=sx, ey=sy;
-  return {key:nt.key,text:nt.text,fs:nt.fs,style:nt.style,x:x0,y:y0,w,h,ax,ay,ex,ey,qx,qy,side:best.side};
+  const a=best.a;
+  return {key:nt.key,text:nt.text,fs:nt.fs,style:nt.style,x:best.cx-w/2,y:best.cy-h/2,w,h,
+    ax:a.tx,ay:a.ty,ex:a.sx,ey:a.sy,qx:a.qx,qy:a.qy,side:best.side};
 }
 
 /* стрелка пометки: пунктирная дуга от текста к вещи и остриё; ox — сдвиг поля по x */
