@@ -188,11 +188,6 @@ const MAGV={
    [{x:.32,y:.66,w:.42,h:.50,r:-4,z:6,cap:1},{x:.18,y:.36,w:.32,h:.38,r:-7,z:4},{x:.40,y:.27,w:.34,h:.40,r:-2,z:5},{x:.62,y:.27,w:.34,h:.40,r:3,z:4},{x:.84,y:.38,w:.32,h:.38,r:7,z:5},{x:.66,y:.70,w:.34,h:.38,r:5,z:4}]
  ]
 };
-function pickSlots(n){
-  const c=Math.min(6,Math.max(2,n)), arr=MAGV[c];
-  const seed=(S.setIdx||0)+(new Date().getDate());   // меняется по набору и по дню
-  return arr[seed%arr.length];
-}
 const FLAT=['muslin','blanket','wrap','wrapbody'];      // плоское кладём под низ стопки
 function stageBox(){
   const st=document.getElementById('stage');
@@ -218,40 +213,29 @@ function drawStage(set,sz){
   let list=heroes.concat(acc).slice(0,6);
   if(!heroes.length)list=items.slice(0,6);
 
-  const slots=pickSlots(list.length);
-  const U=Math.min(B.w,B.h*0.99);              // базовый модуль: композиция не «скачет»
   const LOOK=lookImgs(list.map(x=>x[0]));      // картинки подобраны по сочетанию цветов
   const SHADOW='drop-shadow(6px 12px 15px rgba(90,74,58,.26))';
-  const capFs=Math.max(14,Math.min(21,U*0.066));
+  const capFs=Math.max(14,Math.min(21,Math.min(B.w,B.h)*0.066));
+  const mainKey=list.slice().sort((a,b)=>roleOf(b[0])-roleOf(a[0]))[0];
+  const capTxt=mainKey?(SHORT[mainKey[0]]||mainKey[1]):'';
+  /* раскладка по правилам (js/layout.js); по бокам место под стрелки */
+  const SIDE=18;
+  const rects=layoutLook(list.map(x=>({key:x[0],src:LOOK[x[0]]})),B.w-2*SIDE,B.h,(S.setIdx||0)+new Date().getDate(),{text:capTxt,fs:capFs},{r:140,ox:SIDE,oy:0});
   let html='', capHtml='';
-  list.forEach((it,i)=>{
-    const sl=slots[i]; if(!sl)return;
-    const key=it[0], label=it[1];
-    const bw=sl.w*U, bh=sl.h*U;
-    const SIDE=10;                             // стрелки лежат поверх (z-index выше)
-    const cx=Math.max(bw/2+SIDE,Math.min(B.w-bw/2-SIDE,sl.x*B.w));
-    const cy=Math.max(bh/2+2,Math.min(B.h-bh/2-2,sl.y*B.h-B.h*0.05));
-    /* стопка как в журнале: плоское снизу, аксессуары сверху */
-    const z=sl.z+(FLAT.includes(key)?-3:(NOTLAYER.includes(key)?3:0));
-    const src=LOOK[key];
+  rects.forEach(r=>{
+    const key=r.key, label=(list.find(x=>x[0]===key)||[key,key])[1];
     const inW=!!WISH['day:'+key];
     const lack=wdHave(key,sz)===0;             // мама отметила, что такого нет
     const tap=`onclick="dayWish('${key}','${String(label).replace(/'/g,'')}')"`;
-    html+=`<div class="gitem" ${tap} style="left:${Math.round(cx-bw/2)}px;top:${Math.round(cy-bh/2)}px;`
-      +`width:${Math.round(bw)}px;height:${Math.round(bh)}px;transform:rotate(${sl.r}deg);z-index:${z}">`
-      +`<img src="${src}" alt="" style="filter:${SHADOW}${lack?';opacity:.5':''}">`
+    html+=`<div class="gitem" ${tap} style="left:${Math.round(SIDE+r.left)}px;top:${Math.round(r.top)}px;`
+      +`width:${Math.round(r.iw)}px;height:${Math.round(r.ih)}px;transform-origin:${Math.round(r.ox)}px ${Math.round(r.oy)}px;`
+      +`transform:rotate(${r.rot}deg);z-index:${r.z}">`
+      +`<img src="${r.src}" alt="" style="width:100%;height:100%;max-width:none;max-height:none;filter:${SHADOW}${lack?';opacity:.5':''}">`
       +`${lack?`<div class="gap">нет в ${sz}</div>`:''}${inW?'<div class="heart">♥</div>':''}</div>`;
-
-    if(sl.cap){
+    if(r.main){
       /* единственная подпись — сразу под главной вещью, как в журнале */
-      const cap=(SHORT[key]||label);
-      const cw=Math.round(B.w*0.60);
-      const fs=Math.max(12,Math.min(capFs,(cw-6)/(cap.length*0.45)));
-      const cl=Math.max(6,Math.min(B.w-cw-6,cx-bw/2+4));
-      const ct=Math.max(0,Math.min(B.h-fs*1.3,cy+bh/2-2));
-      capHtml=`<div class="gcap" style="left:${cl}px;width:${cw}px;top:${Math.round(ct)}px;`
-        +`z-index:12;text-align:left;white-space:nowrap;overflow:hidden;`
-        +`font-size:${fs.toFixed(1)}px">${cap}</div>`;
+      capHtml=`<div class="gcap" style="left:${Math.round(SIDE+r.cx-r.w/2+2)}px;width:${Math.round(B.w*0.6)}px;top:${Math.round(r.cy+r.h/2-2)}px;`
+        +`z-index:12;text-align:left;white-space:nowrap;overflow:hidden;font-size:${capFs.toFixed(1)}px">${capTxt}</div>`;
     }
   });
   html+=capHtml;

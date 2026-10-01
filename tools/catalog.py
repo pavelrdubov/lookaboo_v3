@@ -6,7 +6,8 @@
 1. Берёт новые картинки из img/_new/ (webp, png, jpg), проверяет название,
    переводит png/jpg в webp и кладёт в папку по виду вещи.
 2. Проверяет все картинки в img/ (название, пустые и битые файлы, повторы).
-3. Определяет основной цвет каждой вещи (по ним приложение подбирает сочетания).
+3. Определяет основной цвет каждой вещи (по ним приложение подбирает сочетания)
+   и где на картинке сама вещь без прозрачных полей (по этому строится раскладка).
 4. Пишет js/catalog.js — список, по которому приложение выбирает картинки.
 
 Название файла:  вид__пол__возраст__подпись.webp
@@ -126,6 +127,22 @@ def main_colors(path):
     return out
 
 
+def content_box(path):
+    """Где на картинке сама вещь (без прозрачных полей): доли кадра [x0,y0,x1,y1] и пропорция кадра."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    with Image.open(path) as im:
+        if im.mode != 'RGBA':
+            return None
+        W, H = im.size
+        bb = im.getchannel('A').point(lambda a: 255 if a > 40 else 0).getbbox()
+    if not bb:
+        return None
+    return [round(bb[0] / W, 3), round(bb[1] / H, 3), round(bb[2] / W, 3), round(bb[3] / H, 3)], round(W / H, 3)
+
+
 def take_new(problems):
     """img/_new → проверить, при нужде перевести в webp, положить в свою папку."""
     if not os.path.isdir(NEW):
@@ -191,6 +208,9 @@ def scan(problems):
                 continue
             seen[info['id']] = rel
             it = {'id': info['id'], 'file': 'img/' + rel, 'kinds': info['kinds'], 'g': info['g'], 'a': info['a']}
+            box = content_box(os.path.join(d, fn))
+            if box:
+                it['b'], it['r'] = box
             col = main_colors(os.path.join(d, fn))
             if col:
                 it['c'] = col

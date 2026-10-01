@@ -222,34 +222,30 @@ async function renderLookPNG(){
   const acc=items.filter(i=>NOTLAYER.includes(i[0]));
   let ordered=heroes.concat(acc).slice(0,6);
   if(!heroes.length)ordered=items.slice(0,6);
-  const slots=pickSlots(ordered.length);
   const padX=44,padY=34;
   const BW=AW-padX*2, BH=AH-padY*2;
-  /* арка на картинке шире, чем на экране — делаем вещи крупнее, иначе много воздуха */
-  const U=Math.min(BW*0.70,BH*1.08);
   const LOOK=lookImgs(ordered.map(x=>x[0]));
-  const srcs=await Promise.all(ordered.map(([kk])=>loadImg(LOOK[kk])));
-  const capFs=Math.max(30,Math.min(46,U*0.072));
-
-  ordered.forEach((it,i)=>{
-    const sl=slots[i]; if(!sl)return;
-    const bw=sl.w*U, bh=sl.h*U;
-    const cx=AX+padX+Math.max(bw/2,Math.min(BW-bw/2,sl.x*BW));
-    const cy=AY+padY+Math.max(bh/2,Math.min(BH-bh/2,sl.y*BH));
-    drawContain(x,srcs[i],cx,cy,bw,bh,sl.r);
-    if(sl.cap){
-      const cap=(SHORT[it[0]]||it[1])+(i===0?', '+sz:'');
-      x.save();
-      x.translate(sl.cap==='l'?cx-bw/2-6:cx+bw/2+6, cy+bh/2+capFs*0.72);
-      x.rotate(sl.r/2*Math.PI/180);
-      x.textAlign=sl.cap==='l'?'left':'right';
-      x.fillStyle='#6B5B4C';
-      let fs=capFs; x.font=`600 ${fs}px Caveat, cursive`;
-      while(x.measureText(cap).width>AW*0.5&&fs>20){fs-=2;x.font=`600 ${fs}px Caveat, cursive`;}
-      x.fillText(cap,0,0);
-      x.restore(); x.textAlign='left';
-    }
+  const capFs=Math.max(30,Math.min(46,Math.min(BW,BH)*0.072));
+  const mainIt=ordered.slice().sort((a,b)=>roleOf(b[0])-roleOf(a[0]))[0];
+  const capTxt=mainIt?(SHORT[mainIt[0]]||mainIt[1])+', '+sz:'';
+  /* та же раскладка по правилам, что на экране (js/layout.js) */
+  const rects=layoutLook(ordered.map(x=>({key:x[0],src:LOOK[x[0]]})),BW,BH,(S.setIdx||0)+new Date().getDate(),{text:capTxt,fs:capFs},{r:380,ox:padX,oy:padY});
+  const srcs=await Promise.all(rects.map(r=>loadImg(r.src)));
+  rects.slice().sort((a,b)=>a.z-b.z).forEach(r=>{
+    const im=srcs[rects.indexOf(r)]; if(!im)return;
+    x.save();
+    x.translate(AX+padX+r.cx,AY+padY+r.cy); x.rotate(r.rot*Math.PI/180);
+    x.shadowColor='rgba(90,74,58,.26)'; x.shadowBlur=22; x.shadowOffsetX=8; x.shadowOffsetY=14;
+    x.drawImage(im,-r.ox,-r.oy,r.iw,r.ih);
+    x.restore();
   });
+  const mr=rects.find(r=>r.main);
+  if(mr){
+    x.fillStyle='#6B5B4C';
+    let fs=capFs; x.font=`600 ${fs}px Caveat, cursive`;
+    while(x.measureText(capTxt).width>AW*0.5&&fs>20){fs-=2;x.font=`600 ${fs}px Caveat, cursive`;}
+    x.fillText(capTxt,AX+padX+mr.cx-mr.w/2+4,AY+padY+mr.cy+mr.h/2+fs*0.8);
+  }
 
   /* подпись снизу */
   let y=AY+AH+76;
