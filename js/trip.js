@@ -255,7 +255,7 @@ function tripWish(id,label,key){
   else{
     TRIP.wish[id]=label;
     WISH[gid]={label:label.split(' · ')[0],size:sizeForItem(key,tripAgeMonths(),tripSize()),src:'Поездка · '+TRIP.city,
-      img:pickImg(key)||null,key:key,keep:true};
+      img:pickImg(key,0,tripAgeMonths())||null,key:key,keep:true};
   }
   wishSave();tripSave();tripRender();
 }

@@ -163,7 +163,7 @@ function evRender(){
   const items=(e.items||[]);
   const cells=items.map(([k,label])=>{
     const direct=!!IMG[k];                       // прямое имя картинки (нарядное)
-    const src=direct?IMG[k]:(CAND[k]?pickImg(k,0):null);
+    const src=direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null);
     const id='plan'+e.d+':'+k;
     const on=!!WISH[id];
     const isz=direct?sz:sizeForItem(k,em,sz);
@@ -202,7 +202,7 @@ function evWish(k,label,direct){
   const id='plan'+e.d+':'+k;
   const added=wishToggle(id,{label:label,size:direct?sz:sizeForItem(k,em,sz),
     src:(evCanDel(e)?'Событие · ':'План · ')+e.title,ev:evKey(e),d:e.d,
-    img:(direct?IMG[k]:(CAND[k]?pickImg(k,0):null))||null,key:k});
+    img:(direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null))||null,key:k});
   toast(added?`«${label}» — в вишлисте`:`«${label}» убрали из вишлиста`);
   evRender();
 }
