@@ -6,7 +6,8 @@
    3) нахлёст лёгкий: сильнее — раздвигаем;
    4) никто не «улетает»: далёкую от соседей вещь чуть подтягиваем к группе;
    5) группа по центру, поля вокруг одинаковые, не заходит за скругление арки и под стрелки.
-   Вещь держится за точку своего слота — двигаем только сколько нужно, композиция шаблона сохраняется. */
+   Вещь держится за точку своего слота — двигаем только сколько нужно, композиция шаблона сохраняется.
+   Пометка ставится ПОСЛЕ раскладки — только на свободное место, никогда не на вещь (см. fitNote). */
 
 /* относительный размер вещи — какая вещь главнее */
 const ROLE={ovWinter:1,ovDemi:1,ovFleece:.98,slip:.96,slipKnit:.96,romper:.92,dress:.92,dungarees:.92,
@@ -15,17 +16,25 @@ const ROLE={ovWinter:1,ovDemi:1,ovFleece:.98,slip:.96,slipKnit:.96,romper:.92,dr
 const roleOf=k=>ROLE[k]||.7;
 const BOX={}; CATALOG.forEach(c=>{BOX[c.file]={b:c.b||[0,0,1,1],r:c.r||1};});
 
-/* items: [{key, src}], W×H — поле для вещей; seed — какой шаблон;
-   notes — пометки [{key, text, fs}]: место под каждой резервируется прямо под её вещью;
-   arch — скругление верха арки {r, ox, oy}: радиус и сдвиг поля от края арки */
+/* items: [{key, src}], W×H — поле для вещей; seed — какой шаблон; notes — пометки [{key, text, fs}];
+   arch — скругление верха арки {r, ox, oy}: радиус и сдвиг поля от края арки.
+   Возвращает вещи (rects) и rects.notes — где стоят пометки. */
 const LAYOUT_CACHE={};
 function layoutLook(items,W,H,seed,notes,arch){
   const n=Math.min(6,Math.max(2,items.length)), tpls=MAGV[n]||MAGV[4], tpl=tpls[seed%tpls.length];
-  const ck=[items.map(i=>i.src).join(','),Math.round(W),Math.round(H),seed%tpls.length,(notes||[]).map(n=>n.key+n.text).join(';'),arch&&arch.r].join('|');
-  return LAYOUT_CACHE[ck]||(LAYOUT_CACHE[ck]=solveLayout(items,tpl,W,H,notes||[],arch));
+  const ck=[items.map(i=>i.src).join(','),Math.round(W),Math.round(H),seed%tpls.length,(notes||[]).map(x=>x.key+x.text+x.fs).join(';'),arch&&arch.r].join('|');
+  if(LAYOUT_CACHE[ck])return LAYOUT_CACHE[ck];
+  let R=solveLayout(items,tpl,W,H,arch), placed=[];
+  // 1) сначала вещи, 2) потом пометка — на свободное место; нет места — чуть уменьшаем коллаж (до 80%)
+  for(const nt of (notes||[])){
+    let p=null;
+    for(let k=1;k>=.8&&!p;k-=.04){ const S2=k<1?scaleRects(R,k,W,H):R; p=fitNote(S2,nt,W,H,arch); if(p)R=S2; }
+    if(p)placed.push(p);
+  }
+  return LAYOUT_CACHE[ck]=finishRects(R,placed);
 }
 
-function solveLayout(items,tpl,W,H,notes,arch){
+function solveLayout(items,tpl,W,H,arch){
   const U=Math.min(W,H*.99);                       // базовый модуль шаблона, как раньше
   // крупные вещи — в крупные слоты шаблона
   const order=items.map((it,i)=>i).sort((a,b)=>roleOf(items[b].key)-roleOf(items[a].key));
@@ -48,37 +57,14 @@ function solveLayout(items,tpl,W,H,notes,arch){
   let g=1;                                           // общий масштаб
   const M=6, GAP=Math.min(W,H)*.05;
   const dims=r=>{r.w=r.w0*g; r.h=r.h0*g;};
-  const inter=(a,b)=>Math.max(0,Math.min(a.x+a.w/2,b.x+b.w/2)-Math.max(a.x-a.w/2,b.x-b.w/2))
-                   *Math.max(0,Math.min(a.y+a.h/2,b.y+b.h/2)-Math.max(a.y-a.h/2,b.y-b.h/2));
   const allow=(a,b)=>.08*Math.min(a.w*a.h,b.w*b.h);
   const gapOf=(a,b)=>Math.max(Math.abs(a.x-b.x)-(a.w+b.w)/2,Math.abs(a.y-b.y)-(a.h+b.h)/2);
-  /* место под пометку — рядом с её вещью: под ней (от левого или правого края) или сбоку,
-     где меньше задевает другие вещи и не вылезает за поле */
-  const noteRects=()=>notes.map(n=>{ const m=R.find(r=>r.key===n.key); if(!m)return null;
-    const full=n.text.length*n.fs*.47+8, maxW=W*.5, lines=Math.ceil(full/maxW);   // длинное — в две строки
-    const w=Math.min(maxW,full), h=n.fs*1.12*lines+2, L=m.x-m.w/2, Rr=m.x+m.w/2, T=m.y-m.h/2, B=m.y+m.h/2;
-    const cand=[[L+w/2+2,B+h/2+2,'b'],[Rr-w/2-2,B+h/2+2,'b'],[Rr+w/2+6,m.y+m.h*.15,'r'],[L-w/2-6,m.y+m.h*.15,'l']];
-    let best=null;
-    cand.forEach(([x,y,side],i)=>{ const c={x,y,w,h};
-      let pen=i*.03+Math.max(0,M-(x-w/2))+Math.max(0,x+w/2-(W-M))+Math.max(0,y+h/2-(H-M))+Math.max(0,M-(y-h/2));
-      R.forEach(r=>{ if(r!==m)pen+=inter(r,c)/(w*h)*3; });
-      if(!best||pen<best.pen)best={pen,x:Math.max(M+w/2,Math.min(W-M-w/2,x)),y,side}; });
-    return {x:best.x,y:best.y,w,h,own:m,text:n.text,side:best.side}; }).filter(Boolean);
-  /* верхние углы арки скруглены: угол вещи (с запасом — вещи не прямоугольные) должен быть внутри дуги */
-  const corners=r=>{ if(!arch)return [];
-    const rr=arch.r-M, cy=arch.r-(arch.oy||0), ins=.18, out=[];
-    [[-1,arch.r-(arch.ox||0)],[1,W-(arch.r-(arch.ox||0))]].forEach(([sd,cx])=>{
-      const px=r.x+sd*r.w*(.5-ins), py=r.y-r.h*(.5-ins);
-      if(py<cy&&(sd<0?px<cx:px>cx)){const d=Math.hypot(px-cx,py-cy); if(d>rr)out.push({px,py,cx,cy,d,rr});}});
-    return out; };
   const clamp=r=>{
     r.x=Math.max(M+r.w/2,Math.min(W-M-r.w/2,r.x)); r.y=Math.max(M+r.h/2,Math.min(H-M-r.h/2,r.y));
-    corners(r).forEach(c=>{const k=(c.d-c.rr)/c.d; r.x-=(c.px-c.cx)*k; r.y-=(c.py-c.cy)*k;}); };
-  const groupBox=()=>{ const all=R.concat(noteRects());
-    return {x0:Math.min(...all.map(r=>r.x-r.w/2)),x1:Math.max(...all.map(r=>r.x+r.w/2)),
-            y0:Math.min(...all.map(r=>r.y-r.h/2)),y1:Math.max(...all.map(r=>r.y+r.h/2))}; };
-  const tooClose=()=>R.some((a,i)=>R.some((b,j)=>j>i&&inter(a,b)>allow(a,b)*1.5))||R.some(r=>corners(r).length)
-    ||(g>.86&&noteRects().some(c=>c.y+c.h/2>H-M||R.some(r=>r!==c.own&&inter(r,c)>.4*c.w*c.h)));   // ради пометки ужимаем не больше ~15%
+    archOut(r,W,arch,M).forEach(c=>{const k=(c.d-c.rr)/c.d; r.x-=(c.px-c.cx)*k; r.y-=(c.py-c.cy)*k;}); };
+  const groupBox=()=>({x0:Math.min(...R.map(r=>r.x-r.w/2)),x1:Math.max(...R.map(r=>r.x+r.w/2)),
+                       y0:Math.min(...R.map(r=>r.y-r.h/2)),y1:Math.max(...R.map(r=>r.y+r.h/2))});
+  const tooClose=()=>R.some((a,i)=>R.some((b,j)=>j>i&&overlap(a,b)>allow(a,b)*1.5))||R.some(r=>archOut(r,W,arch,M).length);
 
   for(let round=0;round<10;round++){
     R.forEach(dims);
@@ -86,15 +72,11 @@ function solveLayout(items,tpl,W,H,notes,arch){
     for(let it=0;it<70;it++){
       // нахлёст: раздвигаем, мелкая вещь отходит больше
       for(let i=0;i<R.length;i++)for(let j=i+1;j<R.length;j++){
-        const a=R[i], b=R[j], ov=inter(a,b)-allow(a,b); if(ov<=0)continue;
+        const a=R[i], b=R[j], ov=overlap(a,b)-allow(a,b); if(ov<=0)continue;
         let dx=b.x-a.x, dy=b.y-a.y; const d=Math.hypot(dx,dy)||1; dx/=d; dy/=d;
         const p=Math.sqrt(ov)*.25, wa=b.f/(a.f+b.f), wb=a.f/(a.f+b.f);
         a.x-=dx*p*wa; a.y-=dy*p*wa; b.x+=dx*p*wb; b.y+=dy*p*wb;
       }
-      // пометки — препятствие для остальных вещей; пометка у нижнего края — поднимаем её вещь
-      noteRects().forEach(c=>{
-        R.forEach(r=>{ if(r===c.own)return; const ov=inter(r,c); if(ov)r.y+=(r.y<c.y?-1:1)*Math.min(5,Math.sqrt(ov)*.3); });
-        const over=c.y+c.h/2-(H-M); if(over>0)c.own.y-=Math.min(5,over); });
       // «улетевшую» вещь — к ближайшему соседу
       R.forEach(a=>{ let nb=null,gm=1e9; R.forEach(b=>{if(b!==a){const gg=gapOf(a,b);if(gg<gm){gm=gg;nb=b;}}});
         if(nb&&gm>GAP){const k=Math.min(.08,(gm-GAP)/(Math.hypot(nb.x-a.x,nb.y-a.y)||1)); a.x+=(nb.x-a.x)*k; a.y+=(nb.y-a.y)*k;} });
@@ -110,12 +92,78 @@ function solveLayout(items,tpl,W,H,notes,arch){
     if(tooClose())g*=.95; else if(fit>1.03&&g<1.2)g*=Math.min(1.05,fit*.98); else break;
   }
   R.forEach(dims);
-  // пометки: текст под вещью и короткая линия от вещи к тексту
-  const placed=noteRects().map(c=>{ const m=c.own, x0=c.x-c.w/2, y0=c.y-c.h/2;
-    if(c.side==='b'){ const ax=Math.max(m.x-m.w*.35,Math.min(m.x+m.w*.35,c.x));
-      return {text:c.text,x:x0,y:y0,w:c.w,h:c.h,ax,ay:m.y+m.h/2-m.h*.1,ex:ax,ey:y0+1}; }
-    const ex=c.side==='r'?x0-2:x0+c.w+2, ey=y0+c.h*.45;
-    return {text:c.text,x:x0,y:y0,w:c.w,h:c.h,ax:m.x+(c.side==='r'?1:-1)*m.w*.3,ay:ey,ex,ey,side:c.side}; });
+  return R.map(r=>({key:r.key,src:r.src,main:r.main,z:r.z,rot:r.rot,bx:r.bx,x:r.x,y:r.y,w:r.w,h:r.h}));
+}
+
+/* общие помощники: пересечение прямоугольников (по центру и размерам) и выход за скругление арки */
+function overlap(a,b){
+  return Math.max(0,Math.min(a.x+a.w/2,b.x+b.w/2)-Math.max(a.x-a.w/2,b.x-b.w/2))
+        *Math.max(0,Math.min(a.y+a.h/2,b.y+b.h/2)-Math.max(a.y-a.h/2,b.y-b.h/2));
+}
+/* верхние углы арки скруглены: угол прямоугольника (с запасом ins — вещи не прямоугольные) должен быть внутри дуги */
+function archOut(r,W,arch,M,ins){
+  if(!arch)return [];
+  ins=ins==null?.18:ins;
+  const rr=arch.r-M, cy=arch.r-(arch.oy||0), out=[];
+  [[-1,arch.r-(arch.ox||0)],[1,W-(arch.r-(arch.ox||0))]].forEach(([sd,cx])=>{
+    const px=r.x+sd*r.w*(.5-ins), py=r.y-r.h*(.5-ins);
+    if(py<cy&&(sd<0?px<cx:px>cx)){const d=Math.hypot(px-cx,py-cy); if(d>rr)out.push({px,py,cx,cy,d,rr});}});
+  return out;
+}
+/* уменьшить весь коллаж вокруг центра поля — чтобы освободить место под пометку */
+function scaleRects(R,k,W,H){
+  return R.map(r=>Object.assign({},r,{x:W/2+(r.x-W/2)*k,y:H/2+(r.y-H/2)*k,w:r.w*k,h:r.h*k}));
+}
+
+/* пометка — только на полностью свободное место: рядом с её вещью (под, над, сбоку, по углам),
+   ни на какую вещь не заходит (с запасом PAD), внутри поля и арки. Нет такого места — null */
+function fitNote(R,nt,W,H,arch){
+  const m=R.find(r=>r.key===nt.key); if(!m)return null;
+  const M=6, PAD=5, fs=nt.fs;
+  const full=nt.text.length*fs*.5+8, maxW=W*.5, lines=Math.min(2,Math.ceil(full/maxW));   // длинное — в две строки
+  const w=Math.min(maxW,full), h=fs*1.15*lines+2;
+  const L=m.x-m.w/2, Rr=m.x+m.w/2, T=m.y-m.h/2, B=m.y+m.h/2, g=fs*.45;
+  const cand=[                                     // центр текста
+    [L+w/2,B+g+h/2,'b'],[Rr-w/2,B+g+h/2,'b'],[m.x,B+g+h/2,'b'],
+    [Rr+g+w/2,m.y,'r'],[L-g-w/2,m.y,'l'],[Rr+g+w/2,B-h/2,'r'],[L-g-w/2,B-h/2,'l'],
+    [Rr+g+w/2,T+h/2,'r'],[L-g-w/2,T+h/2,'l'],[L+w/2,T-g-h/2,'t'],[Rr-w/2,T-g-h/2,'t']];
+  let best=null;
+  cand.forEach(([cx,cy,side],i)=>{
+    const c={x:cx,y:cy,w:w+2*PAD,h:h+2*PAD};
+    if(cx-w/2<M||cx+w/2>W-M||cy-h/2<M||cy+h/2>H-M)return;               // за краем поля
+    if(archOut({x:cx,y:cy,w,h},W,arch,M,0).length)return;                 // за скруглением арки
+    if(R.some(r=>overlap(r,c)>0))return;                                  // заходит на вещь — нельзя
+    const d=i*.5;                                                          // ближе к началу списка — лучше
+    if(!best||d<best.d)best={d,cx,cy,side};
+  });
+  // вплотную места нет — ищем ближайшее свободное место подальше (линия будет длиннее), но не дальше 40% поля
+  if(!best){
+    const step=fs*.6, maxD=Math.max(W,H)*.4;
+    for(let cy=M+h/2;cy<=H-M-h/2;cy+=step)for(let cx=M+w/2;cx<=W-M-w/2;cx+=step){
+      const c={x:cx,y:cy,w:w+2*PAD,h:h+2*PAD};
+      if(archOut({x:cx,y:cy,w,h},W,arch,M,0).length||R.some(r=>overlap(r,c)>0))continue;
+      const dx=Math.max(0,Math.max(L-(cx+w/2),(cx-w/2)-Rr)), dy=Math.max(0,Math.max(T-(cy+h/2),(cy-h/2)-B)), d=Math.hypot(dx,dy);
+      if(d>maxD)continue;
+      const side=dy>=dx?(cy<m.y?'t':'b'):(cx<m.x?'l':'r');
+      if(!best||d<best.d)best={d,cx,cy,side};
+    }
+  }
+  if(!best)return null;
+  const x0=best.cx-w/2, y0=best.cy-h/2;
+  // линия от вещи (чуть внутрь — вещи не прямоугольные) к ближнему краю текста
+  let ax,ay,ex,ey;
+  if(best.side==='b'||best.side==='t'){
+    ax=Math.max(L+m.w*.15,Math.min(Rr-m.w*.15,best.cx)); ex=ax;
+    ay=best.side==='b'?B-m.h*.08:T+m.h*.08; ey=best.side==='b'?y0:y0+h;
+  }else{
+    ey=best.cy; ay=Math.max(T+m.h*.15,Math.min(B-m.h*.15,ey));
+    ax=best.side==='r'?Rr-m.w*.08:L+m.w*.08; ex=best.side==='r'?x0-2:x0+w+2;
+  }
+  return {key:nt.key,text:nt.text,x:x0,y:y0,w,h,ax,ay,ex,ey,side:best.side};
+}
+
+/* в координаты картинки: вещь (без полей) — в прямоугольник r, картинка вокруг неё */
+function finishRects(R,placed){
   const out=R.map(r=>{ const b=r.bx.b, iw=r.w/(b[2]-b[0]), ih=r.h/(b[3]-b[1]);
     return {key:r.key,src:r.src,main:r.main,z:r.z,rot:r.rot,
       cx:r.x,cy:r.y,w:r.w,h:r.h,                                   // сама вещь
@@ -146,4 +194,3 @@ function lookNotes(items,eff){
   add('cardigan','снять в магазине за секунду',2);
   return out.sort((a,b)=>b.pr-a.pr).slice(0,1);
 }
-
