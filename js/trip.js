@@ -183,7 +183,7 @@ function tripItems(){
       seen[k]=1;out.push([k,label]);
     });
   });
-  const road=[['bodyL','боди на смену'],['slip','слип в дорогу'],['muslin','муслин'],
+  const road=[['bodyL','боди на смену'],['slip','слип в дорогу'],swaddleFor(effHi),
     ['cardigan','кофта — в самолёте прохладно'],['toy','грызунок']];
   const extra=[];
   if(w.rain>=25)extra.push(['ovDemi','запасной верхний слой — дожди']);

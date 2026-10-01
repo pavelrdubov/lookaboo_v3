@@ -27,7 +27,7 @@ function carFilter(items){
   if(S.ctx!=='car')return items;
   const OUT=['ovWinter','ovDemi','ovFleece','jacket'];
   let r=items.filter(x=>!OUT.includes(x[0]));
-  if(!r.some(x=>x[0]==='blanket'))r.push(['blanket','плед в машину']);
+  if(!r.some(x=>x[0]==='blanket'))r.push(['blanket','плед']);
   if(!r.some(x=>!NOTLAYER.includes(x[0])))r.unshift(['bodyL','боди д/р']);
   return r;
 }
@@ -204,7 +204,7 @@ function drawStage(set,sz){
     let fill = S.ctx==='car' ? ['toy','грызунок']       // в машине чепчик не нужен
              : hot ? ['panama','панамка']                // жаркое лето на улице — от солнца
              : ['toy','грызунок'];
-    if(items.some(x=>x[0]===fill[0]))fill=['muslin','муслин'];
+    if(items.some(x=>x[0]===fill[0]))fill=swaddleFor(effTemp());
     items.push(fill);
   }
 

@@ -111,7 +111,7 @@ const WACATS=[
   {t:'Верхнее', it:[['ovFleece','флисовый комбинезон'],['ovDemi','демисезонный'],['ovWinter','зимний комбинезон']]},
   {t:'Аксессуары', it:[['hat','шапка'],['hatWarm','тёплая шапка'],['panama','панамка'],['mittens','варежки']]},
   {t:'Нарядное', it:[]},
-  {t:'Разное', it:[['muslin','муслин'],['blanket','плед'],['toy','игрушка']]}
+  {t:'Разное', it:[['muslin','пелёнка'],['blanket','плед'],['toy','игрушка']]}
 ];
 let WA={id:null,key:null,label:'',size:null,note:'',qty:1,cat:0,direct:false,src:'На каждый день'};
 /* куда положить вещь: свои разделы + те, что уже есть в списке и в поездках */
@@ -217,20 +217,38 @@ function wishShare(){
 }
 
 /* ===== ссылка на список: пакуем в хэш URL, без сервера; картинки берутся из приложения ===== */
-function buildListLink(){
+/* короткая ссылка: данные кладём на сервер (functions/api/link.js), в ссылке — только /l/<id>.
+   Сервер недоступен (нет хранилища, нет сети, открыто с файла) — отдаём длинную ссылку, как раньше */
+async function shortLink(kind,data,longUrl){
+  if(!/^https?:/.test(location.protocol))return longUrl;
+  try{
+    const ac=new AbortController(), t=setTimeout(()=>ac.abort(),4000);
+    const r=await fetch('/api/link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({k:kind,d:data}),signal:ac.signal});
+    clearTimeout(t);
+    if(!r.ok)return longUrl;
+    const j=await r.json(); return j&&j.id?location.origin+'/l/'+j.id:longUrl;
+  }catch(e){ return longUrl; }
+}
+/* поделиться ссылкой; если телефон не дал открыть «Поделиться» после ожидания сервера — показываем ссылку с кнопкой */
+async function shareUrl(title,url){
+  try{ if(navigator.share){await navigator.share({title,url});return;} }
+  catch(e){ if(e&&e.name==='AbortError')return; if(e&&e.name==='NotAllowedError'){showCopy(url);return;} }
+  try{ await navigator.clipboard.writeText(url); toast('Ссылка скопирована'); return; }catch(e){}
+  showCopy(url);
+}
+function listLinkData(){
   const ids=wishOutIds();
   const it=ids.map(id=>{const w=WISH[id];return {l:w.label,s:w.size||'',n:w.note||'',q:w.qty||1,k:w.key||'',g:w.src||''};});
   const k=kid();
   const payload={v:1,nm:kidName(k)||'',sz:sizeFor(heightNow()),z:sizesData(),it};
-  const enc=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  return location.origin+location.pathname+'#list='+encodeURIComponent(enc);
+  return encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
 }
+function buildListLink(){ return location.origin+location.pathname+'#list='+listLinkData(); }
 async function copyListLink(){
   if(!wishOutIds().length){toast('Список пуст');return;}
-  const url=buildListLink();
-  try{ if(navigator.share){await navigator.share({title:'Список Lookaboo',url});return;} }catch(e){if(e&&e.name==='AbortError')return;}
-  try{ await navigator.clipboard.writeText(url); toast('Ссылка скопирована'); return; }catch(e){}
-  showCopy(url);
+  const d=listLinkData();
+  const url=await shortLink('list',d,location.origin+location.pathname+'#list='+d);
+  shareUrl('Список Lookaboo',url);
 }
 function sharedFromHash(){
   const m=(location.hash||'').match(/list=([^&]+)/); if(!m)return null;

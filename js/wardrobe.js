@@ -7,7 +7,7 @@ const WDGROUPS=[
   {t:'КОФТЫ И ВЕРХ', it:[['cardigan','кофта'],['sweater','свитер'],['dungarees','полукомбинезон'],['vest','жилет'],['jacket','куртка']]},
   {t:'ВЕРХНЕЕ',      it:[['ovFleece','флисовый комбинезон'],['ovDemi','демисезонный'],['ovWinter','зимний комбинезон']]},
   {t:'АКСЕССУАРЫ',   it:[['hat','шапка'],['hatWarm','тёплая шапка'],['panama','панамка'],['mittens','варежки']]},
-  {t:'РАЗНОЕ',       it:[['muslin','муслин'],['blanket','плед'],['dress','платье'],['romper','песочник']]}
+  {t:'РАЗНОЕ',       it:[['muslin','пелёнка'],['blanket','плед'],['dress','платье'],['romper','песочник']]}
 ];
 /* сколько обычно нужно — чтобы «5 боди» было с чем сравнить */
 const NORM={bodyL:6,bodyS:6,bodyT:4,slip:4,slipKnit:1,footpants:4,wrapbody:3,wrap:3,socks:6,

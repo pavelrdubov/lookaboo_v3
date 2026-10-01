@@ -38,11 +38,9 @@ function renderSizes(d,shared){
   document.getElementById('szOpenBtn').style.display=shared?'block':'none';
 }
 async function copySizesLink(){
-  const d=sizesData();
-  const url=location.origin+location.pathname+'#sizes='+encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(d)))));
-  try{ if(navigator.share){await navigator.share({title:'Размеры Lookaboo',url});return;} }catch(e){if(e&&e.name==='AbortError')return;}
-  try{ await navigator.clipboard.writeText(url); toast('Ссылка скопирована'); return; }catch(e){}
-  showCopy(url);
+  const d=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(sizesData())))));
+  const url=await shortLink('sizes',d,location.origin+location.pathname+'#sizes='+d);
+  shareUrl('Размеры Lookaboo',url);
 }
 function sizesFromHash(){const m=(location.hash||'').match(/sizes=([^&]+)/);if(!m)return null;
   try{return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(m[1])))));}catch(e){return null;}}
