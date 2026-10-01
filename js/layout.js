@@ -140,14 +140,16 @@ function scaleRects(R,k,W,H){
    ни на какую вещь не заходит (с запасом PAD), внутри поля и арки. Нет такого места — null */
 function fitNote(R,nt,W,H,arch,obst){
   // текст крупнее, если есть место (журнально: подписи разного размера), мельче — если тесно
-  for(const sc of [1.3,1.15,1,.88]){ const p=fitNoteAt(R,Object.assign({},nt,{fs:nt.fs*sc}),W,H,arch,obst||[]); if(p)return p; }
+  const scales=nt.style==='fact'?[1.1,1,.9]:[1.3,1.15,1,.88,.76];
+  for(const sc of scales){ const p=fitNoteAt(R,Object.assign({},nt,{fs:nt.fs*sc}),W,H,arch,obst||[]); if(p)return p; }
   return null;
 }
 function fitNoteAt(R,nt,W,H,arch,obst){
   const m=R.find(r=>r.key===nt.key); if(!m)return null;
-  const M=6, PAD=5, fs=nt.fs;
-  const full=nt.text.length*fs*.5+8, maxW=W*.5, lines=Math.min(2,Math.ceil(full/maxW));   // длинное — в две строки
-  const w=Math.min(maxW,full), h=fs*1.15*lines+2;
+  const M=6, PAD=5, BOT=22, fs=nt.fs;              // BOT — нижняя полоса под кнопками
+  const cw=nt.style==='fact'?.82:.52, lh=nt.style==='fact'?1.35:1.15;   // ширина с запасом: заглавные в разрядку шире
+  const full=nt.text.length*fs*cw+8, maxW=W*.5, lines=Math.min(2,Math.ceil(full/maxW));   // длинное — в две строки
+  const w=Math.min(maxW,full), h=fs*lh*lines+2;
   const L=m.x-m.w/2, Rr=m.x+m.w/2, T=m.y-m.h/2, B=m.y+m.h/2, g=fs*.45;
   const cand=[                                     // центр текста
     [L+w/2,B+g+h/2,'b'],[Rr-w/2,B+g+h/2,'b'],[m.x,B+g+h/2,'b'],
@@ -156,7 +158,7 @@ function fitNoteAt(R,nt,W,H,arch,obst){
   let best=null;
   cand.forEach(([cx,cy,side],i)=>{
     const c={x:cx,y:cy,w:w+2*PAD,h:h+2*PAD};
-    if(cx-w/2<M||cx+w/2>W-M||cy-h/2<M||cy+h/2>H-M)return;               // за краем поля
+    if(cx-w/2<M||cx+w/2>W-M||cy-h/2<M||cy+h/2>H-BOT)return;             // за краем поля или на кнопках внизу
     if(archOut({x:cx,y:cy,w,h},W,arch,M,0).length)return;                 // за скруглением арки
     if(R.some(r=>overlap(r,c)>0)||obst.some(o=>overlap(o,c)>0))return;  // заходит на вещь или другую пометку — нельзя
     const d=i*.5;                                                          // ближе к началу списка — лучше
@@ -165,7 +167,7 @@ function fitNoteAt(R,nt,W,H,arch,obst){
   // вплотную места нет — ищем ближайшее свободное место подальше (линия будет длиннее), но не дальше 40% поля
   if(!best){
     const step=fs*.6, maxD=Math.max(W,H)*.4;
-    for(let cy=M+h/2;cy<=H-M-h/2;cy+=step)for(let cx=M+w/2;cx<=W-M-w/2;cx+=step){
+    for(let cy=M+h/2;cy<=H-BOT-h/2;cy+=step)for(let cx=M+w/2;cx<=W-M-w/2;cx+=step){
       const c={x:cx,y:cy,w:w+2*PAD,h:h+2*PAD};
       if(archOut({x:cx,y:cy,w,h},W,arch,M,0).length||R.some(r=>overlap(r,c)>0)||obst.some(o=>overlap(o,c)>0))continue;
       const dx=Math.max(0,Math.max(L-(cx+w/2),(cx-w/2)-Rr)), dy=Math.max(0,Math.max(T-(cy+h/2),(cy-h/2)-B)), d=Math.hypot(dx,dy);
@@ -186,7 +188,7 @@ function fitNoteAt(R,nt,W,H,arch,obst){
   const bend=(best.cx<m.x?1:-1)*Math.min(26,len*.35);                         // завиток в сторону от центра
   const qx=mx+(-(ty-sy)/len)*bend, qy=my+((tx-sx)/len)*bend;
   const ax=tx, ay=ty, ex=sx, ey=sy;
-  return {key:nt.key,text:nt.text,fs:nt.fs,x:x0,y:y0,w,h,ax,ay,ex,ey,qx,qy,side:best.side};
+  return {key:nt.key,text:nt.text,fs:nt.fs,style:nt.style,x:x0,y:y0,w,h,ax,ay,ex,ey,qx,qy,side:best.side};
 }
 
 /* стрелка пометки: пунктирная дуга от текста к вещи и остриё; ox — сдвиг поля по x */
@@ -217,7 +219,8 @@ function finishRects(R,placed){
    (стрелки) — разные пометки, чтобы, листая, прочитать все. Нечего сказать — текста нет. */
 function lookNotes(items,eff){
   const has=k=>items.some(x=>x[0]===k), out=[];
-  const add=(k,text,pr)=>{ if(has(k)&&!out.some(n=>n.key===k))out.push({key:k,text,pr}); };
+  // факт с цифрами («250 г утеплителя») — мелкими заглавными, как журнальная этикетка; совет — рукописным
+  const add=(k,text,pr)=>{ if(has(k)&&!out.some(n=>n.key===k))out.push({key:k,text,pr,style:/\d/.test(text)?'fact':'hand'}); };
   if(has('ovWinter')||has('ovDemi')){ const g=insFor(eff).g; add(has('ovWinter')?'ovWinter':'ovDemi',/пух/.test(g)?g:g+' утеплителя',10); }
   if(S.ctx==='car')add('blanket','поверх ремней, не под них',9);
   if(S.ctx==='stroller'&&strollerKind()==='seat'&&eff<=6)add('blanket','укрыть ножки — в прогулочной дует',9);
