@@ -27,8 +27,11 @@ function layoutLook(items,W,H,seed,notes,arch){
   let R=solveLayout(items,tpl,W,H,arch), placed=[];
   // 1) сначала вещи, 2) потом пометка — на свободное место; нет места — чуть уменьшаем коллаж (до 80%)
   for(const nt of (notes||[])){
+    // первая пометка может чуть уменьшить коллаж; следующие — только в готовой раскладке и не на другие пометки
+    const obst=placed.map(q=>({x:q.x+q.w/2,y:q.y+q.h/2,w:q.w,h:q.h}));
     let p=null;
-    for(let k=1;k>=.8&&!p;k-=.04){ const S2=k<1?scaleRects(R,k,W,H):R; p=fitNote(S2,nt,W,H,arch); if(p)R=S2; }
+    for(let k=1;k>=.8&&!p;k-=.04){ if(k<1&&placed.length)break;
+      const S2=k<1?scaleRects(R,k,W,H):R; p=fitNote(S2,nt,W,H,arch,obst); if(p)R=S2; }
     if(p)placed.push(p);
   }
   return LAYOUT_CACHE[ck]=finishRects(R,placed);
@@ -117,7 +120,8 @@ function scaleRects(R,k,W,H){
 
 /* пометка — только на полностью свободное место: рядом с её вещью (под, над, сбоку, по углам),
    ни на какую вещь не заходит (с запасом PAD), внутри поля и арки. Нет такого места — null */
-function fitNote(R,nt,W,H,arch){
+function fitNote(R,nt,W,H,arch,obst){
+  obst=obst||[];
   const m=R.find(r=>r.key===nt.key); if(!m)return null;
   const M=6, PAD=5, fs=nt.fs;
   const full=nt.text.length*fs*.5+8, maxW=W*.5, lines=Math.min(2,Math.ceil(full/maxW));   // длинное — в две строки
@@ -132,7 +136,7 @@ function fitNote(R,nt,W,H,arch){
     const c={x:cx,y:cy,w:w+2*PAD,h:h+2*PAD};
     if(cx-w/2<M||cx+w/2>W-M||cy-h/2<M||cy+h/2>H-M)return;               // за краем поля
     if(archOut({x:cx,y:cy,w,h},W,arch,M,0).length)return;                 // за скруглением арки
-    if(R.some(r=>overlap(r,c)>0))return;                                  // заходит на вещь — нельзя
+    if(R.some(r=>overlap(r,c)>0)||obst.some(o=>overlap(o,c)>0))return;  // заходит на вещь или другую пометку — нельзя
     const d=i*.5;                                                          // ближе к началу списка — лучше
     if(!best||d<best.d)best={d,cx,cy,side};
   });
@@ -141,7 +145,7 @@ function fitNote(R,nt,W,H,arch){
     const step=fs*.6, maxD=Math.max(W,H)*.4;
     for(let cy=M+h/2;cy<=H-M-h/2;cy+=step)for(let cx=M+w/2;cx<=W-M-w/2;cx+=step){
       const c={x:cx,y:cy,w:w+2*PAD,h:h+2*PAD};
-      if(archOut({x:cx,y:cy,w,h},W,arch,M,0).length||R.some(r=>overlap(r,c)>0))continue;
+      if(archOut({x:cx,y:cy,w,h},W,arch,M,0).length||R.some(r=>overlap(r,c)>0)||obst.some(o=>overlap(o,c)>0))continue;
       const dx=Math.max(0,Math.max(L-(cx+w/2),(cx-w/2)-Rr)), dy=Math.max(0,Math.max(T-(cy+h/2),(cy-h/2)-B)), d=Math.hypot(dx,dy);
       if(d>maxD)continue;
       const side=dy>=dx?(cy<m.y?'t':'b'):(cx<m.x?'l':'r');
@@ -175,7 +179,9 @@ function finishRects(R,placed){
 
 /* ===== пометки на коллаже — как выноски в журнальном разборе образа =====
    Пишем только то, чего не видно на картинке: граммы утеплителя, «на резинке», «швы наружу», совет.
-   Одна на образ — самая важная; нечего сказать — текста нет. */
+   lookNotes — все уместные пометки по важности; pickNotes — какие показать на этом варианте:
+   до 4 вещей — две (в спокойной раскладке есть место), 5–6 вещей — одна; на разных вариантах
+   (стрелки) — разные пометки, чтобы, листая, прочитать все. Нечего сказать — текста нет. */
 function lookNotes(items,eff){
   const has=k=>items.some(x=>x[0]===k), out=[];
   const add=(k,text,pr)=>{ if(has(k)&&!out.some(n=>n.key===k))out.push({key:k,text,pr}); };
@@ -194,5 +200,11 @@ function lookNotes(items,eff){
   if(eff<=-5){ add('hatWarm','закрывает уши',4); add('socks','тёплые — стопы мёрзнут первыми',3); }
   if(eff<=1)add('slipKnit','вязаный — греет под комбинезоном',3);
   add('cardigan','снять в магазине за секунду',2);
-  return out.sort((a,b)=>b.pr-a.pr).slice(0,1);
+  return out.sort((a,b)=>b.pr-a.pr);
+}
+function pickNotes(items,eff,variant){
+  const all=lookNotes(items,eff); if(!all.length)return [];
+  const max=items.length<=4?2:1, k=Math.min(max,all.length), off=((variant||0)*k)%all.length;
+  const out=[]; for(let i=0;i<k;i++)out.push(all[(off+i)%all.length]);
+  return out;
 }

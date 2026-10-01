@@ -234,7 +234,7 @@ function drawStage(set,sz){
   const noteFs=Math.max(15,Math.min(19,Math.min(B.w,B.h)*0.058));
   /* раскладка по правилам (js/layout.js); по бокам место под стрелки */
   const SIDE=18, ARCH={r:140,ox:SIDE,oy:0};
-  const NOTES=lookNotes(list,effTemp()).map(n=>Object.assign({fs:noteFs},n));
+  const NOTES=pickNotes(list,effTemp(),S.setIdx).map(n=>Object.assign({fs:noteFs},n));
   const rects=layoutLook(list.map(x=>({key:x[0],src:LOOK[x[0]]})),B.w-2*SIDE,B.h-14,(S.setIdx||0)+new Date().getDate(),NOTES,ARCH);
   let html='';
   rects.forEach(r=>{
