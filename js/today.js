@@ -108,7 +108,7 @@ function dayWish(key,label,quiet){
   if(SWIPED)return;                       // это был свайп, а не тап по вещи
   const sz=sizeFor(heightNow());
   const added=wishToggle('day:'+key,{label:label,size:sizeForItem(key,ageMonths(),sz),
-    src:'На каждый день',img:pickImg(key),key:key});
+    src:'На каждый день',img:LASTLOOK[key]||pickImg(key),key:key});
   if(!quiet)toast(added?`«${label}» — в вишлисте`:`«${label}» убрали из вишлиста`);
   paintMain();
 }
@@ -218,9 +218,7 @@ function drawStage(set,sz){
 
   const slots=pickSlots(list.length);
   const U=Math.min(B.w,B.h*0.99);              // базовый модуль: композиция не «скачет»
-  /* оттенок крутим только там, где для вещи всего одна картинка:
-     если вариантов несколько, набор и так выглядит иначе */
-  const shiftFor=k=>candFor(k).length>1?0:[0,-14,15,-24][S.setIdx%4];
+  const LOOK=lookImgs(list.map(x=>x[0]));      // картинки подобраны по сочетанию цветов
   const SHADOW='drop-shadow(6px 12px 15px rgba(90,74,58,.26))';
   const capFs=Math.max(14,Math.min(21,U*0.066));
   let html='', capHtml='';
@@ -233,13 +231,13 @@ function drawStage(set,sz){
     const cy=Math.max(bh/2+2,Math.min(B.h-bh/2-2,sl.y*B.h-B.h*0.05));
     /* стопка как в журнале: плоское снизу, аксессуары сверху */
     const z=sl.z+(FLAT.includes(key)?-3:(NOTLAYER.includes(key)?3:0));
-    const src=pickImg(key,S.setIdx);
+    const src=LOOK[key];
     const inW=!!WISH['day:'+key];
     const lack=wdHave(key,sz)===0;             // мама отметила, что такого нет
     const tap=`onclick="dayWish('${key}','${String(label).replace(/'/g,'')}')"`;
     html+=`<div class="gitem" ${tap} style="left:${Math.round(cx-bw/2)}px;top:${Math.round(cy-bh/2)}px;`
       +`width:${Math.round(bw)}px;height:${Math.round(bh)}px;transform:rotate(${sl.r}deg);z-index:${z}">`
-      +`<img src="${src}" alt="" style="filter:${SHADOW}${(()=>{const h=shiftFor(key);return h?` hue-rotate(${h}deg) saturate(.94)`:'';})()}${lack?';opacity:.5':''}">`
+      +`<img src="${src}" alt="" style="filter:${SHADOW}${lack?';opacity:.5':''}">`
       +`${lack?`<div class="gap">нет в ${sz}</div>`:''}${inW?'<div class="heart">♥</div>':''}</div>`;
 
     if(sl.cap){

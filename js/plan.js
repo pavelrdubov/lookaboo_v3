@@ -33,8 +33,9 @@ const HOMEKIT=[['bodyL','боди д/р'],['bodyS','боди к/р'],['slip','с
 function fancyItems(){
   const g=S.gender;
   const pool=Object.keys(FANCY).filter(n=>IMG[n]&&okFor(n,g));
-  const NM={shirtbody_blue:'боди-рубашка', pinafore_check:'сарафан в клетку', bodydress_cream:'боди-платье'};
-  return pool.map(n=>[n,NM[n]||'нарядный комплект']);
+  const NM={bodyL:'нарядное боди',bodyS:'нарядное боди',dress:'нарядное платье',romper:'нарядный песочник',pants:'нарядные штанишки'};
+  const kindOf=n=>(CAND_KINDS[n]||[]).find(k=>NM[k]);
+  return pool.map(n=>[n,NM[kindOf(n)]||'нарядный комплект']);
 }
 
 /* что покупать к зиме — зависит от того, насколько холодно в городе (разгар зимы, среднесуточная) */

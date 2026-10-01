@@ -2,8 +2,8 @@
 /* ================= данные ================= */
 /* картинки берутся из каталога js/catalog.js (собирается tools/catalog.py, правила — IMAGES.md):
    IMG — имя → файл, CAND — вид вещи → имена, GT — пол (g/b; нейтральные без метки), AGE — [от, до) месяцев */
-const IMG={}, CAND={}, GT={}, AGE={}, FANCY={};
-CATALOG.forEach(c=>{IMG[c.id]=c.file; AGE[c.id]=c.a; if(c.g!=='n')GT[c.id]=c.g;
+const IMG={}, CAND={}, GT={}, AGE={}, FANCY={}, COLOR={}, CAND_KINDS={};
+CATALOG.forEach(c=>{IMG[c.id]=c.file; AGE[c.id]=c.a; COLOR[c.id]=c.c||[]; CAND_KINDS[c.id]=c.kinds; if(c.g!=='n')GT[c.id]=c.g;
   c.kinds.forEach(k=>{if(k==='fancy')FANCY[c.id]=1; (CAND[k]=CAND[k]||[]).push(c.id);});});
 
 const NOTLAYER=['hat','hatWarm','panama','socks','mittens','muslin','blanket','toy'];

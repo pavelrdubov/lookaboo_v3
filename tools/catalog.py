@@ -6,15 +6,15 @@
 1. Берёт новые картинки из img/_new/ (webp, png, jpg), проверяет название,
    переводит png/jpg в webp и кладёт в папку по виду вещи.
 2. Проверяет все картинки в img/ (название, пустые и битые файлы, повторы).
-3. Пишет js/catalog.js — список, по которому приложение выбирает картинки.
-4. Обновляет таблицу «сколько картинок есть» в IMAGES.md.
+3. Определяет основной цвет каждой вещи (по ним приложение подбирает сочетания).
+4. Пишет js/catalog.js — список, по которому приложение выбирает картинки.
 
-Название файла:  вид__пол__возраст__имя.webp
+Название файла:  вид__пол__возраст__подпись.webp
     вид      — один или несколько через «+»: slip, bodyL+fancy, hat+panama
     пол      — g (девочка), b (мальчик), n (нейтральное)
     возраст  — месяцы «от-до»: 0-1, 0-6, 6-12, 0-12, 12-24
-    имя      — латиница, цифры, «_»; уникальное на весь каталог
-Подробно — в IMAGES.md.
+    подпись  — по желанию, любая латиница/цифры: cream_dots, 07
+Подробно — в IMAGES.md.  --report — показать, сколько картинок на пол и возраст.
 """
 import json, os, re, sys
 
@@ -22,7 +22,6 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMG = os.path.join(ROOT, 'img')
 NEW = os.path.join(IMG, '_new')
 OUT_JS = os.path.join(ROOT, 'js', 'catalog.js')
-DOC = os.path.join(ROOT, 'IMAGES.md')
 
 # вид вещи → папка и подпись. Порядок задаёт порядок в таблице покрытия.
 KINDS = {
@@ -68,22 +67,22 @@ KINDS = {
 SPECIAL = ('costume', 'fancy')           # перебивают папку основного вида
 GENDERS = {'g': 'девочка', 'b': 'мальчик', 'n': 'нейтральное'}
 AGES = [(0, 1, '0–1 мес'), (1, 6, '1–6 мес'), (6, 12, '6–12 мес')]
-NAME_RE = re.compile(r'^([A-Za-z+]+)__([gbn])__(\d{1,2})-(\d{1,2})__([a-z0-9_]+)$')
+NAME_RE = re.compile(r'^([A-Za-z+]+)__([gbn])__(\d{1,2})-(\d{1,2})(?:__([A-Za-z0-9_-]+))?$')
 
 
 def parse(stem):
-    """'slip__n__0-12__slip_cream' → dict или текст ошибки."""
+    """'slip__n__0-12__cream' → dict или текст ошибки. id картинки — всё название целиком."""
     m = NAME_RE.match(stem)
     if not m:
-        return 'название не по схеме вид__пол__возраст__имя'
-    kinds, g, a0, a1, name = m.group(1).split('+'), m.group(2), int(m.group(3)), int(m.group(4)), m.group(5)
+        return 'название не по схеме вид__пол__возраст__подпись'
+    kinds, g, a0, a1 = m.group(1).split('+'), m.group(2), int(m.group(3)), int(m.group(4))
     bad = [k for k in kinds if k not in KINDS]
     if bad:
         return 'неизвестный вид: ' + ', '.join(bad)
     if not a0 < a1 <= 48:
         return 'возраст «от-до» в месяцах, от меньшего к большему (до 48)'
     folder = next((k for k in SPECIAL if k in kinds), None) or KINDS[kinds[0]][0]
-    return {'id': name, 'kinds': kinds, 'g': g, 'a': [a0, a1], 'folder': folder}
+    return {'id': stem, 'kinds': kinds, 'g': g, 'a': [a0, a1], 'folder': folder}
 
 
 def image_ok(path):
@@ -99,6 +98,32 @@ def image_ok(path):
     except Exception:
         return 'файл не открывается как картинка'
     return None
+
+
+def main_colors(path):
+    """Основной цвет вещи и, если заметен, второй (принт, отделка) — по непрозрачным пикселям."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    with Image.open(path) as im:
+        im = im.convert('RGBA')
+        im.thumbnail((96, 96))
+        data = im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata()
+        px = [p[:3] for p in data if p[3] > 200]
+    if len(px) < 20:
+        return None
+    flat = Image.new('RGB', (len(px), 1)); flat.putdata(px)
+    q = flat.quantize(colors=5, method=Image.Quantize.MEDIANCUT)
+    pal, counts = q.getpalette(), sorted(q.getcolors(), reverse=True)
+    rgb = lambda i: tuple(pal[i * 3:i * 3 + 3])
+    hexc = lambda c: '#%02x%02x%02x' % c
+    c1 = rgb(counts[0][1]); out = [hexc(c1)]
+    for n, i in counts[1:]:
+        c = rgb(i)
+        if n / len(px) >= 0.15 and sum((a - b) ** 2 for a, b in zip(c, c1)) ** .5 > 70:
+            out.append(hexc(c)); break
+    return out
 
 
 def take_new(problems):
@@ -165,8 +190,11 @@ def scan(problems):
                 problems.append(f'{rel}: имя «{info["id"]}» уже занято ({seen[info["id"]]}) — пропущен')
                 continue
             seen[info['id']] = rel
-            items.append({'id': info['id'], 'file': 'img/' + rel, 'kinds': info['kinds'],
-                          'g': info['g'], 'a': info['a']})
+            it = {'id': info['id'], 'file': 'img/' + rel, 'kinds': info['kinds'], 'g': info['g'], 'a': info['a']}
+            col = main_colors(os.path.join(d, fn))
+            if col:
+                it['c'] = col
+            items.append(it)
     return items
 
 
@@ -195,27 +223,11 @@ def coverage(items):
     return '\n'.join(lines)
 
 
-def write_doc(items):
-    if not os.path.exists(DOC):
-        return
-    with open(DOC, encoding='utf-8') as f:
-        doc = f.read()
-    a, b = '<!-- ПОКРЫТИЕ:НАЧАЛО -->', '<!-- ПОКРЫТИЕ:КОНЕЦ -->'
-    if a not in doc or b not in doc:
-        return
-    body = (f'\nВсего картинок: {len(items)}. Жирным — меньше двух: для этого пола и возраста '
-            f'вещь будет повторяться.\n\n' + coverage(items) + '\n')
-    doc = doc[:doc.index(a) + len(a)] + body + doc[doc.index(b):]
-    with open(DOC, 'w', encoding='utf-8') as f:
-        f.write(doc)
-
-
 def main():
     problems = []
     moved = take_new(problems)
     items = scan(problems)
     write_js(items)
-    write_doc(items)
     print(f'Каталог: {len(items)} картинок' + (f', из _new разложено {moved}' if moved else ''))
     for p in problems:
         print('  ! ' + p)

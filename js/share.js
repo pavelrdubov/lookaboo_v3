@@ -227,7 +227,8 @@ async function renderLookPNG(){
   const BW=AW-padX*2, BH=AH-padY*2;
   /* арка на картинке шире, чем на экране — делаем вещи крупнее, иначе много воздуха */
   const U=Math.min(BW*0.70,BH*1.08);
-  const srcs=await Promise.all(ordered.map(([kk])=>loadImg(pickImg(kk,S.setIdx))));
+  const LOOK=lookImgs(ordered.map(x=>x[0]));
+  const srcs=await Promise.all(ordered.map(([kk])=>loadImg(LOOK[kk])));
   const capFs=Math.max(30,Math.min(46,U*0.072));
 
   ordered.forEach((it,i)=>{

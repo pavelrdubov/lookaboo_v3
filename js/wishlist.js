@@ -24,8 +24,6 @@ let WISH={};
   /* миграция: раньше галочка = «куплено» (исключить). Теперь галочка = «в списке».
      старое bought:true → keep:false; всё остальное по умолчанию в списке */
   for(const id in WISH){const x=WISH[id];if(x&&x.keep===undefined){x.keep=!x.bought;delete x.bought;}}
-  /* картинки переехали в папки (img/base/…): старый путь img/<имя>.webp → новый по имени из каталога */
-  for(const id in WISH){const x=WISH[id],m=x&&x.img&&String(x.img).match(/^img\/([a-z0-9_]+)\.webp$/);if(m&&IMG[m[1]])x.img=IMG[m[1]];}
   /* по умолчанию всё в списке: один раз возвращаем галочки, снятые старой версией */
   try{if(!store.get('mpp-wish-on')){for(const id in WISH)if(WISH[id])WISH[id].keep=true;
     store.set('mpp-wish',JSON.stringify(WISH));store.set('mpp-wish-on','1');}}catch(e){}
