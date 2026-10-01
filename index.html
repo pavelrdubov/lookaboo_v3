@@ -261,6 +261,22 @@ button{font-family:inherit}
 .tlcard .d{font-size:12px;font-weight:600;color:var(--muted);line-height:1.4}
 .tlcard .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .tlcard .chips span{background:#F4EFE6;border-radius:999px;padding:4px 9px;font-size:10.5px;font-weight:700;color:#7A6450}
+.cal{background:#fff;border-radius:18px;padding:12px 10px 10px;box-shadow:0 3px 12px rgba(90,74,58,.08)}
+.calh{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+.calh b{font-size:15px;font-weight:800;color:var(--ink-strong)}
+.calh button{width:34px;height:34px;border-radius:50%;border:none;background:#F6F0E6;color:#7A6450;font-size:20px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1}
+.calh button:disabled{opacity:.3;cursor:default}
+.calw,.calg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.calw span{font-size:10px;font-weight:800;color:#BCAF9B;text-transform:uppercase;padding:2px 0 4px}
+.cd{height:44px;border:none;background:transparent;border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;color:#8A7A66;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0;cursor:default}
+.cd.has{color:var(--ink-strong);font-weight:800;cursor:pointer}
+.cd.today{box-shadow:inset 0 0 0 2px #EBD3BE}
+.cd.sel{background:#FAF1E6;box-shadow:inset 0 0 0 2px var(--accent)}
+.cd span{display:flex;gap:2px;height:6px}
+.cd i,.call i{width:6px;height:6px;border-radius:50%;display:block}
+.call{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;margin-top:10px;padding-top:9px;border-top:1px solid #F0E8DA}
+.call span{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:#8A7A66}
 .tlkind{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;margin:0 6px 1px 0;vertical-align:1px}
 .szi{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1.5px solid #D9CDBB;background:#fff;
   color:#8A7A66;font-family:Georgia,serif;font-style:italic;font-size:12px;font-weight:700;cursor:pointer;padding:0;margin-left:6px;vertical-align:2px;line-height:1}
@@ -306,6 +322,7 @@ button{font-family:inherit}
 .tag{display:inline-block;border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:800;margin-top:8px}
 .sect{font-size:11px;font-weight:800;letter-spacing:.1em;color:#A9987F;margin:16px 4px 8px}
 .wlsect{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.wlsect .wlev{cursor:pointer;color:#8C7FA8}
 .wlsect button{flex:none;border:none;background:none;padding:2px 0;font-family:inherit;font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#C06A4A;cursor:pointer}
 .wlflt{position:relative;margin:0 0 4px}
 .wlflt select{width:100%;height:44px;border:2px solid #EAE2D4;border-radius:999px;background:#fff;font-family:inherit;font-size:13px;font-weight:800;color:#7A6450;padding:0 38px 0 18px;-webkit-appearance:none;appearance:none;cursor:pointer}
@@ -999,6 +1016,7 @@ function accSize(key,m){
 function sizeForItem(key,m,clothSize){
   const a=accSize(key,m); if(a!==null)return a;
   if(key==='muslin'||key==='blanket'||key==='toy')return '';
+  if(key==='costume'){const L=[50,56,62,68,74,80,86,92,98,104];const i=L.indexOf(+clothSize);return i>=0&&i<L.length-1?L[i+1]:clothSize;} // костюм — поверх одежды, на размер больше
   return clothSize;
 }
 /* подпись размера: голое число одежды → «размер 68»; аксессуары уже самоописательны («обхват 44») */
@@ -2099,7 +2117,9 @@ function wlRender(){
       ${WLG.map((g,i)=>`<option value="${i}"${g===WLF?' selected':''}>${esc2(g)} · ${groups[g].length}</option>`).join('')}
     </select></div>`:'';
   const body=WLG.map((g,gi)=>WLF&&g!==WLF?'':
-    `<div class="sect wlsect"><span>${esc2(g.toUpperCase())}</span><button onclick="wlGroupDel(${gi})">удалить раздел</button></div>`+
+    (()=>{const w0=WISH[groups[g].find(id=>WISH[id].ev)];          // раздел из события плана: дата и переход к событию
+      const dt=w0&&w0.d?' · '+fmtF(w0.d).toUpperCase():'';
+      return `<div class="sect wlsect"><span${w0?` class="wlev" data-k="${esc2(w0.ev)}" onclick="evOpenKey(this.dataset.k)"`:''}>${esc2(g.toUpperCase())}${dt}${w0?' ›':''}</span><button onclick="wlGroupDel(${gi})">удалить раздел</button></div>`;})()+
     groups[g].map(id=>{const w=WISH[id];
       const sub=[szTxt(w.size),(w.qty>1?'×'+w.qty:''),w.note||''].filter(Boolean).join(' · ');
       const keep=inList(w);
@@ -2214,10 +2234,10 @@ function waRender(){
 }
 function waSave(){
   const label=(WA.label||'').trim(); if(!label)return;
-  const id=WA.id||('man'+Date.now());
-  WISH[id]={label:label,size:WA.size||'',note:WA.note||'',qty:WA.qty||1,key:WA.key||null,direct:WA.direct,
+  const id=WA.id||('man'+Date.now()), old=WISH[id]||{};
+  WISH[id]={ev:old.ev,d:old.d,label:label,size:WA.size||'',note:WA.note||'',qty:WA.qty||1,key:WA.key||null,direct:WA.direct,
     src:WA.src||'На каждый день',
-    img:WA.key?(WA.direct?IMG[WA.key]:pickImg(WA.key,0)):null,
+    img:WA.key?(WA.direct?IMG[WA.key]:(CAND[WA.key]?pickImg(WA.key,0):null)):null,
     keep:WISH[id]?inList(WISH[id]):true};
   wishSave();waClose();wlRender();
   toast(WA.id?'Сохранила':'Добавила в вишлист');
@@ -2335,6 +2355,7 @@ const SEASONS=[
    why:'В сентябре разница между утром и днём доходит до десяти градусов.'}
 ];
 const HOLIDAYS=[
+  {m:9, d:31,name:'Хэллоуин',     need:['костюм'], keys:[['costume','костюм']], why:'Тыква, тигрёнок или привидение — костюм надевают поверх одежды, так что берите на размер больше: и наденется легко, и на фото не тесно.'},
   {m:11,d:31,name:'Новый год',    need:['нарядный комплект'], fancy:1, why:'Фотографий будет много — нарядное стоит заказать за пару недель: к концу декабря нужных размеров уже нет.'},
   {m:1, d:23, name:'23 февраля',  need:['нарядный комплект'], fancy:1, why:'Повод для фотографий с папой — и для нарядного, которое потом пойдёт в садик.'},
   {m:2, d:8,  name:'8 марта',     need:['нарядный комплект'], fancy:1, why:'Весенний праздник — нарядное пригодится и на майские.'}
@@ -2424,7 +2445,7 @@ function tlEvents(){
   // поездки
   TRIPS.filter(t=>t.from&&inFuture(t.to||t.from)).forEach(t=>{
     const total=(()=>{try{return tripCount(t);}catch(e){return null;}})();
-    ev.push({d:t.from,type:'trip',title:t.city,sub:`${fmtD(t.from)} — ${fmtD(t.to)} · размер ${sizeOn(t.from)}`,
+    ev.push({d:t.from,to:t.to,type:'trip',title:t.city,sub:`${fmtD(t.from)} — ${fmtD(t.to)} · размер ${sizeOn(t.from)}`,
       chips:Object.keys(t.wish||{}).length?['в вишлисте: '+Object.keys(t.wish).length]:[],id:t.id});
   });
   // смена размера
@@ -2530,7 +2551,7 @@ function evRender(){
   const items=(e.items||[]);
   const cells=items.map(([k,label])=>{
     const direct=!!IMG[k];                       // прямое имя картинки (нарядное)
-    const src=direct?IMG[k]:pickImg(k,0);
+    const src=direct?IMG[k]:(CAND[k]?pickImg(k,0):null);
     const id='plan'+e.d+':'+k;
     const on=!!WISH[id];
     const isz=direct?sz:sizeForItem(k,em,sz);
@@ -2546,7 +2567,7 @@ function evRender(){
       <div class="sub">${personize(e.why||e.sub)}</div>
       ${items.length?`<div class="evgrid">${cells}</div>
         <div class="pfnote">Нажмите на вещь — она попадёт в вишлист с размером ${sz}.</div>`
-        :`<div class="pfnote" style="margin-top:10px">Картинок для этого события пока нет — добавлю, когда нагенерим нарядные комплекты. Размер к этой дате: <b>${sz}</b>.</div>`}
+        :`<div class="pfnote" style="margin-top:10px">Картинок для этого события пока нет. Размер к этой дате: <b>${sz}</b>.</div>`}
     </div>
     <div class="card">
       <h3>${e.type==='season'?'Размер к разгару сезона':'Размер к этой дате'}${szI(sz)}</h3>
@@ -2567,8 +2588,9 @@ function evWish(k,label,direct){
   const sz=e.size||sizeOn(e.d);
   const em=Math.max(0,monthsUntil(e.szDate||e.d));
   const id='plan'+e.d+':'+k;
-  const added=wishToggle(id,{label:label,size:direct?sz:sizeForItem(k,em,sz),src:'План · '+e.title,
-    img:(direct?IMG[k]:pickImg(k,0))||null,key:k});
+  const added=wishToggle(id,{label:label,size:direct?sz:sizeForItem(k,em,sz),
+    src:(evCanDel(e)?'Событие · ':'План · ')+e.title,ev:evKey(e),d:e.d,
+    img:(direct?IMG[k]:(CAND[k]?pickImg(k,0):null))||null,key:k});
   toast(added?`«${label}» — в вишлисте`:`«${label}» убрали из вишлиста`);
   evRender();
 }
@@ -2587,6 +2609,9 @@ function evDel(){
   else{EVHIDE.push(evKey(e));evHideSave();}
   go('tl');toast('Событие удалено');
 }
+/* открыть событие по ключу (из вишлиста) */
+function evOpenKey(k){TLEV=tlEvents();const i=TLEV.findIndex(e=>evKey(e)===k);
+  if(i<0){toast('Этого события уже нет в плане');return;}evOpen(i);}
 function evUnhide(){EVHIDE=[];evHideSave();tlRender();toast('События вернулись');}
 let CUSTEV=[]; (function(){try{const a=JSON.parse(store.get('mpp-custev')||'[]');if(Array.isArray(a))CUSTEV=a;}catch(e){}})();
 function custSave(){try{store.set('mpp-custev',JSON.stringify(CUSTEV));}catch(e){}}
@@ -2606,11 +2631,43 @@ function evAddSave(){
   document.getElementById('evAddBox').style.display='none'; tlRender(); toast('Событие добавлено');
 }
 let TLEV=[];
+let TLVIEW=(()=>{try{return store.get('mpp-tlview')||'list';}catch(e){return 'list';}})(), TLCM=0, TLDAY=null;
+function tlView(v){TLVIEW=v;TLDAY=null;try{store.set('mpp-tlview',v);}catch(e){}tlRender();}
+function tlMonth(dlt){TLCM=Math.max(0,Math.min(6,TLCM+dlt));TLDAY=null;tlRender();}
+function tlDay(d){TLDAY=TLDAY===d?null:d;tlRender();}
+/* календарь: месяц сеткой, кружочки цветом типа; поездка отмечена на все свои дни */
+function tlCal(ev,card){
+  const t0=new Date(todayStr()), base=new Date(t0.getFullYear(),t0.getMonth()+TLCM,1);
+  const y=base.getFullYear(), m=base.getMonth(), nd=new Date(y,m+1,0).getDate(), lead=(base.getDay()+6)%7;
+  const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const by={};
+  ev.forEach((e,i)=>{
+    const last=e.type==='trip'&&e.to?e.to:e.d;
+    for(let dt=new Date(e.d);locISO(dt)<=last;dt.setDate(dt.getDate()+1))(by[locISO(dt)]=by[locISO(dt)]||[]).push(i);
+  });
+  let cells='';
+  for(let i=0;i<lead;i++)cells+='<div></div>';
+  for(let d=1;d<=nd;d++){
+    const iso=dISO(y,m,d), l=by[iso]||[];
+    const dots=[...new Set(l.map(i=>TLCOL[ev[i].type]))].slice(0,3).map(c=>`<i style="background:${c}"></i>`).join('');
+    cells+=`<button class="cd${iso===todayStr()?' today':''}${iso===TLDAY?' sel':''}${l.length?' has':''}"${l.length?` onclick="tlDay('${iso}')"`:''}>${d}<span>${dots}</span></button>`;
+  }
+  const dayList=TLDAY&&by[TLDAY]?by[TLDAY].map(i=>card(ev[i],i)).join(''):'';
+  const legend=[['holiday','Событие'],['trip','Поездка'],['size','Смена размера'],['season','Смена сезона']]
+    .map(([t,n])=>`<span><i style="background:${TLCOL[t]}"></i>${n}</span>`).join('');
+  return `<div class="cal">
+      <div class="calh"><button onclick="tlMonth(-1)"${TLCM?'':' disabled'}>‹</button><b>${MONN[m]} ${y}</b><button onclick="tlMonth(1)"${TLCM<6?'':' disabled'}>›</button></div>
+      <div class="calw">${['пн','вт','ср','чт','пт','сб','вс'].map(x=>`<span>${x}</span>`).join('')}</div>
+      <div class="calg">${cells}</div>
+      <div class="call">${legend}</div>
+    </div>
+    ${dayList?`<div style="margin-top:12px">${dayList}</div>`:`<div class="sub" style="text-align:center;margin:10px 6px 0">Нажмите на день с кружочком — покажу, что в этот день.</div>`}`;
+}
 function tlRender(){
   climoFetch();                       // подтянет историю города и перерисует, когда готово
   const ev=TLEV=tlEvents();
   const now=new Date(todayStr());
-  const html=ev.map((e,i)=>{
+  const card=(e,i)=>{
     const days=Math.round((new Date(e.d)-now)/MS);
     const when=days<=0?'сегодня':(days<7?`через ${days} дн.`:(days<45?`через ${Math.round(days/7)} нед.`:`через ${Math.round(days/30)} мес.`));
     const soon=S.rem>0&&days>=0&&days<=S.rem;
@@ -2622,13 +2679,15 @@ function tlRender(){
         <div class="d">${personize(e.sub)}</div>
         ${e.chips.length?`<div class="chips">${e.chips.map(c=>`<span>${c}</span>`).join('')}</div>`:''}
       </div></div>`;
-  }).join('');
+  };
+  const html=TLVIEW==='cal'?(ev.length?tlCal(ev,card):''):ev.map(card).join('');
   document.getElementById('tlBody').innerHTML=
     `<div style="display:flex;gap:8px;margin-bottom:12px">
        <button class="ghost2" style="margin:0;flex:1" onclick="tripNew()">+ Поездка</button>
        <button class="ghost2" style="margin:0;flex:1" onclick="evNew()">+ Своё событие</button>
      </div>
-     <div id="evAddBox" style="display:none;margin-bottom:12px"></div>`
+     <div id="evAddBox" style="display:none;margin-bottom:12px"></div>
+     <div class="seg" style="margin:0 0 14px"><button class="${TLVIEW==='cal'?'':'on'}" onclick="tlView('list')">Списком</button><button class="${TLVIEW==='cal'?'on':''}" onclick="tlView('cal')">Календарь</button></div>`
     + (html||`<div class="card"><div class="sub">Пока пусто. Добавьте поездку или своё событие — и здесь появятся напоминания про размеры и сезоны.</div></div>`)
     + `<div class="sub" style="text-align:center;margin:14px 6px ${EVHIDE.length?6:20}px">Окно двигается вперёд вместе с малышом — новые события появляются сами.</div>`
     + (EVHIDE.length?`<div style="text-align:center;margin-bottom:20px"><button class="swlink" style="width:auto" onclick="evUnhide()">Вернуть удалённые события (${EVHIDE.length})</button></div>`:'');
