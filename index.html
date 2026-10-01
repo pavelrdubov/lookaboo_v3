@@ -2528,8 +2528,9 @@ function tlEvents(){
   }
   // «месяцики» первого года — повод для фотосессии
   for(let mo=1;mo<=11;mo++){
-    const dt=new Date(S.dob); dt.setMonth(dt.getMonth()+mo);
-    const d=locISO(dt);
+    // 30 апреля + 10 мес = 28 февраля, а не «30 февраля» → 2 марта: берём последний день месяца
+    const b0=new Date(S.dob), y=b0.getFullYear(), m=b0.getMonth()+mo;
+    const d=dISO(new Date(y,m,1).getFullYear(),new Date(y,m,1).getMonth(),Math.min(b0.getDate(),new Date(y,m+1,0).getDate()));
     if(!inFuture(d)||new Date(d)>horizon||monthsUntil(d)>12.5)continue;
     ev.push({d,type:'month',title:`${mo} ${monthsWord(mo)}`,
       sub:`Фотосессия «${mo} мес» — нарядное к размеру ${sizeOn(d)}.`,chips:['нарядный комплект'],size:sizeOn(d),
