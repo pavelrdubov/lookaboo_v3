@@ -450,12 +450,10 @@ button{font-family:inherit}
 .shfoot{text-align:center;font-size:11px;font-weight:700;color:#BCAF9B;padding:6px 0 22px}
 /* страница размеров */
 #sizes{overflow-y:auto;background:var(--bg)}
-#szHeadW{position:relative;background:linear-gradient(160deg,#7C6BA6,#B9A7D6);padding:84px 22px 22px;color:#fff}
-#szBack{position:absolute;left:14px;top:38px;width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer}
-#szAv{position:absolute;right:26px;top:24px;width:76px;height:76px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.75);box-shadow:0 4px 14px rgba(60,40,90,.25);display:none}
+#szHeadW{position:relative;height:150px;background:linear-gradient(168deg,#8C7FA8,#CBC3DC);color:#fff}   /* как шапки других экранов */
+#szBack{position:absolute;left:14px;top:20px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.24);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9;padding:0}
+#szAv{position:absolute;right:40px;top:18px;width:68px;height:68px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.75);box-shadow:0 4px 14px rgba(60,40,90,.25);display:none}
 #szAv img{width:100%;height:100%;object-fit:cover}
-#szHeadW h2{font-size:28px;font-weight:800;margin:12px 0 4px}
-#szHeadW p{font-family:"Caveat",cursive;font-size:19px;opacity:.92}
 #szBody{padding:16px 18px 0}
 .szcard{background:#fff;border-radius:20px;padding:18px 18px 8px;box-shadow:0 6px 18px rgba(90,74,58,.09);margin-bottom:16px;text-align:center}
 .sznow{font-size:11px;font-weight:800;letter-spacing:.1em;color:#A9987F;text-transform:uppercase}
@@ -779,19 +777,17 @@ button{font-family:inherit}
     <button id="szBack" aria-label="Назад" onclick="szBack()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
     </button>
-    <svg width="120" height="130" viewBox="270 0 120 130" fill="none" style="position:absolute;right:0;top:0" aria-hidden="true">
-      <circle cx="320" cy="62" r="34" fill="#fff" opacity=".22"></circle>
-      <circle cx="320" cy="62" r="21" fill="#fff" opacity=".3"></circle>
+    <svg width="390" height="150" viewBox="0 0 390 150" fill="none" style="position:absolute;right:0;top:0" aria-hidden="true">
+      <circle cx="316" cy="52" r="34" fill="#fff" opacity=".22"></circle>
+      <circle cx="316" cy="52" r="21" fill="#fff" opacity=".3"></circle>
       <g id="szIco" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".6">
-        <path d="M312 44v36M312 48h6M312 55h4M312 62h6M312 69h4M312 76h6"></path>
-        <path d="M325 54l4-5 4 5M329 49v26M325 70l4 5 4-5"></path>
+        <path d="M308 34v36M308 38h6M308 45h4M308 52h6M308 59h4M308 66h6"></path>
+        <path d="M321 44l4-5 4 5M325 39v26M321 60l4 5 4-5"></path>
       </g>
-      <g fill="#fff" opacity=".5"><circle cx="284" cy="112" r="3"></circle><circle cx="356" cy="118" r="2.6"></circle></g>
+      <g fill="#fff" opacity=".5"><circle cx="248" cy="104" r="3"></circle><circle cx="278" cy="120" r="2.4"></circle><circle cx="352" cy="110" r="2.6"></circle></g>
     </svg>
     <div id="szAv"></div>
-    <div class="shbrand">LOOKABOO</div>
-    <h2 id="szTitle">Размеры</h2>
-    <p id="szHint2">что впору сейчас и что брать на вырост</p>
+    <div class="tripTitle"><h2 id="szTitle">Размеры</h2><p id="szHint2">что впору и что на вырост</p></div>
   </div>
   <div id="szBody"></div>
   <button class="ghost2" id="szShareBtn" style="margin:4px 18px 6px;width:calc(100% - 36px)" onclick="copySizesLink()">Поделиться размерами</button>
@@ -2323,7 +2319,7 @@ function szCard(d,onclick){
 function szI(tgt){return `<button class="szi" aria-label="Все размеры" onclick="event.stopPropagation();openSizes(S.screen${tgt?','+tgt:''})">i</button>`;}
 function renderSizes(d,shared){
   const rows=SIZETBL.map(r=>`<tr class="${r[0]===d.cloth?'cur':(r[0]===d.tgt?'tgt':'')}"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
-  document.getElementById('szTitle').textContent=d.nm?('Размеры '+d.nm):'Размеры малыша';
+  document.getElementById('szTitle').textContent=d.nm?('Размеры '+nameCases(d.nm).gen):'Размеры малыша';
   document.getElementById('szBody').innerHTML=
     `<div class="szcard"><div class="sznow">Сейчас впору</div><div class="szbig">${d.cloth}</div>`
     +`<div class="szsub">${d.nm?d.nm+' · ':''}${d.m} ${monthsWord(d.m)} · рост ~${d.h} см</div>`
