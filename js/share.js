@@ -216,7 +216,7 @@ async function renderLookPNG(){
 
   /* тот же набор, что на экране */
   const band=bandFor(effTemp()), list=setsFor(band), set=list[S.setIdx%list.length];
-  let items=set.it.slice();
+  let items=lookItems(set.it).slice();
   if(items.length<2)items.push(swaddleFor(effTemp()));
   const heroes=items.filter(i=>!NOTLAYER.includes(i[0]));
   const acc=items.filter(i=>NOTLAYER.includes(i[0]));

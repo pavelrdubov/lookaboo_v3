@@ -181,10 +181,11 @@ function lookNotes(items,eff){
   const add=(k,text,pr)=>{ if(has(k)&&!out.some(n=>n.key===k))out.push({key:k,text,pr}); };
   if(has('ovWinter')||has('ovDemi')){ const g=insFor(eff).g; add(has('ovWinter')?'ovWinter':'ovDemi',/пух/.test(g)?g:g+' утеплителя',10); }
   if(S.ctx==='car')add('blanket','поверх ремней, не под них',9);
+  if(S.ctx==='stroller'&&strollerKind()==='seat'&&eff<=6)add('blanket','укрыть ножки — в прогулочной дует',9);
   add('wrap','швы наружу — коже мягко',8);
   add('wrapbody','на запах — не через голову',8);
   add('mittens','на резинке — не потеряются',7);
-  if(eff>=22){ add('muslin','муслин дышит — не душно',6); add('panama','закрывает шею от солнца',5); add('socks','в жару можно без носков',2); }
+  if(eff>=22){ add('muslin','коляску целиком не накрывать — внутри жарче',6); add('panama','закрывает шею от солнца',5); add('socks','в жару можно без носков',2); }
   else if(eff>=7)add('muslin','накрыть, если подует',3);
   if(eff<=6)add('blanket','поверх комбинезона',3);
   add('ovFleece',eff<=1?'флис — тёплый слой, дышит':'флис вместо свитера',6);

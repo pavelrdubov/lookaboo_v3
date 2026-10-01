@@ -30,6 +30,14 @@ function effTemp(){
 }
 
 /* в машине объёмную верхнюю одежду не надеваем — салон тёплый, её везут отдельно и накрывают пледом */
+/* в прогулочной коляске ветер достаёт до ног: в прохладу добавляем плед на ножки
+   (потом — конверт или накидку, когда будут картинки) */
+function legsFilter(items){
+  if(S.ctx!=='stroller'||strollerKind()!=='seat'||effTemp()>6||items.some(x=>x[0]==='blanket'))return items;
+  return items.concat([['blanket','плед на ножки']]);
+}
+/* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
+function lookItems(it){ return legsFilter(carFilter(it)); }
 function carFilter(items){
   if(S.ctx!=='car')return items;
   const OUT=['ovWinter','ovDemi','ovFleece','jacket'];
@@ -90,7 +98,7 @@ function paintMain(){
   const b=bandFor(effTemp());
   const list=setsFor(b);
   const set0=list[S.setIdx%list.length];
-  const set={name:set0.name, it:carFilter(set0.it)};   // в машине объёмный комбинезон не надеваем
+  const set={name:set0.name, it:lookItems(set0.it)};   // машина — без объёмного комбинезона, прогулочная — плед на ножки
   const nl=set.it.filter(x=>!NOTLAYER.includes(x[0])).length;
   document.getElementById('tLayers').textContent=`${nl} ${nl===1?'слой':(nl<5?'слоя':'слоёв')}`;
   document.getElementById('bTitle').textContent=b.title;
@@ -103,6 +111,7 @@ function paintMain(){
   const insN=insFor(ef).note;
   if(insN&&set.it.some(x=>INSKEYS.includes(x[0])))tipTxt=insN;
   if(S.ctx==='car')tipTxt='Объёмный комбинезон в машину не надевают: под ремнями он сминается, и они не затянутся плотно. В салоне тепло — тонкие слои, ремни впритык. Согреть можно пледом поверх пристёгнутых ремней (не под спину и не за лямки) — и не закрывая лицо.';
+  if(S.ctx==='stroller'&&strollerKind()==='seat'&&ef<=6)tipTxt='В прогулочной коляске ветер достаёт до ног — укройте ножки пледом или накидкой, даже если комбинезон тёплый.';
   if(S.ctx==='sling')tipTxt='В слинге малыша греет ваше тело — проверяйте шею сзади, чтобы он не перегрелся под курткой.';
   tipTxt=personize(tipTxt);
   S.tipText=tipTxt;

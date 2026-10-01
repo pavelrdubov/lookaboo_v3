@@ -5,7 +5,7 @@ function openPick(){
   const sz=sizeFor(heightNow());
   document.getElementById('sheet').innerHTML=
     `<h3>Что докупить?</h3><p>Отметьте вещи из сегодняшнего набора — они попадут в вишлист с размером.</p>`
-    + set.it.map(([k,l])=>{
+    + lookItems(set.it).map(([k,l])=>{
         const id='day:'+k, on=!!WISH[id];
         return `<div class="item${on?' on':''}" style="margin-bottom:8px">
           <div class="bx" onclick="pickTap('${k}','${l.replace(/'/g,'')}')">${on?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"></path></svg>':''}</div>
