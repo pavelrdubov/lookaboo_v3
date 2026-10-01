@@ -280,6 +280,12 @@ button{font-family:inherit}
 .tlkind{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;margin:0 6px 1px 0;vertical-align:1px}
 .szi{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1.5px solid #D9CDBB;background:#fff;
   color:#8A7A66;font-family:Georgia,serif;font-style:italic;font-size:12px;font-weight:700;cursor:pointer;padding:0;margin-left:6px;vertical-align:2px;line-height:1}
+.szcardbtn{display:flex;align-items:center;gap:12px;width:100%;border:none;background:#fff;border-radius:16px;padding:11px 14px;margin:0 0 14px;
+  box-shadow:0 3px 12px rgba(90,74,58,.08);font-family:inherit;text-align:left;cursor:pointer}
+.szcardbtn span{flex:1;min-width:0}
+.szcardbtn b{display:block;font-size:13.5px;font-weight:800;color:var(--ink-strong)}
+.szcardbtn s{display:block;text-decoration:none;font-size:11px;font-weight:700;color:#8A7A66;margin-top:2px}
+.szcardbtn em{font-style:normal;font-size:20px;font-weight:800;color:#7C6BA6}
 .sztbl tr.tgt td{background:rgba(124,107,166,.14);color:#6C5A98;font-weight:800}
 .tlnow{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--accent)}
 
@@ -2102,7 +2108,7 @@ function wlRender(){
   document.getElementById('wlSub').textContent = ids.length
     ? `${ids.length} ${ids.length===1?'вещь':(ids.length<5?'вещи':'вещей')} · в списке ${wishCount()}`
     : 'что купить малышу';
-  const addBtn=`<button class="ghost2" style="margin:0 0 14px;border-color:var(--accent);color:var(--accent)" onclick="waOpen()">+ Добавить вещь</button>`;
+  const addBtn=`<button class="ghost2" style="margin:0 0 12px;border-color:var(--accent);color:var(--accent)" onclick="waOpen()">+ Добавить вещь</button>`;
   if(!ids.length){
     document.getElementById('wlBody').innerHTML=addBtn+
       `<div class="card"><h3>Пока пусто</h3><div class="sub">Нажмите на вещь в наборе на главном экране, на плюсик в списке для поездки — или добавьте руками кнопкой выше.</div></div>`;
@@ -2130,7 +2136,7 @@ function wlRender(){
         <button class="del" onclick="wishDel('${id}')">×</button>
       </div>`;}).join('')
   ).join('');
-  document.getElementById('wlBody').innerHTML=addBtn+flt+body+
+  document.getElementById('wlBody').innerHTML=addBtn+szCard(sizesData(),"openSizes('wl')")+flt+body+
     `<button class="ghost2" style="margin-top:12px" onclick="wishShare()">Отправить картинкой</button>
      <button class="ghost2" style="margin-top:8px;border-color:var(--accent);color:var(--accent)" onclick="copyListLink()">Поделиться ссылкой на список</button>
      <div style="height:12px"></div>`;
@@ -2254,7 +2260,7 @@ function buildListLink(){
   const ids=wishOutIds();
   const it=ids.map(id=>{const w=WISH[id];return {l:w.label,s:w.size||'',n:w.note||'',q:w.qty||1,k:w.key||'',g:w.src||''};});
   const k=kid();
-  const payload={v:1,nm:kidName(k)||'',sz:sizeFor(heightNow()),it};
+  const payload={v:1,nm:kidName(k)||'',sz:sizeFor(heightNow()),z:sizesData(),it};
   const enc=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
   return location.origin+location.pathname+'#list='+encodeURIComponent(enc);
 }
@@ -2284,10 +2290,13 @@ function renderShared(d){
   ).join('');
   document.getElementById('shTitle').textContent=d.nm?('Что нужно '+(typeof nameCases==='function'?nameCases(d.nm).dat:d.nm)):'Список вещей';
   document.getElementById('shSub').textContent='';
-  document.getElementById('shBody').innerHTML=rows||'<div class="sub">Список пуст.</div>';
+  SHZ=d.z||null;
+  document.getElementById('shBody').innerHTML=(SHZ?szCard(SHZ,'sharedSizes()'):'')+(rows||'<div class="sub">Список пуст.</div>');
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById('shared').classList.add('on');
 }
+let SHZ=null;
+function sharedSizes(){if(!SHZ)return;renderSizes(SHZ,true);SZFROM='shared';document.getElementById('szBack').style.display='flex';go('sizes');}
 function sharedOpenApp(){ location.hash=''; location.reload(); }
 
 /* ===== страница размеров (шарабельная) ===== */
@@ -2300,6 +2309,13 @@ let SZFROM='prof';
 /* таблица размеров открывается отовсюду, где мы называем размер; tgt — размер «к дате» */
 function openSizes(from,tgt){SZFROM=from||'prof';const d=sizesData();if(tgt&&tgt!==d.cloth)d.tgt=tgt;renderSizes(d,false);go('sizes');}
 function szBack(){go(SZFROM);}
+/* заметная карточка «Размеры малыша» — в вишлисте и в списке по ссылке */
+function szCard(d,onclick){
+  return `<button class="szcardbtn" onclick="${onclick}">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true"><rect width="34" height="34" rx="11" fill="#EFEAF7"></rect>
+      <g stroke="#7C6BA6" stroke-width="2" stroke-linecap="round"><path d="M12 8v18M12 10h4M12 14h3M12 18h4M12 22h3M12 26h4"></path><path d="M20 12l3-3 3 3M23 9v16M20 22l3 3 3-3"></path></g></svg>
+    <span><b>Размеры${d.nm?' '+esc2(nameCases(d.nm).gen):' малыша'}</b><s>одежда ${d.cloth} · шапка ${d.hat} · носки ${d.sock} см</s></span><em>›</em></button>`;
+}
 function szI(tgt){return `<button class="szi" aria-label="Все размеры" onclick="event.stopPropagation();openSizes(S.screen${tgt?','+tgt:''})">i</button>`;}
 function renderSizes(d,shared){
   const rows=SIZETBL.map(r=>`<tr class="${r[0]===d.cloth?'cur':(r[0]===d.tgt?'tgt':'')}"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
@@ -2597,7 +2613,7 @@ function evWish(k,label,direct){
 
 const TLCOL={trip:'#6E8FA8',size:'#C4613C',season:'#7A8C5A',holiday:'#B87A9C',month:'#C98AA6',custom:'#B87A9C'};
 /* три рода записей: события (праздники, месяцы, свои) — можно удалить; поездки; план (смена размера/сезона) — не удаляется */
-const TLKIND={trip:'Поездка',size:'Смена размера',season:'Смена сезона',holiday:'Событие',month:'Событие',custom:'Событие'};
+const TLKIND={trip:'Поездка',size:'План',season:'План',holiday:'Событие',month:'Событие',custom:'Событие'};
 const evCanDel=e=>['holiday','month','custom'].includes(e.type);
 const evKey=e=>e.type+'|'+e.title+'|'+e.d;
 let EVHIDE=[]; (function(){try{const a=JSON.parse(store.get('mpp-evhide')||'[]');if(Array.isArray(a))EVHIDE=a;}catch(e){}})();
@@ -2653,7 +2669,7 @@ function tlCal(ev,card){
     cells+=`<button class="cd${iso===todayStr()?' today':''}${iso===TLDAY?' sel':''}${l.length?' has':''}"${l.length?` onclick="tlDay('${iso}')"`:''}>${d}<span>${dots}</span></button>`;
   }
   const dayList=TLDAY&&by[TLDAY]?by[TLDAY].map(i=>card(ev[i],i)).join(''):'';
-  const legend=[['holiday','Событие'],['trip','Поездка'],['size','Смена размера'],['season','Смена сезона']]
+  const legend=[['holiday','Событие'],['trip','Поездка'],['size','План: размер'],['season','План: сезон']]
     .map(([t,n])=>`<span><i style="background:${TLCOL[t]}"></i>${n}</span>`).join('');
   return `<div class="cal">
       <div class="calh"><button onclick="tlMonth(-1)"${TLCM?'':' disabled'}>‹</button><b>${MONN[m]} ${y}</b><button onclick="tlMonth(1)"${TLCM<6?'':' disabled'}>›</button></div>
