@@ -44,8 +44,8 @@
 .wlflt select{width:100%;height:44px;border:2px solid #EAE2D4;border-radius:999px;background:#fff;font-family:inherit;font-size:13px;font-weight:800;color:#7A6450;padding:0 38px 0 18px;-webkit-appearance:none;appearance:none;cursor:pointer}
 .wlflt:after{content:'';position:absolute;right:19px;top:16px;width:7px;height:7px;border-right:2.5px solid #7A6450;border-bottom:2.5px solid #7A6450;transform:rotate(45deg);pointer-events:none}
 .item{display:flex;align-items:center;gap:11px;background:#fff;border-radius:15px;padding:11px 13px;margin-bottom:7px;box-shadow:0 2px 8px rgba(90,74,58,.06)}
-.item .bx{width:23px;height:23px;border-radius:8px;border:2px solid #DDD2BF;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff}
-.item.on .bx{background:var(--accent);border-color:var(--accent)}
+.item .bag{flex:none;width:32px;height:32px;margin:-4px -2px -4px -4px;border:none;background:none;padding:0;color:#C9BCA6;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.item.on .bag{color:var(--accent)}
 .item.on .nm{text-decoration:line-through;color:#B9AC98}
 .item .nm{flex:1;font-size:13px;font-weight:700;color:var(--ink-strong);line-height:1.3}
 .item .qt{font-size:12px;font-weight:800;color:#A9987F;flex:none}
@@ -54,7 +54,8 @@
 /* подсказка над списком: квадратик — собрано, сердечко — купить */
 .tleg{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 4px 0;font-size:11.5px;font-weight:700;color:#8A7A66}
 .tleg span{display:flex;align-items:center;gap:6px}
-.tleg .lb{width:15px;height:15px;border-radius:5px;border:2px solid #DDD2BF;background:#fff;display:block}
+.tleg .lg{color:#B9AC98;display:flex}
+.tleg .lg svg{width:18px;height:18px}
 .tleg .lh{width:22px;height:22px;border-radius:50%;background:#F4EFE6;color:#A9987F;display:flex;align-items:center;justify-content:center}
 .tleg .lh svg{width:12px;height:12px}
 .wish{background:#FFF6EC;border:1.5px dashed #E4CBA8}

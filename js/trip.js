@@ -207,7 +207,7 @@ function tripRender(){
     const lack=have!=null&&have<qty;
     const note=lack?`<s style="display:block;text-decoration:none;font-size:10px;font-weight:800;color:#B0705A;margin-top:2px">${have?`есть ${have} из ${qty} — добрать ${qty-have}`:`нет в ${sz}`}</s>`:'';
     return `<div class="item${on}" id="it-${btoa(unescape(encodeURIComponent(id))).replace(/=/g,'')}">
-      <div class="bx" onclick="tripTick('${id}')">${TRIP.done[id]?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"></path></svg>':''}</div>
+      <button class="bag" onclick="tripTick('${id}')" aria-label="${TRIP.done[id]?'вынуть из чемодана':'положить в чемодан'}">${TRIP.done[id]?'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round"><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" stroke="currentColor" stroke-width="2"></path><rect x="4" y="7" width="16" height="12" rx="2.5" fill="currentColor" stroke="currentColor" stroke-width="2"></rect><path d="M8.5 13l2.3 2.3 4.7-4.6" stroke="#fff" stroke-width="2.2"></path></svg>':'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"></path><rect x="4" y="7" width="16" height="12" rx="2.5"></rect></svg>'}</button>
       <div class="nm">${label}${note}</div>
       <div class="qt">${qty>1?'×'+qty:''}</div>
       <button class="add${inW}" onclick="tripWish('${id}','${label.replace(/'/g,"")}','${k}')" aria-label="${TRIP.wish[id]?'убрать из вишлиста':'в вишлист — купить'}">${TRIP.wish[id]?'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>'}</button>
@@ -234,7 +234,7 @@ function tripRender(){
       <div class="sub">${personize('Малышу будет')} ${mm} ${monthsWord(mm)} — берите размер <b>${sz}</b>, а не тот, что впору сейчас.</div>
     </div>
 
-    <div class="tleg"><span><i class="lb"></i>уже в чемодане</span><span><i class="lh"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></i>купить — в вишлист</span></div>
+    <div class="tleg"><span><i class="lg"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"></path><rect x="4" y="7" width="16" height="12" rx="2.5"></rect></svg></i>положить в чемодан</span><span><i class="lh"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></i>купить — в вишлист</span></div>
 
     <div class="sect">В ДОРОГУ — В РУЧНУЮ КЛАДЬ</div>
     ${I.road.map(([k,l])=>row(k,l,k==='bodyL'?2:1,'road')).join('')}
@@ -254,7 +254,7 @@ function tripRender(){
     <div style="height:10px"></div>`;
 }
 function tripTick(id){TRIP.done[id]=!TRIP.done[id];tripSave();tripRender();
-  toast(TRIP.done[id]?'Отмечено: уже в чемодане':'Снова не собрано');}
+  toast(TRIP.done[id]?'В чемодане':'Вынули из чемодана');}
 function tripWish(id,label,key){
   const gid='trip'+(TRIP.id||0)+':'+id;
   if(TRIP.wish[id]){delete TRIP.wish[id];delete WISH[gid];}
