@@ -5,6 +5,31 @@ const CITIES=[['Москва','Россия',55.75,37.62],['Санкт-Пете�
 ['Краснодар','Россия',45.04,38.98],['Сочи','Россия',43.60,39.73],['Калининград','Россия',54.71,20.51],
 ['Ереван','Армения',40.18,44.51],['Тбилиси','Грузия',41.72,44.78],['Алматы','Казахстан',43.24,76.89],
 ['Минск','Беларусь',53.90,27.56],['Белград','Сербия',44.79,20.45],['Дубай','ОАЭ',25.20,55.27]];
+/* поиск города: сразу — по встроенному списку, через долю секунды — по всему миру
+   (геокодер Open-Meteo: бесплатно, без ключа, понимает русские названия). Нет сети — остаётся список. */
+let CITY_HITS=[], CITY_T=null, CITY_Q='';
+function localCities(q){ q=q.trim().toLowerCase();
+  return CITIES.filter(c=>c[0].toLowerCase().startsWith(q)).map(c=>({name:c[0],sub:c[1],lat:c[2],lon:c[3]})); }
+function citySearch(q,limit,render){
+  const loc=localCities(q).slice(0,limit), qq=q.trim();
+  CITY_Q=qq; clearTimeout(CITY_T);
+  render(CITY_HITS=loc, qq.length>=2);
+  if(qq.length<2)return;
+  CITY_T=setTimeout(async()=>{
+    let rem=[];
+    try{
+      const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=8&language=ru&format=json&name='+encodeURIComponent(qq));
+      const j=await r.json();
+      rem=(j.results||[]).map(x=>({name:x.name,sub:[x.admin1,x.country].filter(v=>v&&v!==x.name).filter((v,i,a)=>a.indexOf(v)===i).join(', '),
+        lat:Math.round(x.latitude*100)/100,lon:Math.round(x.longitude*100)/100}));
+    }catch(e){}
+    if(CITY_Q!==qq)return;                         // пока ждали ответ, ввели другое
+    const all=loc.concat(rem.filter(a=>!loc.some(b=>b.name===a.name&&Math.abs(b.lat-a.lat)<.5))).slice(0,limit);
+    render(CITY_HITS=all,false);
+  },300);
+}
+const cityPickJs=(fn,i)=>`${fn}(CITY_HITS[${i}].name,CITY_HITS[${i}].lat,CITY_HITS[${i}].lon)`;
+
 function initCity(){
   const inp=document.getElementById('cityInput');
   inp.oninput=()=>renderCities(inp.value);
@@ -12,11 +37,14 @@ function initCity(){
 }
 function renderCities(q){
   const l=document.getElementById('cityList');
-  const list=CITIES.filter(c=>c[0].toLowerCase().startsWith(q.trim().toLowerCase())).slice(0,6);
-  l.innerHTML=list.map(c=>`<button class="crow" onclick="pickCity('${c[0]}',${c[2]},${c[3]})">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 2c-4 0-7 3-7 7 0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z" fill="${c[0]===S.city?'var(--accent)':'#D8C9B4'}"></path><circle cx="12" cy="9" r="2.6" fill="#FFF6EF"></circle></svg>
-    <div style="flex:1"><b>${c[0]}</b><s>${c[1]}</s></div></button>`).join('')
-    || `<div style="font-size:13px;font-weight:700;color:#A9987F;padding:8px 4px">Ничего не нашлось — проверьте написание.</div>`;
+  if(!q.trim()){ CITY_HITS=localCities('').slice(0,6); return paintCities(l,CITY_HITS,false); }
+  citySearch(q,6,(list,wait)=>paintCities(l,list,wait));
+}
+function paintCities(l,list,wait){
+  l.innerHTML=list.map((c,i)=>`<button class="crow" onclick="${cityPickJs('pickCity',i)}">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M12 2c-4 0-7 3-7 7 0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z" fill="${c.name===S.city?'var(--accent)':'#D8C9B4'}"></path><circle cx="12" cy="9" r="2.6" fill="#FFF6EF"></circle></svg>
+    <div style="flex:1"><b>${esc2(c.name)}</b><s>${esc2(c.sub)}</s></div></button>`).join('')
+    || `<div style="font-size:13px;font-weight:700;color:#A9987F;padding:8px 4px">${wait?'Ищем…':'Ничего не нашлось — проверьте написание.'}</div>`;
 }
 async function pickCity(name,lat,lon){
   S.city=name;store.set('mpp-city',name);

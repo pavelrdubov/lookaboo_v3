@@ -38,8 +38,9 @@ function tripForm(){
     const q=inp.value.trim().toLowerCase();
     const l=document.getElementById('tCityList');
     if(!q){l.innerHTML='';return;}
-    const m=CITIES.filter(c=>c[0].toLowerCase().startsWith(q)).slice(0,4);
-    l.innerHTML=m.map(c=>`<button class="ghost2" style="text-align:left;padding:0 14px" onclick="tripPick('${c[0]}',${c[2]},${c[3]})">${c[0]} · ${c[1]}</button>`).join('');
+    TRIP.lat=null;                                  // город сменили — пока не выбран из списка
+    citySearch(inp.value,5,(m,wait)=>{ l.innerHTML=m.map((c,i)=>`<button class="ghost2" style="text-align:left;padding:0 14px" onclick="${cityPickJs('tripPick',i)}">${esc2(c.name)} · ${esc2(c.sub)}</button>`).join('')
+      || `<div class="pfnote">${wait?'Ищем…':'Такой город не нашёлся — проверьте написание.'}</div>`; });
   };
 }
 function tripPick(name,lat,lon){
@@ -104,7 +105,9 @@ function calRender(){
 
 async function tripBuild(){
   const f=TRIP.from, t=TRIP.to;
-  if(!TRIP.city||!TRIP.lat){document.getElementById('tCity').focus();return;}
+  // город набрали, но не выбрали из подсказок — берём первую найденную
+  if(!TRIP.lat&&CITY_HITS.length&&document.getElementById('tCity').value.trim())tripPick(CITY_HITS[0].name,CITY_HITS[0].lat,CITY_HITS[0].lon);
+  if(!TRIP.city||!TRIP.lat){toast('Выберите город из подсказок');document.getElementById('tCity').focus();return;}
   if(!f||!t||t<f){toast('Выберите даты туда и обратно');return;}
   TRIP.from=f;TRIP.to=t;
   document.getElementById('tripCta').textContent='Смотрим погоду…';

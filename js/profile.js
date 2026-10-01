@@ -102,9 +102,8 @@ function profCities(q){
   const l=document.getElementById('pfCityList'); if(!l)return;
   const t=(q||'').trim().toLowerCase();
   if(!t){l.innerHTML='';return;}
-  l.innerHTML=CITIES.filter(c=>c[0].toLowerCase().startsWith(t)).slice(0,5)
-    .map(c=>`<button class="ghost2" style="margin:0;text-align:left;padding:0 14px" onclick="pickCity('${c[0]}',${c[2]},${c[3]})">${c[0]} · ${c[1]}</button>`).join('')
-    || `<div class="pfnote">Такого города в списке нет — напишите, добавлю.</div>`;
+  citySearch(q,5,(list,wait)=>{ l.innerHTML=list.map((c,i)=>`<button class="ghost2" style="margin:0;text-align:left;padding:0 14px" onclick="${cityPickJs('pickCity',i)}">${esc2(c.name)} · ${esc2(c.sub)}</button>`).join('')
+    || `<div class="pfnote">${wait?'Ищем…':'Такой город не нашёлся — проверьте написание.'}</div>`; });
 }
 function profSetKid(i){KI=i;kidsSave();profPaint();paintDate();syncHeight();paintMain();}
 function profAddKid(){KIDS.push(blankKid());KI=KIDS.length-1;kidsSave();profPaint();paintDate();paintMain();}
