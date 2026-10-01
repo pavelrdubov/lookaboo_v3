@@ -225,11 +225,10 @@ async function renderLookPNG(){
   const padX=44,padY=34;
   const BW=AW-padX*2, BH=AH-padY*2;
   const LOOK=lookImgs(ordered.map(x=>x[0]));
-  const capFs=Math.max(30,Math.min(46,Math.min(BW,BH)*0.072));
-  const mainIt=ordered.slice().sort((a,b)=>roleOf(b[0])-roleOf(a[0]))[0];
-  const capTxt=mainIt?(SHORT[mainIt[0]]||mainIt[1])+', '+sz:'';
-  /* та же раскладка по правилам, что на экране (js/layout.js) */
-  const rects=layoutLook(ordered.map(x=>({key:x[0],src:LOOK[x[0]]})),BW,BH,(S.setIdx||0)+new Date().getDate(),{text:capTxt,fs:capFs},{r:380,ox:padX,oy:padY});
+  const noteFs=Math.max(30,Math.min(40,Math.min(BW,BH)*0.062));
+  /* та же раскладка и та же пометка, что на экране (js/layout.js) */
+  const NOTES=lookNotes(ordered,effTemp()).map(n=>Object.assign({fs:noteFs},n));
+  const rects=layoutLook(ordered.map(x=>({key:x[0],src:LOOK[x[0]]})),BW,BH,(S.setIdx||0)+new Date().getDate(),NOTES,{r:380,ox:padX,oy:padY});
   const srcs=await Promise.all(rects.map(r=>loadImg(r.src)));
   rects.slice().sort((a,b)=>a.z-b.z).forEach(r=>{
     const im=srcs[rects.indexOf(r)]; if(!im)return;
@@ -239,13 +238,20 @@ async function renderLookPNG(){
     x.drawImage(im,-r.ox,-r.oy,r.iw,r.ih);
     x.restore();
   });
-  const mr=rects.find(r=>r.main);
-  if(mr){
-    x.fillStyle='#6B5B4C';
-    let fs=capFs; x.font=`600 ${fs}px Caveat, cursive`;
-    while(x.measureText(capTxt).width>AW*0.5&&fs>20){fs-=2;x.font=`600 ${fs}px Caveat, cursive`;}
-    x.fillText(capTxt,AX+padX+mr.cx-mr.w/2+4,AY+padY+mr.cy+mr.h/2+fs*0.8);
-  }
+  (rects.notes||[]).forEach(n=>{
+    const ox=AX+padX, oy=AY+padY;
+    x.save(); x.strokeStyle='#A08F7B'; x.fillStyle='#A08F7B'; x.lineWidth=2.4; x.lineCap='round';
+    x.beginPath(); x.arc(ox+n.ax,oy+n.ay,4.5,0,7); x.fill();
+    x.beginPath(); x.moveTo(ox+n.ax,oy+n.ay); x.lineTo(ox+n.ex,oy+n.ey); x.stroke();
+    x.fillStyle='#6B5B4C'; x.font=`600 ${noteFs}px Caveat, cursive`; x.textBaseline='top';
+    x.shadowColor='#fff'; x.shadowBlur=10;
+    // перенос по словам в ширину пометки
+    const words=n.text.split(' '), lines=[]; let cur='';
+    words.forEach(w=>{const t=cur?cur+' '+w:w; if(x.measureText(t).width>n.w&&cur){lines.push(cur);cur=w;}else cur=t;}); lines.push(cur);
+    lines.forEach((l,i)=>x.fillText(l,ox+n.x,oy+n.y+i*noteFs*1.08));
+    x.restore();
+  });
+
 
   /* подпись снизу */
   let y=AY+AH+76;

@@ -15,16 +15,17 @@ const ROLE={ovWinter:1,ovDemi:1,ovFleece:.98,slip:.96,slipKnit:.96,romper:.92,dr
 const roleOf=k=>ROLE[k]||.7;
 const BOX={}; CATALOG.forEach(c=>{BOX[c.file]={b:c.b||[0,0,1,1],r:c.r||1};});
 
-/* items: [{key, src}], W×H — поле для вещей; seed — какой шаблон; cap — подпись под главной {text, fs};
+/* items: [{key, src}], W×H — поле для вещей; seed — какой шаблон;
+   notes — пометки [{key, text, fs}]: место под каждой резервируется прямо под её вещью;
    arch — скругление верха арки {r, ox, oy}: радиус и сдвиг поля от края арки */
 const LAYOUT_CACHE={};
-function layoutLook(items,W,H,seed,cap,arch){
+function layoutLook(items,W,H,seed,notes,arch){
   const n=Math.min(6,Math.max(2,items.length)), tpls=MAGV[n]||MAGV[4], tpl=tpls[seed%tpls.length];
-  const ck=[items.map(i=>i.src).join(','),Math.round(W),Math.round(H),seed%tpls.length,cap&&cap.text,arch&&arch.r].join('|');
-  return LAYOUT_CACHE[ck]||(LAYOUT_CACHE[ck]=solveLayout(items,tpl,W,H,cap,arch));
+  const ck=[items.map(i=>i.src).join(','),Math.round(W),Math.round(H),seed%tpls.length,(notes||[]).map(n=>n.key+n.text).join(';'),arch&&arch.r].join('|');
+  return LAYOUT_CACHE[ck]||(LAYOUT_CACHE[ck]=solveLayout(items,tpl,W,H,notes||[],arch));
 }
 
-function solveLayout(items,tpl,W,H,cap,arch){
+function solveLayout(items,tpl,W,H,notes,arch){
   const U=Math.min(W,H*.99);                       // базовый модуль шаблона, как раньше
   // крупные вещи — в крупные слоты шаблона
   const order=items.map((it,i)=>i).sort((a,b)=>roleOf(items[b].key)-roleOf(items[a].key));
@@ -51,9 +52,18 @@ function solveLayout(items,tpl,W,H,cap,arch){
                    *Math.max(0,Math.min(a.y+a.h/2,b.y+b.h/2)-Math.max(a.y-a.h/2,b.y-b.h/2));
   const allow=(a,b)=>.08*Math.min(a.w*a.h,b.w*b.h);
   const gapOf=(a,b)=>Math.max(Math.abs(a.x-b.x)-(a.w+b.w)/2,Math.abs(a.y-b.y)-(a.h+b.h)/2);
-  const capRect=()=>{ if(!cap)return null; const m=R.find(r=>r.main);
-    const w=Math.min(W*.6,cap.text.length*cap.fs*.46+8), h=cap.fs*1.25;
-    return {x:m.x-m.w/2+w/2+2,y:m.y+m.h/2+h/2-2,w,h}; };
+  /* место под пометку — рядом с её вещью: под ней (от левого или правого края) или сбоку,
+     где меньше задевает другие вещи и не вылезает за поле */
+  const noteRects=()=>notes.map(n=>{ const m=R.find(r=>r.key===n.key); if(!m)return null;
+    const full=n.text.length*n.fs*.47+8, maxW=W*.5, lines=Math.ceil(full/maxW);   // длинное — в две строки
+    const w=Math.min(maxW,full), h=n.fs*1.12*lines+2, L=m.x-m.w/2, Rr=m.x+m.w/2, T=m.y-m.h/2, B=m.y+m.h/2;
+    const cand=[[L+w/2+2,B+h/2+2,'b'],[Rr-w/2-2,B+h/2+2,'b'],[Rr+w/2+6,m.y+m.h*.15,'r'],[L-w/2-6,m.y+m.h*.15,'l']];
+    let best=null;
+    cand.forEach(([x,y,side],i)=>{ const c={x,y,w,h};
+      let pen=i*.03+Math.max(0,M-(x-w/2))+Math.max(0,x+w/2-(W-M))+Math.max(0,y+h/2-(H-M))+Math.max(0,M-(y-h/2));
+      R.forEach(r=>{ if(r!==m)pen+=inter(r,c)/(w*h)*3; });
+      if(!best||pen<best.pen)best={pen,x:Math.max(M+w/2,Math.min(W-M-w/2,x)),y,side}; });
+    return {x:best.x,y:best.y,w,h,own:m,text:n.text,side:best.side}; }).filter(Boolean);
   /* верхние углы арки скруглены: угол вещи (с запасом — вещи не прямоугольные) должен быть внутри дуги */
   const corners=r=>{ if(!arch)return [];
     const rr=arch.r-M, cy=arch.r-(arch.oy||0), ins=.18, out=[];
@@ -64,10 +74,11 @@ function solveLayout(items,tpl,W,H,cap,arch){
   const clamp=r=>{
     r.x=Math.max(M+r.w/2,Math.min(W-M-r.w/2,r.x)); r.y=Math.max(M+r.h/2,Math.min(H-M-r.h/2,r.y));
     corners(r).forEach(c=>{const k=(c.d-c.rr)/c.d; r.x-=(c.px-c.cx)*k; r.y-=(c.py-c.cy)*k;}); };
-  const groupBox=()=>{ const c=capRect(), all=c?R.concat([c]):R;
+  const groupBox=()=>{ const all=R.concat(noteRects());
     return {x0:Math.min(...all.map(r=>r.x-r.w/2)),x1:Math.max(...all.map(r=>r.x+r.w/2)),
             y0:Math.min(...all.map(r=>r.y-r.h/2)),y1:Math.max(...all.map(r=>r.y+r.h/2))}; };
-  const tooClose=()=>R.some((a,i)=>R.some((b,j)=>j>i&&inter(a,b)>allow(a,b)*1.5))||R.some(r=>corners(r).length);
+  const tooClose=()=>R.some((a,i)=>R.some((b,j)=>j>i&&inter(a,b)>allow(a,b)*1.5))||R.some(r=>corners(r).length)
+    ||(g>.86&&noteRects().some(c=>c.y+c.h/2>H-M||R.some(r=>r!==c.own&&inter(r,c)>.4*c.w*c.h)));   // ради пометки ужимаем не больше ~15%
 
   for(let round=0;round<10;round++){
     R.forEach(dims);
@@ -80,9 +91,10 @@ function solveLayout(items,tpl,W,H,cap,arch){
         const p=Math.sqrt(ov)*.25, wa=b.f/(a.f+b.f), wb=a.f/(a.f+b.f);
         a.x-=dx*p*wa; a.y-=dy*p*wa; b.x+=dx*p*wb; b.y+=dy*p*wb;
       }
-      // подпись главной вещи — препятствие для остальных
-      const c=capRect();
-      if(c)R.forEach(r=>{ if(r.main)return; const ov=inter(r,c); if(ov)r.y+=(r.y<c.y?-1:1)*Math.min(5,Math.sqrt(ov)*.3); });
+      // пометки — препятствие для остальных вещей; пометка у нижнего края — поднимаем её вещь
+      noteRects().forEach(c=>{
+        R.forEach(r=>{ if(r===c.own)return; const ov=inter(r,c); if(ov)r.y+=(r.y<c.y?-1:1)*Math.min(5,Math.sqrt(ov)*.3); });
+        const over=c.y+c.h/2-(H-M); if(over>0)c.own.y-=Math.min(5,over); });
       // «улетевшую» вещь — к ближайшему соседу
       R.forEach(a=>{ let nb=null,gm=1e9; R.forEach(b=>{if(b!==a){const gg=gapOf(a,b);if(gg<gm){gm=gg;nb=b;}}});
         if(nb&&gm>GAP){const k=Math.min(.08,(gm-GAP)/(Math.hypot(nb.x-a.x,nb.y-a.y)||1)); a.x+=(nb.x-a.x)*k; a.y+=(nb.y-a.y)*k;} });
@@ -98,9 +110,40 @@ function solveLayout(items,tpl,W,H,cap,arch){
     if(tooClose())g*=.95; else if(fit>1.03&&g<1.2)g*=Math.min(1.05,fit*.98); else break;
   }
   R.forEach(dims);
-  return R.map(r=>{ const b=r.bx.b, iw=r.w/(b[2]-b[0]), ih=r.h/(b[3]-b[1]);
+  // пометки: текст под вещью и короткая линия от вещи к тексту
+  const placed=noteRects().map(c=>{ const m=c.own, x0=c.x-c.w/2, y0=c.y-c.h/2;
+    if(c.side==='b'){ const ax=Math.max(m.x-m.w*.35,Math.min(m.x+m.w*.35,c.x));
+      return {text:c.text,x:x0,y:y0,w:c.w,h:c.h,ax,ay:m.y+m.h/2-m.h*.1,ex:ax,ey:y0+1}; }
+    const ex=c.side==='r'?x0-2:x0+c.w+2, ey=y0+c.h*.45;
+    return {text:c.text,x:x0,y:y0,w:c.w,h:c.h,ax:m.x+(c.side==='r'?1:-1)*m.w*.3,ay:ey,ex,ey,side:c.side}; });
+  const out=R.map(r=>{ const b=r.bx.b, iw=r.w/(b[2]-b[0]), ih=r.h/(b[3]-b[1]);
     return {key:r.key,src:r.src,main:r.main,z:r.z,rot:r.rot,
       cx:r.x,cy:r.y,w:r.w,h:r.h,                                   // сама вещь
       left:r.x-iw*(b[0]+b[2])/2, top:r.y-ih*(b[1]+b[3])/2, iw, ih, // весь кадр картинки
       ox:iw*(b[0]+b[2])/2, oy:ih*(b[1]+b[3])/2}; });               // центр вещи внутри кадра
+  out.notes=placed;
+  return out;
 }
+
+/* ===== пометки на коллаже — как выноски в журнальном разборе образа =====
+   Пишем только то, чего не видно на картинке: граммы утеплителя, «на резинке», «швы наружу», совет.
+   Одна на образ — самая важная; нечего сказать — текста нет. */
+function lookNotes(items,eff){
+  const has=k=>items.some(x=>x[0]===k), out=[];
+  const add=(k,text,pr)=>{ if(has(k)&&!out.some(n=>n.key===k))out.push({key:k,text,pr}); };
+  if(has('ovWinter')||has('ovDemi')){ const g=insFor(eff).g; add(has('ovWinter')?'ovWinter':'ovDemi',/пух/.test(g)?g:g+' утеплителя',10); }
+  if(S.ctx==='car')add('blanket','поверх ремней, не под них',9);
+  add('wrap','швы наружу — коже мягко',8);
+  add('wrapbody','на запах — не через голову',8);
+  add('mittens','на резинке — не потеряются',7);
+  if(eff>=22){ add('muslin','муслин дышит — не душно',6); add('panama','закрывает шею от солнца',5); add('socks','в жару можно без носков',2); }
+  else if(eff>=7)add('muslin','накрыть, если подует',3);
+  if(eff<=6)add('blanket','поверх комбинезона',3);
+  add('ovFleece',eff<=1?'флис — тёплый слой, дышит':'флис вместо свитера',6);
+  if(eff>=11&&eff<=16)add('hat','тонкая шапочка — до +16',4);
+  if(eff<=-5){ add('hatWarm','закрывает уши',4); add('socks','тёплые — стопы мёрзнут первыми',3); }
+  if(eff<=1)add('slipKnit','вязаный — греет под комбинезоном',3);
+  add('cardigan','снять в магазине за секунду',2);
+  return out.sort((a,b)=>b.pr-a.pr).slice(0,1);
+}
+

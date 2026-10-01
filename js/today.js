@@ -215,13 +215,12 @@ function drawStage(set,sz){
 
   const LOOK=lookImgs(list.map(x=>x[0]));      // картинки подобраны по сочетанию цветов
   const SHADOW='drop-shadow(6px 12px 15px rgba(90,74,58,.26))';
-  const capFs=Math.max(14,Math.min(21,Math.min(B.w,B.h)*0.066));
-  const mainKey=list.slice().sort((a,b)=>roleOf(b[0])-roleOf(a[0]))[0];
-  const capTxt=mainKey?(SHORT[mainKey[0]]||mainKey[1]):'';
+  const noteFs=Math.max(15,Math.min(19,Math.min(B.w,B.h)*0.058));
   /* раскладка по правилам (js/layout.js); по бокам место под стрелки */
-  const SIDE=18;
-  const rects=layoutLook(list.map(x=>({key:x[0],src:LOOK[x[0]]})),B.w-2*SIDE,B.h,(S.setIdx||0)+new Date().getDate(),{text:capTxt,fs:capFs},{r:140,ox:SIDE,oy:0});
-  let html='', capHtml='';
+  const SIDE=18, ARCH={r:140,ox:SIDE,oy:0};
+  const NOTES=lookNotes(list,effTemp()).map(n=>Object.assign({fs:noteFs},n));
+  const rects=layoutLook(list.map(x=>({key:x[0],src:LOOK[x[0]]})),B.w-2*SIDE,B.h-14,(S.setIdx||0)+new Date().getDate(),NOTES,ARCH);
+  let html='';
   rects.forEach(r=>{
     const key=r.key, label=(list.find(x=>x[0]===key)||[key,key])[1];
     const inW=!!WISH['day:'+key];
@@ -232,13 +231,16 @@ function drawStage(set,sz){
       +`transform:rotate(${r.rot}deg);z-index:${r.z}">`
       +`<img src="${r.src}" alt="" style="width:100%;height:100%;max-width:none;max-height:none;filter:${SHADOW}${lack?';opacity:.5':''}">`
       +`${lack?`<div class="gap">нет в ${sz}</div>`:''}${inW?'<div class="heart">♥</div>':''}</div>`;
-    if(r.main){
-      /* единственная подпись — сразу под главной вещью, как в журнале */
-      capHtml=`<div class="gcap" style="left:${Math.round(SIDE+r.cx-r.w/2+2)}px;width:${Math.round(B.w*0.6)}px;top:${Math.round(r.cy+r.h/2-2)}px;`
-        +`z-index:12;text-align:left;white-space:nowrap;overflow:hidden;font-size:${capFs.toFixed(1)}px">${capTxt}</div>`;
-    }
   });
-  html+=capHtml;
+  /* пометки-выноски: только то, чего не видно на картинке (js/layout.js) */
+  const notes=rects.notes||[];
+  if(notes.length){
+    html+=`<svg class="gnotes" width="${B.w}" height="${B.h}" viewBox="0 0 ${B.w} ${B.h}">`
+      +notes.map(n=>{const x1=SIDE+n.ax,y1=n.ay,x2=SIDE+n.ex,y2=n.ey,mx=(x1+x2)/2+(y2-y1)*.18,my=(y1+y2)/2-(x2-x1)*.18;
+        return `<circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="2.4"></circle><path d="M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}"></path>`;}).join('')
+      +`</svg>`
+      +notes.map(n=>`<div class="gnote" style="left:${Math.round(SIDE+n.x)}px;top:${Math.round(n.y)}px;width:${Math.round(n.w)}px;font-size:${noteFs.toFixed(1)}px">${n.text}</div>`).join('');
+  }
   st.innerHTML=html;
 }
 
