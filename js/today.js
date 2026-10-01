@@ -63,8 +63,10 @@ function paintMain(){
   /* объяснение с причиной: почему малышу там ощущается иначе */
   const ef0=effTemp();
   const why=personize(CTX[S.ctx].why);
-  const pron=S.gender==='girl'?'для неё это как':S.gender==='boy'?'для него это как':'это как';
-  const whyFull=`${sc.word} · ${why} — ${pron} ${ef0>0?'+':''}${ef0}°`;
+  const named=!!kidName(kid());                       // без имени «малыш … для неё» звучит странно
+  const pron=!named?'это как':S.gender==='girl'?'для неё это как':S.gender==='boy'?'для него это как':'это как';
+  // погода («облачно») уже написана рядом с температурой — здесь только про малыша
+  const whyFull=`${why.charAt(0).toUpperCase()+why.slice(1)} — ${pron} ${ef0>0?'+':''}${ef0}°`;
   const tw=document.getElementById('tWhy');
   if(S.wx==='live'||S.wx==='manual'){tw.textContent=whyFull;}
   else if(S.wx==='loading'){tw.textContent='секунду…';}
