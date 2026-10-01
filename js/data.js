@@ -35,6 +35,8 @@ function okFor(n,g){
 function candFor(key,m){
   const g=S.gender, all=(CAND[key]||[]).filter(n=>IMG[n]&&okFor(n,g));
   const age=m==null?ageMonthsExact():m;
+  // мальчику розового не предлагаем совсем (в том числе нейтральные вещи розоватого цвета)
+  if(g==='boy'&&typeof pinkish==='function'){const np=all.filter(n=>!pinkish(n)); if(np.length)all.splice(0,all.length,...np);}
   const fit=all.filter(n=>{const a=AGE[n];return !a||(age>=a[0]&&age<a[1]);});
   const l=(fit.length?fit:all).slice();
   const tag=g==='girl'?'g':(g==='boy'?'b':'_');

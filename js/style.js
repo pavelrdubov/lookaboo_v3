@@ -24,6 +24,11 @@ function colOf(id){
 /* нейтральные: молочный, белый, серый, бежевый — и из тёмных только тёмно-синий и графит
    (тёмно-бордовый, шоколадный — уже цвет) */
 function isNeutral(x){ return x.c<.13 || x.l>.9 || (x.l<.3&&x.c<.35&&(x.c<.15||(x.h>=190&&x.h<=250))); }
+/* розовый — пастельный и пыльно-розовый (и розоватая «карамель»); терракота и рыжий — не розовый */
+function isPinkC(x){ return x.c>=.1&&(x.h>=320||(x.h<=16&&x.l>=.55&&x.c<=.35)); }
+function isBlueC(x){ return x.c>=.1&&x.h>=185&&x.h<=250&&x.l>=.3; }
+const PINK_CACHE={};
+function pinkish(id){ if(!(id in PINK_CACHE))PINK_CACHE[id]=(COLOR[id]||[]).some(c=>isPinkC(hexHsl(c))); return PINK_CACHE[id]; }
 function hueDist(a,b){ const d=Math.abs(a-b)%360; return d>180?360-d:d; }
 /* насколько вещь «весит» в образе: верх и основная одежда — главное, аксессуары и игрушка — акцент */
 const LOOKW={ovWinter:1.3,ovDemi:1.3,ovFleece:1.2,jacket:1.2,vest:1,hat:.6,hatWarm:.6,panama:.6,socks:.5,mittens:.5,
@@ -57,6 +62,9 @@ function lookScore(ids,keys){
   // аксессуар перекликается по цвету с одеждой
   it.forEach(a=>{ if(a.w>=1||isNeutral(a))return;
     if(it.some(b=>b!==a&&b.w>=1&&!isNeutral(b)&&hueDist(a.h,b.h)<=25))s+=.6; });
+  // девочке голубое можно отдельными вещами, но не весь образ: голубого не больше половины одежды
+  if(S.gender==='girl'){ const cl=it.filter(x=>x.w>=1), all=cl.reduce((t,x)=>t+x.w,0);
+    const blue=cl.filter(isBlueC).reduce((t,x)=>t+x.w,0); if(all&&blue/all>.5)s-=3; }
   // слишком много цвета в целом
   const loud=chrom.reduce((t,x)=>t+x.w*Math.min(1,x.c*2),0);
   if(loud>2.5)s-=(loud-2.5);
