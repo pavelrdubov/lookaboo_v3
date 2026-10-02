@@ -42,12 +42,18 @@ function legsFilter(items){
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
 function lookItems(it){ return oneCloth(headFilter(legsFilter(carFilter(it)))); }
 /* голова: до +16 по ощущению малышу нужна шапочка, где бы он ни был (кроме тёплой машины) —
-   голова у него большая и отдаёт много тепла. Если в наборе шапки нет — добавляем по погоде */
+   голова у него большая и отдаёт много тепла. Толщину шапки подбираем по погоде и пишем словами;
+   в солнце и теплее +16 — панамка или чепчик от солнца */
 function headFilter(items){
-  const HEAD=['hat','hatWarm','panama'];
-  if(S.ctx==='car'||items.some(x=>HEAD.includes(x[0])))return items;
-  const t=airTemp(); if(t>16)return items;
-  return items.concat([t<=3?['hatWarm','тёплая шапка']:(t<=10?['hat','шапка']:['hat','тонкая шапочка'])]);
+  if(S.ctx==='car')return items;
+  const t=airTemp(), sunny=S.weather==='sun';
+  const want=t<=3?['hatWarm','тёплая шапка']:(t<=10?['hatWarm','шапка потолще, вязаная']
+    :(t<=16?['hat','тонкая шапочка или чепчик']:(sunny?['panama','панамка или чепчик — от солнца']:null)));
+  const at=items.findIndex(x=>x[0]==='hat'||x[0]==='hatWarm'||x[0]==='panama');
+  if(!want)return items;
+  if(at<0)return items.concat([want]);
+  if(t>16&&items[at][0]==='panama')return items;                  // панамка уже есть
+  const r=items.slice(); r[at]=want; return r;
 }
 /* пелёнка и плед вместе — две одинаковые «тряпочки» в образе: оставляем плед, вместо пелёнки — игрушка */
 function oneCloth(items){
