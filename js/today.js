@@ -15,12 +15,15 @@ const CTX={
    сидит открыто, ветер достаёт до ног. По умолчанию: до 6 месяцев люлька, потом прогулочная; можно выбрать в профиле */
 function strollerKind(){ const s=kid().stroller||'auto'; return s==='auto'?(ageMonths()<6?'cot':'seat'):s; }
 function ctxNow(){
+  // в слинге греется только тело: ножки, стопы и голова снаружи, на ветру. В холод тепло мамы почти не помогает
+  if(S.ctx==='sling'&&airTemp()<=10)return {d:+1,why:'в слинге греется только тело — ножки и голова на ветру'};
   if(S.ctx!=='stroller')return CTX[S.ctx];
   return strollerKind()==='cot'?{d:-2,why:'малыш лежит в люльке'}:{d:-4,why:'малыш сидит в прогулочной коляске'};
 }
 function setCtx(c){S.ctx=c;store.set('mpp-ctx',c);
   document.querySelectorAll('#ctxRow .c').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
   S.setIdx=0;paintMain();}
+function airTemp(){ return S.live?S.feels:S.temp; }
 function effTemp(){
   let e=(S.live?S.feels:S.temp);
   e+=ctxNow().d;
@@ -37,7 +40,15 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return oneCloth(legsFilter(carFilter(it))); }
+function lookItems(it){ return oneCloth(headFilter(legsFilter(carFilter(it)))); }
+/* голова: до +16 по ощущению малышу нужна шапочка, где бы он ни был (кроме тёплой машины) —
+   голова у него большая и отдаёт много тепла. Если в наборе шапки нет — добавляем по погоде */
+function headFilter(items){
+  const HEAD=['hat','hatWarm','panama'];
+  if(S.ctx==='car'||items.some(x=>HEAD.includes(x[0])))return items;
+  const t=airTemp(); if(t>16)return items;
+  return items.concat([t<=3?['hatWarm','тёплая шапка']:(t<=10?['hat','шапка']:['hat','тонкая шапочка'])]);
+}
 /* пелёнка и плед вместе — две одинаковые «тряпочки» в образе: оставляем плед, вместо пелёнки — игрушка */
 function oneCloth(items){
   if(!(items.some(x=>x[0]==='muslin')&&items.some(x=>x[0]==='blanket')))return items;
@@ -122,7 +133,7 @@ function paintMain(){
   if(insN&&set.it.some(x=>INSKEYS.includes(x[0])))tipTxt=insN;
   if(S.ctx==='car')tipTxt='Объёмный комбинезон в машину не надевают: под ремнями он сминается, и они не затянутся плотно. В салоне тепло — тонкие слои, ремни впритык. Согреть можно пледом поверх пристёгнутых ремней (не под спину и не за лямки) — и не закрывая лицо.';
   if(S.ctx==='stroller'&&strollerKind()==='seat'&&ef<=6)tipTxt='В прогулочной коляске ветер достаёт до ног — укройте ножки пледом или накидкой, даже если комбинезон тёплый.';
-  if(S.ctx==='sling')tipTxt='В слинге малыша греет ваше тело — проверяйте шею сзади, чтобы он не перегрелся под курткой.';
+  if(S.ctx==='sling')tipTxt=airTemp()<=10?'В слинге тело малыша греете вы, а ножки, стопы и голова — на ветру: они мёрзнут первыми. Ниже +10 застегните свою куртку поверх слинга или наденьте слингонакидку, на ножки — тёплые носки или пинетки.':'В слинге малыша греет ваше тело — проверяйте шею сзади, чтобы он не перегрелся под курткой.';
   tipTxt=personize(tipTxt);
   S.tipText=tipTxt;
   const tpEl=document.getElementById('tipText'); if(tpEl)tpEl.textContent=tipTxt;
