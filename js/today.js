@@ -62,10 +62,12 @@ function density(items){
     return x;
   });
 }
-/* штанишки без стопы — к ним носки (под комбинезоном со стопой не нужно) */
+/* штанишки без стопы — к ним носки. Под комбинезон на синтепоне (демисезонный, зимний) — тоже:
+   иначе это как обувь на голую ногу. Не нужны, только если стопу уже закрывает слип, ползунки
+   или флисовый комбинезон со стопой поверх штанишек */
 function socksFilter(items){
   if(!items.some(x=>x[0]==='pants')||items.some(x=>x[0]==='socks'))return items;
-  if(items.some(x=>['ovWinter','ovDemi','ovFleece','slip','slipKnit','footpants'].includes(x[0])))return items;
+  if(items.some(x=>['ovFleece','slip','slipKnit','footpants'].includes(x[0])))return items;
   if(effTemp()>22)return items;
   const at=items.findIndex(x=>x[0]==='pants'); const r=items.slice(); r.splice(at+1,0,['socks','носки']); return r;
 }
