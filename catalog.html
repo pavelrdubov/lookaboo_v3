@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Каталог картинок</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
+<!-- служебная страница: как записана каждая картинка (вид, пол, возраст, цвет).
+     Данные — из js/catalog.js, его собирает tools/catalog.py; в приложение страница не встроена -->
+<style>
+:root{--accent:#C4613C;--ink:#40372F;--ink-strong:#3B2E22;--muted:#8A7864;--cream:#FCF7F0;--card:#fff;--line:#EADFCF;--warn:#B0705A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-size:14px}
+header{background:var(--cream);border-bottom:1px solid var(--line);padding:12px 16px}
+h1{margin:0 0 2px;font-size:20px;font-weight:800;color:var(--ink-strong)}
+.sub{color:var(--muted);font-size:12px}
+.flt{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.flt select,.flt input{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);min-width:0}
+.flt input[type=search]{flex:1 1 140px}
+main{padding:12px 16px 40px;max-width:1200px;margin:0 auto}
+.miss{background:#fff;border:1px dashed #E3C9B8;border-radius:14px;padding:10px 12px;margin-bottom:14px;font-size:13px}
+.miss b{color:var(--warn)}
+h2{font-size:15px;font-weight:800;color:var(--ink-strong);margin:18px 0 8px;display:flex;align-items:baseline;gap:8px}
+h2 s{text-decoration:none;font-weight:700;color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.card{background:var(--card);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(90,74,58,.07);display:flex;flex-direction:column}
+.ph{display:block;aspect-ratio:1/1;background:#F6F1EA;background-image:linear-gradient(45deg,#EFE7DC 25%,transparent 25%,transparent 75%,#EFE7DC 75%),linear-gradient(45deg,#EFE7DC 25%,transparent 25%,transparent 75%,#EFE7DC 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.ph img{width:100%;height:100%;object-fit:contain;display:block}
+.inf{padding:8px 10px 10px;display:flex;flex-direction:column;gap:3px;font-size:12px}
+.inf b{font-size:13px;color:var(--ink-strong);line-height:1.25}
+.row{display:flex;flex-wrap:wrap;gap:4px}
+.tag{border-radius:999px;padding:1px 7px;font-weight:700;font-size:11px;background:#F4EFE6;color:#7A6A55}
+.tag.g{background:#FBE3E6;color:#A5566A}.tag.b{background:#DDE9F5;color:#3F6690}.tag.n{background:#E7F0E4;color:#4F7350}
+.tag.f{background:#F2E4CC;color:#8C6A2E}
+.sw{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.12);vertical-align:middle}
+.id{color:var(--muted);font-size:10.5px;word-break:break-all}
+.id a{color:inherit}
+.none{color:var(--muted);padding:30px 0;text-align:center}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--ink:#E8DFD3;--ink-strong:#F5EDE2;--muted:#A99A86;--cream:#1F1B17;--card:#2A2520;--line:#3A332C}
+  :root:not([data-theme="light"]) .flt select,:root:not([data-theme="light"]) .flt input,:root:not([data-theme="light"]) .miss{background:#2A2520;color:var(--ink)}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Каталог картинок</h1>
+  <div class="sub" id="sum"></div>
+  <div class="flt">
+    <input type="search" id="q" placeholder="Поиск: номер, вид, подпись">
+    <select id="fk"><option value="">Все виды</option></select>
+    <select id="fg"><option value="">Любой пол</option><option value="g">девочка</option><option value="b">мальчик</option><option value="n">нейтральное</option></select>
+    <select id="fa"><option value="">Любой возраст</option></select>
+  </div>
+</header>
+<main id="out"></main>
+<script src="js/catalog.js"></script>
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const kindRu=k=>(KIND_RU[k]||['',k])[1];
+  const ageTxt=a=>`${a[0]}–${a[1]} мес`;
+  const KINDS=Object.keys(KIND_RU).filter(k=>k!=='fancy'&&k!=='costume');
+
+  // фильтры
+  KINDS.forEach(k=>{const n=CATALOG.filter(c=>c.kinds.includes(k)).length;
+    $('fk').insertAdjacentHTML('beforeend',`<option value="${k}">${esc(kindRu(k))} (${n})</option>`);});
+  [0,1,2,3,4,5,6,7,8,9,10,11,12,18].forEach(m=>$('fa').insertAdjacentHTML('beforeend',`<option value="${m}">подходит в ${m} мес</option>`));
+
+  const card=c=>{
+    const main=c.kinds.filter(k=>k!=='fancy'&&k!=='costume');
+    const extra=c.kinds.filter(k=>k==='fancy'||k==='costume');
+    const cap=(c.id.split('__')[3]||'');
+    return `<div class="card">
+      <a class="ph" href="${esc(c.file)}" target="_blank" title="открыть картинку"><img src="${esc(c.file)}" alt="" loading="lazy"></a>
+      <div class="inf">
+        <b>${main.map(kindRu).map(esc).join(' / ')}</b>
+        <div class="row"><span class="tag ${c.g}">${esc(GENDER_RU[c.g]||c.g)}</span><span class="tag">${ageTxt(c.a)}</span>
+          ${extra.map(k=>`<span class="tag f">${esc(kindRu(k))}</span>`).join('')}</div>
+        <div class="row">${(c.c||[]).map(h=>`<span class="sw" style="background:${esc(h)}" title="${esc(h)}"></span>`).join('')}${cap?` <span class="id">№ ${esc(cap)}</span>`:''}</div>
+        <div class="id"><a href="${esc(c.file)}" target="_blank">${esc(c.file.replace(/^img\//,''))}</a></div>
+      </div></div>`;
+  };
+
+  function render(){
+    const q=$('q').value.trim().toLowerCase(), fk=$('fk').value, fg=$('fg').value, fa=$('fa').value;
+    const ok=c=>(!fk||c.kinds.includes(fk))&&(!fg||c.g===fg)
+      &&(fa===''||(+fa>=c.a[0]&&+fa<c.a[1]))
+      &&(!q||(c.id+' '+c.kinds.map(kindRu).join(' ')+' '+(GENDER_RU[c.g]||'')).toLowerCase().includes(q));
+    const list=CATALOG.filter(ok);
+    $('sum').textContent=`Всего ${CATALOG.length} картинок · показано ${list.length}. Нажмите на картинку, чтобы открыть её целиком (клетчатый фон — прозрачные места).`;
+
+    // каких видов нет совсем — чтобы было видно, что догрузить
+    const empty=KINDS.filter(k=>!CATALOG.some(c=>c.kinds.includes(k)));
+    const few=KINDS.filter(k=>CATALOG.filter(c=>c.kinds.includes(k)).length===1);
+    let html='';
+    if(!fk&&!fg&&fa===''&&!q){
+      html+=`<div class="miss">${empty.length?`<div><b>Нет картинок:</b> ${empty.map(kindRu).map(esc).join(', ')}.</div>`:''}`
+        +`${few.length?`<div style="margin-top:4px"><b>Всего по одной:</b> ${few.map(kindRu).map(esc).join(', ')}.</div>`:''}</div>`;
+    }
+    // по видам; вещь показываем в разделе её главного (первого) вида
+    const order=KINDS.concat(['fancy','costume']);
+    order.forEach(k=>{
+      const its=list.filter(c=>(c.kinds.find(x=>x!=='fancy'&&x!=='costume')||c.kinds[0])===k);
+      if(!its.length)return;
+      html+=`<h2>${esc(kindRu(k))} <s>${its.length}</s></h2><div class="grid">${its.map(card).join('')}</div>`;
+    });
+    $('out').innerHTML=html||'<div class="none">Ничего не нашлось</div>';
+  }
+  ['q','fk','fg','fa'].forEach(id=>$(id).addEventListener('input',render));
+  render();
+})();
+</script>
+</body>
+</html>

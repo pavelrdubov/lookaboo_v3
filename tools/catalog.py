@@ -223,7 +223,10 @@ def write_js(items):
     with open(OUT_JS, 'w', encoding='utf-8') as f:
         f.write('/* каталог картинок — СОБИРАЕТСЯ АВТОМАТИЧЕСКИ: python3 tools/catalog.py\n'
                 '   руками не править; как добавлять картинки — IMAGES.md */\n'
-                'const CATALOG=[\n' + rows + '\n];\n')
+                'const CATALOG=[\n' + rows + '\n];\n'
+                '/* подписи для страницы проверки каталога (catalog.html) */\n'
+                'const KIND_RU=' + json.dumps({k: [f, t] for k, (f, t) in KINDS.items()}, ensure_ascii=False) + ';\n'
+                'const GENDER_RU=' + json.dumps(GENDERS, ensure_ascii=False) + ';\n')
 
 
 def coverage(items):
