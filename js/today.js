@@ -42,7 +42,33 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return oneCloth(coverFilter(headFilter(legsFilter(legLayer(carFilter(it)))))); }
+function lookItems(it){ return oneCloth(coverFilter(headFilter(legsFilter(density(socksFilter(legLayer(carFilter(it)))))))); }
+/* насколько плотные нижние слои: зависит от погоды и от того, что сверху.
+   Под зимним комбинезоном можно потоньше, под одним флисом или демисезонным — потеплее */
+function density(items){
+  const top=['ovWinter','ovDemi','ovFleece','jacket'].find(k=>items.some(x=>x[0]===k));
+  const shift={ovWinter:6,ovDemi:3}[top]||0, v=effTemp()+shift;
+  const lv=v<=-6?2:(v<=9?1:0);                                      // 0 — тонкие, 1 — плотные, 2 — тёплые
+  const L={pants:['хлопковые штанишки','штанишки из футера','тёплые штанишки (начёс, флис)'],
+    cardigan:['тонкая кофта','плотная кофта','тёплая вязаная кофта'],
+    sweater:['тонкий свитшот','свитер','тёплый шерстяной свитер'],
+    slip:['хлопковый слип','слип из футера','тёплый слип (начёс)'],
+    footpants:['ползунки','плотные ползунки','тёплые ползунки']};
+  if(!top&&effTemp()>16)return items;                                // летом подписи из набора
+  return items.map(x=>{
+    if(L[x[0]])return [x[0],L[x[0]][lv]];
+    if(x[0]==='bodyL'&&lv===2)return ['bodyL','шерстяное боди'];
+    if(x[0]==='bodyL'&&lv<2&&/шерст/.test(x[1]))return ['bodyL','боди д/р'];
+    return x;
+  });
+}
+/* штанишки без стопы — к ним носки (под комбинезоном со стопой не нужно) */
+function socksFilter(items){
+  if(!items.some(x=>x[0]==='pants')||items.some(x=>x[0]==='socks'))return items;
+  if(items.some(x=>['ovWinter','ovDemi','ovFleece','slip','slipKnit','footpants'].includes(x[0])))return items;
+  if(effTemp()>22)return items;
+  const at=items.findIndex(x=>x[0]==='pants'); const r=items.slice(); r.splice(at+1,0,['socks','носки']); return r;
+}
 /* слои считаем и на теле, и на ножках: боди ножки не закрывает. Под комбинезон или куртку всегда
    что-то на ножки; в прохладу на ногах столько же слоёв, сколько на теле */
 const TORSO=['bodyL','bodyS','bodyT','wrap','wrapbody','tank','cardigan','sweater','slip','slipKnit','romper','dress','dungarees','ovFleece','ovDemi','ovWinter','jacket','vest'];
@@ -57,11 +83,14 @@ function legLayer(items){
   const top=OUTER.find(k=>items.some(x=>x[0]===k));
   const under=items.filter(x=>LEGS.includes(x[0])&&x[0]!==top).length;
   const t=S.ctx==='sling'?airTemp():effTemp(), c=layerCount(items);
-  const needed=top?under===0:(t<=14&&c.legs<c.torso&&c.legs<2);
+  const needed=top?under===0:(t<=14&&c.legs===0);           // без комбинезона — если ножки совсем ничем не закрыты
   if(!needed||items.some(x=>x[0]==='pants'||x[0]==='footpants'))return items;
-  const add=ageMonths()>=6?['pants','штанишки']:['footpants','ползунки'];
+  // с 3 месяцев — штанишки (и носки), раньше — ползунки со стопой
+  const add=ageMonths()>=3?['pants','штанишки']:['footpants','ползунки'];
   const at=items.findIndex(x=>!['bodyL','bodyS','bodyT','wrap','wrapbody','tank'].includes(x[0]));   // сразу после боди
-  const r=items.slice(); r.splice(at<0?r.length:at,0,add); return r;
+  const r=items.slice(); r.splice(at<0?r.length:at,0,add);
+  if(add[0]==='pants'&&!r.some(x=>x[0]==='socks'))r.splice(r.findIndex(x=>x[0]==='pants')+1,0,['socks','носки']);
+  return r;
 }
 /* в коляске до +16 малыш лежит без движения — пелёнки мало, нужен тонкий плед */
 function coverFilter(items){
