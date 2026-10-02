@@ -232,8 +232,25 @@ const SKY={
   dawn: {rain:['#7F8AA2','#D7B9A8'],snow:['#7C86B0','#E2C6C4'],sun:['#86A5CC','#F6C9A6'],cloud:['#93A7C2','#EFCDB8'],frost:['#6F80B2','#F1C3AE']},
   dusk: {rain:['#6F7392','#D2A08C'],snow:['#6A6E9E','#D9AFB3'],sun:['#6D6CA3','#F3A27C'],cloud:['#7C7DA6','#EDB08F'],frost:['#575C96','#EE9F80']}
 };
+/* подробности погоды для шапки: туман, морось, ливень, гроза, мокрый снег, снегопад, сильный ветер.
+   По коду погоды Open-Meteo; без живой погоды — только то, что выбрано вручную */
+function wxDetail(){
+  const c=S.live?S.wcode:null, K={45:'fog',48:'fog',51:'drizzle',53:'drizzle',55:'drizzle',56:'sleet',57:'sleet',
+    61:'rain',63:'rain',65:'heavy',66:'sleet',67:'sleet',71:'snow',73:'snow',75:'heavysnow',77:'snow',80:'shower',81:'shower',82:'heavy',
+    85:'snow',86:'heavysnow',95:'thunder',96:'thunder',99:'thunder'};
+  const kind=c!=null&&K[c]?K[c]:(S.weather==='rain'?'rain':(S.weather==='snow'?'snow':null));
+  const wind=(S.wind||0)>=10||(S.live&&(S.gust||0)>=15);
+  return {kind,wind};
+}
+const WXWORD={fog:'туман',drizzle:'морось',rain:'дождь',shower:'ливень',heavy:'сильный дождь',thunder:'гроза',sleet:'мокрый снег',snow:'снег',heavysnow:'снегопад'};
 function skyFor(w){
-  const ph=dayPhase(), c=(SKY[ph]||{})[w];
+  const ph=dayPhase(), dt=wxDetail();
+  if(dt.kind==='fog'||dt.kind==='thunder'){                      // туман — молочно-серое небо, гроза — тёмное
+    const F={fog:{day:['#A3ADB4','#D8DCDB'],dawn:['#A9A8B4','#E2CFC4'],dusk:['#9C98AA','#D9BDB0'],night:['#3A4258','#606A80']},
+             thunder:{day:['#4E5868','#8C96A2'],dawn:['#555A70','#A28F92'],dusk:['#4F4F6A','#9A8088'],night:['#1E2338','#3E4660']}}[dt.kind][ph];
+    return {grad:`linear-gradient(172deg,${F[0]},${F[1]})`, top:F[0], ph};
+  }
+  const c=(SKY[ph]||{})[w];
   if(!c){const sc=SCENES[w]||SCENES.cloud; return {grad:sc.grad, top:THEME[w]||'#A8C0D2', ph};}
   return {grad:`linear-gradient(172deg,${c[0]},${c[1]})`, top:c[0], ph};
 }

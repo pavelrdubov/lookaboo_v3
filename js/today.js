@@ -59,7 +59,7 @@ function paintMain(){
   const sc=SCENES[S.weather]||SCENES.cloud, sky=skyFor(S.weather);
   document.getElementById('wband').style.background=sky.grad;
   document.getElementById('bband').style.background=sc.band;
-  document.getElementById('wart').innerHTML=sceneArt(S.weather,sky.ph,seasonNow());
+  document.getElementById('wart').innerHTML=sceneArt(S.weather,sky.ph,seasonNow(),wxDetail());
 
   const m=ageMonths(), sz=sizeFor(heightNow()), k=kid();
   /* аватарка и имя в углу */
@@ -70,10 +70,11 @@ function paintMain(){
 
   const tT=document.getElementById('tTemp'), tF=document.getElementById('tFeels');
   document.getElementById('tPlace').textContent=S.city||'город не выбран';
-  const wind=S.wind>=5?` · ветер ${S.wind} м/с`:'';
+  const dt=wxDetail(), word=(dt.kind&&WXWORD[dt.kind])||sc.word;
+  const wind=S.wind>=10?` · сильный ветер ${S.wind} м/с`:(S.wind>=5?` · ветер ${S.wind} м/с`:'');
   if(S.wx==='live'){
     tT.textContent=(S.temp>0?'+':'')+S.temp+'°';
-    tF.textContent=sc.word+wind;
+    tF.textContent=word+wind;
   }else if(S.wx==='loading'){
     tT.textContent='…'; tF.textContent='ищем погоду';
   }else if(S.wx==='manual'){
@@ -277,8 +278,8 @@ function drawStage(set,sz){
 
 /* картинка в шапке: погода × время суток (рассвет, день, закат, ночь) × сезонные детали
    (осенью листья, зимой снежинки и сугроб, весной цветы, летом ромашки). Детали чуть меняются по дням */
-function sceneArt(w,ph,season){
-  ph=ph||'day';
+function sceneArt(w,ph,season,dt){
+  ph=ph||'day'; dt=dt||{};
   const night=ph==='night', low=ph==='dawn'||ph==='dusk';
   const svg='<svg width="390" height="244" viewBox="0 0 390 244" fill="none" style="position:absolute;left:0;top:0">';
   const day0=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,1))/864e5);
@@ -293,10 +294,25 @@ function sceneArt(w,ph,season){
   let a='';
 
   // небо и погода
-  if(w==='rain'||w==='snow'){
-    a+=clouds();
-    if(w==='rain')a+=`<g stroke="${night?'#A9BBD6':'#E9EEF1'}" stroke-width="3" stroke-linecap="round" opacity=".76"><path d="M262 98l-9 26M286 106l-9 26M310 116l-9 26M334 102l-9 26M358 118l-9 26M274 144l-7 18M322 156l-7 18M350 164l-7 18"></path></g>`;
-    else a+='<g fill="#fff" opacity=".92"><circle cx="266" cy="112" r="4"></circle><circle cx="300" cy="140" r="3.4"></circle><circle cx="338" cy="118" r="4.4"></circle><circle cx="356" cy="156" r="3.2"></circle><circle cx="242" cy="152" r="3.6"></circle><circle cx="286" cy="182" r="4"></circle><circle cx="322" cy="196" r="3"></circle><circle cx="204" cy="132" r="3"></circle><circle cx="180" cy="176" r="3.6"></circle><circle cx="252" cy="212" r="3.2"></circle></g>';
+  const k=dt.kind, wind=!!dt.wind;
+  const skew=wind?' transform="skewX(-28)" style="transform-origin:300px 140px"':'';                 // в ветер капли и снег летят косо
+  const drops=(x0,y0,n,len,op)=>{let o='';for(let q=0;q<n;q++){const x=x0+((q*37+day0*11)%150),y=y0+((q*53)%90);o+=`M${x} ${y}l-${(len*.35).toFixed(0)} ${len}`;}return `<path d="${o}" stroke="${night?'#A9BBD6':'#E9EEF1'}" stroke-width="${len>20?3:2.6}" stroke-linecap="round" opacity="${op}"></path>`;};
+  const flakes=(n,r0)=>{let o=`<g fill="#fff" opacity=".92">`;for(let q=0;q<n;q++)o+=`<circle cx="${(178+((q*41+day0*7)%200))}" cy="${(100+((q*29)%120))}" r="${(r0+((q*7)%3)*.6).toFixed(1)}"></circle>`;return o+'</g>';};
+  if(w==='rain'||w==='snow'||k==='fog'||k==='thunder'){
+    if(k==='thunder'){                                   // гроза: тяжёлые тёмные тучи и молния
+      a+=`<path d="M250 76a28 28 0 0 1 0-56 34 34 0 0 1 62 9 24 24 0 0 1 15 47z" fill="${night?'#4A536F':'#7E8896'}"></path><path d="M312 96a22 22 0 0 1 0-44 26 26 0 0 1 48 7 19 19 0 0 1 11 37z" fill="${night?'#5A6380':'#959EAA'}" opacity=".95"></path>`
+        +'<path d="M366 104l-14 30h12l-8 26 26-36h-13l9-20z" fill="#F7D46A"></path>'+`<g${skew}>${drops(250,104,7,24,.7)}</g>`;
+    }else if(k==='fog'){                                 // туман: размытые полосы
+      a+=clouds(.55)+'<g fill="#fff">'+[[236,70,170,.34],[256,104,150,.4],[228,138,180,.42],[248,172,160,.46]].map(([x,y,wd,o])=>`<rect x="${x}" y="${y}" width="${wd}" height="16" rx="8" opacity="${o}"></rect>`).join('')+'</g>';
+    }else{
+      a+=clouds();
+      if(k==='drizzle')a+=`<g fill="${night?'#A9BBD6':'#E9EEF1'}" opacity=".8"${skew}>`+Array.from({length:16},(_,q)=>`<circle cx="${178+((q*41+day0*5)%200)}" cy="${104+((q*29)%100)}" r="1.6"></circle>`).join('')+'</g>';
+      else if(k==='heavy'||k==='shower')a+=`<g${skew}>${drops(240,98,14,26,.8)}${drops(200,140,8,22,.6)}</g>`;
+      else if(k==='sleet')a+=`<g${skew}>${drops(240,100,6,20,.7)}</g>`+flakes(6,3);
+      else if(k==='heavysnow')a+=`<g${skew}>${flakes(22,3.4)}</g>`;
+      else if(w==='snow'||k==='snow')a+=`<g${skew}><g fill="#fff" opacity=".92"><circle cx="266" cy="112" r="4"></circle><circle cx="300" cy="140" r="3.4"></circle><circle cx="338" cy="118" r="4.4"></circle><circle cx="356" cy="156" r="3.2"></circle><circle cx="242" cy="152" r="3.6"></circle><circle cx="286" cy="182" r="4"></circle><circle cx="322" cy="196" r="3"></circle><circle cx="204" cy="132" r="3"></circle><circle cx="180" cy="176" r="3.6"></circle><circle cx="252" cy="212" r="3.2"></circle></g></g>`;
+      else a+=`<g stroke="${night?'#A9BBD6':'#E9EEF1'}" stroke-width="3" stroke-linecap="round" opacity=".76"${skew}><path d="M262 98l-9 26M286 106l-9 26M310 116l-9 26M334 102l-9 26M358 118l-9 26M274 144l-7 18M322 156l-7 18M350 164l-7 18"></path></g>`;
+    }
   }else if(night){
     a+=stars(w==='cloud'?7:13)+moon;
     if(w==='cloud')a+='<path d="M214 118a22 22 0 0 1 0-44 27 27 0 0 1 49 7 18 18 0 0 1 12 37z" fill="#6C789F" opacity=".85"></path><path d="M318 128a20 20 0 0 1 0-40 24 24 0 0 1 44 6 16 16 0 0 1 11 34z" fill="#7D88AD" opacity=".75"></path>';
@@ -317,6 +333,7 @@ function sceneArt(w,ph,season){
       +'<g stroke="#fff" stroke-width="3.4" stroke-linecap="round" opacity=".6"><path d="M176 156c24-11 48 7 72-3M206 182c22-10 44 6 66-3"></path></g>';
   }
 
+  if(wind)a+=`<g stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none" opacity="${night?.5:.9}"><path d="M236 104c26-5 52 3 80-2 12-3 16-14 5-16-7-1-10 6-4 9"></path><path d="M262 128c30-4 62 4 100-3"></path><path d="M244 152c24-4 46 3 70-1 11-2 14-12 5-14-6 0-8 5-4 7"></path></g>`;   // сильный ветер — порывы
   // сезонные детали: по краям, чтобы не мешать тексту
   const dim=night?.55:1;
   const hill=c=>`<path d="M0 244c0-26 18-44 40-44-10 16-4 32 10 44z" fill="${c}" opacity="${.6*dim}"></path>`;

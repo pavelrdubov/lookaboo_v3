@@ -83,7 +83,7 @@ async function fetchWeather(lat,lon,skipGeo){
   if(!skipGeo)reverseGeo(lat,lon);
   try{
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
-      +`&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code`
+      +`&current=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,weather_code`
       +`&wind_speed_unit=ms&timezone=auto`;
     const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),9000);
     const r=await fetch(u,{signal:ctl.signal}); clearTimeout(tm);
@@ -93,6 +93,7 @@ async function fetchWeather(lat,lon,skipGeo){
     S.temp=Math.round(c.temperature_2m);
     S.feels=Math.round(c.apparent_temperature);
     S.wind=Math.round(c.wind_speed_10m);
+    S.gust=Math.round(c.wind_gusts_10m||0); S.wcode=c.weather_code;
     S.weather=codeToScene(c.weather_code,S.temp);
     S.live=true; S.wx='live';
     const tr=document.getElementById('trange'); if(tr)tr.value=S.temp;
