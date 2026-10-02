@@ -45,7 +45,10 @@ function candFor(key,m){
   const fit=all.filter(n=>{const a=AGE[n];return !a||(age>=a[0]&&age<a[1]);});
   const l=(fit.length?fit:all).slice();
   const tag=g==='girl'?'g':(g==='boy'?'b':'_');
-  const score=n=>(GT[n]===tag?2:0)-(FANCY[n]?3:0);
+  // девочковые и мальчиковые вещи не задвигают нейтральные: чуть выше в списке, но вперемешку.
+  // Порядок внутри — постоянный «случайный» (по имени), чтобы в подбор попадали разные вещи
+  const hs=n=>{let h=0;for(const ch of n)h=(h*31+ch.charCodeAt(0))|0;return (h>>>0)%1000/1000;};
+  const score=n=>(GT[n]===tag?.3:0)-(FANCY[n]?3:0)+hs(n);
   l.sort((a,b)=>score(b)-score(a));
   return l.length?l:(CAND[src]||[]).filter(n=>IMG[n]).slice(0,1);
 }

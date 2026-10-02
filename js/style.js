@@ -63,9 +63,12 @@ function lookScore(ids,keys){
   // аксессуар перекликается по цвету с одеждой
   it.forEach(a=>{ if(a.w>=1||isNeutral(a))return;
     if(it.some(b=>b!==a&&b.w>=1&&!isNeutral(b)&&hueDist(a.h,b.h)<=25))s+=.6; });
-  // девочке голубое можно отдельными вещами, но не весь образ: голубого не больше половины одежды
+  // девочке голубое можно отдельными вещами, но не весь образ: голубого не больше половины одежды.
+  // И розового тоже не больше половины — нейтральная база (молочный, беж, серый, шалфей) смотрится стильнее
   if(S.gender==='girl'){ const cl=it.filter(x=>x.w>=1), all=cl.reduce((t,x)=>t+x.w,0);
-    const blue=cl.filter(isBlueC).reduce((t,x)=>t+x.w,0); if(all&&blue/all>.5)s-=3; }
+    const blue=cl.filter(isBlueC).reduce((t,x)=>t+x.w,0); if(all&&blue/all>.5)s-=3;
+    const pink=cl.filter(isPinkC).reduce((t,x)=>t+x.w,0); if(all&&pink/all>.5)s-=2.5;
+    const pinkAcc=it.filter(x=>x.w<1&&isPinkC(x)).length; if(pinkAcc>1&&pink>0)s-=1; }
   // два комбинезона почти одного цвета рядом выглядят как одна вещь дважды
   const OV=['ovWinter','ovDemi','ovFleece','jacket','slip','slipKnit'];
   for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++){
