@@ -40,13 +40,21 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return oneCloth(headFilter(legsFilter(carFilter(it)))); }
+function lookItems(it){ return oneCloth(coverFilter(headFilter(legsFilter(carFilter(it))))); }
+/* в коляске до +16 малыш лежит без движения — пелёнки мало, нужен тонкий плед */
+function coverFilter(items){
+  if(S.ctx!=='stroller'||effTemp()>16||items.some(x=>x[0]==='blanket'))return items;
+  const cov=swaddleFor(effTemp()), at=items.findIndex(x=>x[0]==='muslin');
+  if(at<0)return items.concat([cov]);
+  const r=items.slice(); r[at]=cov; return r;
+}
 /* голова: до +16 по ощущению малышу нужна шапочка, где бы он ни был (кроме тёплой машины) —
    голова у него большая и отдаёт много тепла. Толщину шапки подбираем по погоде и пишем словами;
    в солнце и теплее +16 — панамка или чепчик от солнца */
 function headFilter(items){
   if(S.ctx==='car')return items;
-  const t=airTemp(), sunny=S.weather==='sun';
+  // в слинге голова снаружи — смотрим на воздух; в коляске — на то, как ощущается малышу
+  const t=S.ctx==='sling'?airTemp():effTemp(), sunny=S.weather==='sun';
   const want=t<=3?['hatWarm','тёплая шапка']:(t<=10?['hatWarm','шапка потолще, вязаная']
     :(t<=16?['hat','тонкая шапочка или чепчик']:(sunny?['panama','панамка или чепчик — от солнца']:null)));
   const at=items.findIndex(x=>x[0]==='hat'||x[0]==='hatWarm'||x[0]==='panama');
