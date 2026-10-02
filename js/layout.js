@@ -72,6 +72,16 @@ function solveLayout(items,tpl,W,H,arch,noteKeys,swapTo){
   // запасной ход: вещь с первой пометкой — в слот swapTo (главную вещь с места не сдвигаем)
   if(swapTo!=null&&noteKeys&&noteKeys.length){ const pos=order.findIndex(ii=>items[ii].key===noteKeys[0]);
     if(pos>0&&swapTo!==pos&&swapTo<order.length&&swapTo<slots.length){const t=order[pos];order[pos]=order[swapTo];order[swapTo]=t;} }
+  /* высокие вещи (штанишки, ползунки, слип) в верхний угол под аркой не ставим — их там обрезает
+     и они «уезжают»; меняем местами с плоской вещью (плед, пелёнка, шапка, носки) из середины */
+  const corner=sl=>sl&&sl.y<.36&&(sl.x<.3||sl.x>.7);
+  const TALL=['pants','footpants','slip','slipKnit','dungarees'], FLATK=['blanket','muslin','hat','hatWarm','panama','socks','mittens','toy'];
+  order.forEach((ii,rank)=>{
+    if(rank===0||!TALL.includes(items[ii].key)||!corner(slots[Math.min(rank,slots.length-1)]))return;
+    const q=order.findIndex((jj,r2)=>r2>0&&r2<slots.length&&FLATK.includes(items[jj].key)&&!corner(slots[r2])&&!(noteKeys||[]).includes(items[jj].key));
+    const q2=q>=0?q:order.findIndex((jj,r2)=>r2>0&&r2<slots.length&&!TALL.includes(items[jj].key)&&!corner(slots[r2])&&!(noteKeys||[]).includes(items[jj].key));
+    if(q2>=0){const t=order[rank];order[rank]=order[q2];order[q2]=t;}
+  });
   const R=items.map(()=>null);
   order.forEach((ii,rank)=>{
     const it=items[ii], sl=slots[Math.min(rank,slots.length-1)], bx=BOX[it.src]||{b:[0,0,1,1],r:1};
