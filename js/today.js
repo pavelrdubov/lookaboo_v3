@@ -43,15 +43,20 @@ function legsFilter(items){
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
 function lookItems(it){ return oneCloth(coverFilter(headFilter(legsFilter(legLayer(carFilter(it)))))); }
-/* слои считаем и на теле, и на ножках: боди ножки не закрывает. В прохладу под комбинезон —
-   ползунки или штанишки, чтобы на ногах было столько же слоёв, сколько на теле */
+/* слои считаем и на теле, и на ножках: боди ножки не закрывает. Под комбинезон или куртку всегда
+   что-то на ножки; в прохладу на ногах столько же слоёв, сколько на теле */
 const TORSO=['bodyL','bodyS','bodyT','wrap','wrapbody','tank','cardigan','sweater','slip','slipKnit','romper','dress','dungarees','ovFleece','ovDemi','ovWinter','jacket','vest'];
 const LEGS=['slip','slipKnit','footpants','pants','dungarees','ovFleece','ovDemi','ovWinter'];
 function layerCount(items){ const t=items.filter(x=>TORSO.includes(x[0])&&x[0]!=='vest').length, l=items.filter(x=>LEGS.includes(x[0])).length;
   return {torso:t, legs:l, n:Math.max(t,l)}; }
 function legLayer(items){
-  const t=S.ctx==='sling'?airTemp():effTemp(); if(t>14)return items;
-  const c=layerCount(items); if(c.legs>=c.torso||c.legs>=2||items.some(x=>x[0]==='pants'||x[0]==='footpants'))return items;
+  // под любой комбинезон или куртку — что-то на ножки: слип, ползунки или штанишки (а не голые ноги под флисом)
+  const OUTER=['ovFleece','ovDemi','ovWinter','jacket'], BASE=['slip','slipKnit','footpants','pants','dungarees'];
+  const hasBase=items.some(x=>BASE.includes(x[0]));
+  if(hasBase)return items;
+  const t=S.ctx==='sling'?airTemp():effTemp(), c=layerCount(items);
+  const needed=items.some(x=>OUTER.includes(x[0]))||(t<=14&&c.legs<c.torso);
+  if(!needed)return items;
   const add=ageMonths()>=6?['pants','штанишки']:['footpants','ползунки'];
   const at=items.findIndex(x=>!['bodyL','bodyS','bodyT','wrap','wrapbody','tank'].includes(x[0]));   // сразу после боди
   const r=items.slice(); r.splice(at<0?r.length:at,0,add); return r;
