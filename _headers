@@ -1,0 +1,17 @@
+# Cloudflare Pages: код и разметку браузер каждый раз сверяет с сервером (быстро, по ETag) —
+# иначе телефон держит старый js/catalog.js, а картинки по новым путям уже другие
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/catalog.html
+  Cache-Control: no-cache
+/js/*
+  Cache-Control: no-cache
+/css/*
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
+# картинки меняются вместе с именем файла — их можно держать неделю
+/img/*
+  Cache-Control: public, max-age=604800

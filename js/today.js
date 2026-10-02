@@ -288,7 +288,7 @@ function drawStage(set,sz){
     html+=`<div class="gitem" ${tap} style="left:${Math.round(SIDE+r.left)}px;top:${Math.round(r.top)}px;`
       +`width:${Math.round(r.iw)}px;height:${Math.round(r.ih)}px;transform-origin:${Math.round(r.ox)}px ${Math.round(r.oy)}px;`
       +`transform:rotate(${r.rot}deg);z-index:${r.z}">`
-      +`<img src="${r.src}" alt="" style="width:100%;height:100%;max-width:none;max-height:none;filter:${SHADOW}${lack?';opacity:.5':''}">`
+      +`<img src="${r.src}" alt="" onerror="this.parentNode.style.display='none'" style="width:100%;height:100%;max-width:none;max-height:none;filter:${SHADOW}${lack?';opacity:.5':''}">`
       +`${lack?`<div class="gap">нет в ${sz}</div>`:''}${inW?'<div class="heart">♥</div>':''}</div>`;
   });
   /* пометки-выноски: только то, чего не видно на картинке (js/layout.js) */
