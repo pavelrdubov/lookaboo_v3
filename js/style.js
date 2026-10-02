@@ -129,6 +129,9 @@ function bestLooks(keys){
 /* картинки для образа + список без вещей, для которых картинок пока нет.
    Одна вещь в образе смотрится одиноко — в прохладу добавляем носочки, если есть картинка */
 function lookWithImgs(list){
+  // на картинке не больше 5 вещей — так они крупнее; мелочь (носки, варежки, игрушка, пелёнка) остаётся в строке под образом
+  const DROP=['socks','mittens','toy','muslin','blanket'];
+  for(const k of DROP){ if(list.length<=5)break; if(S.ctx==='car'&&k==='blanket')continue; list=list.filter(x=>x[0]!==k); }
   let L=lookImgs(list.map(x=>x[0]));
   let out=list.filter(x=>L[x[0]]);
   if(out.length<2&&effTemp()<22&&!out.some(x=>x[0]==='socks')&&pickImg('socks'))out.push(['socks','носочки']);

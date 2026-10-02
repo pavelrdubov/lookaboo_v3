@@ -32,7 +32,7 @@ function layoutLook(items,W,H,seed,notes,arch){
       // первая пометка может чуть уменьшить коллаж; следующие — только в готовой раскладке и не на другие пометки
       const obst=placed.map(q=>({x:q.x+q.w/2,y:q.y+q.h/2,w:q.w,h:q.h}));
       let p=null;
-      for(let k=1;k>=.8&&!p;k-=.04){ if(k<1&&placed.length)break;
+      for(let k=1;k>=.88&&!p;k-=.04){ if(k<1&&placed.length)break;
         const S2=k<1?scaleRects(R,k,W,H):R; p=fitNote(S2,nt,W,H,arch,obst); if(p)R=S2; }
       if(p)placed.push(p);
     }
@@ -170,8 +170,9 @@ function fitNoteAt(R,nt,W,H,arch,obst){
   const m=R.find(r=>r.key===nt.key); if(!m)return null;
   const M=6, PAD=5, BOT=22, fs=nt.fs;              // BOT — нижняя полоса под кнопками
   const cw=.44, lh=1.12;                            // Caveat ≈ 0,39–0,42 em на символ — берём с запасом
-  const full=nt.text.length*fs*cw+8, maxW=W*.5, lines=Math.min(2,Math.ceil(full/maxW));   // длинное — в две строки
-  const w=Math.min(maxW,full), h=fs*lh*lines+2;
+  const full=nt.text.length*fs*cw+8, maxW=W*.5, lines=Math.ceil(full/maxW);   // длинное — в две строки
+  if(lines>2)return null;                           // в три строки не пишем — пусть шрифт будет мельче
+  const w=lines>1?Math.min(maxW,full/2*1.22+10):Math.min(maxW,full), h=fs*lh*lines+2;   // две строки — поровну, без «висящего» слова
   const L=m.x-m.w/2, Rr=m.x+m.w/2, T=m.y-m.h/2, B=m.y+m.h/2, g=fs*.45;
   /* другие вещи для проверки стрелки — «ужатые» на 15% с каждой стороны: вещи не прямоугольные,
      и касание по краю допустимо, а сквозь вещь — нет */
