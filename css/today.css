@@ -127,3 +127,5 @@
 #tabs .bdg{position:absolute;top:7px;right:calc(50% - 20px);min-width:16px;height:16px;border-radius:999px;
   background:var(--accent);color:#fff;font-size:9.5px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px}
 #tabs .bdg.on{display:flex}
+
+.gempty{position:absolute;left:24px;right:24px;top:40%;text-align:center;font-family:'Caveat',cursive;font-size:24px;color:#A9987F}

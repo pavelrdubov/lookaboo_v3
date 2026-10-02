@@ -92,7 +92,7 @@ function wlRender(){
       const keep=inList(w);
       return `<div class="wi${keep?'':' off'}">
         <div class="bx2" onclick="wishKeep('${id}')">${keep?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"></path></svg>':''}</div>
-        ${w.img?`<img src="${w.img}" alt="" onclick="waOpen('${id}')">`:''}
+        ${w.img?`<img src="${w.img}" alt="" onclick="waOpen('${id}')" onerror="this.remove()">`:''}
         <div class="t" onclick="waOpen('${id}')"><b>${esc2(w.label)}</b><s>${esc2(sub)||'нажмите, чтобы изменить'}</s></div>
         <button class="del" onclick="wishDel('${id}')">×</button>
       </div>`;}).join('')
@@ -162,7 +162,7 @@ function waRender(){
   const grid=cat.it.map(([k,l])=>{
     const direct=!!IMG[k];
     return `<button class="${WA.key===k?'on':''}" onclick="waPick('${k}','${l.replace(/'/g,'')}',${direct?1:0})">
-      <img src="${direct?IMG[k]:pickImg(k,0)}" alt=""><span>${l}</span></button>`;}).join('');
+      <img src="${direct?IMG[k]:pickImg(k,0)}" alt="" onerror="this.style.visibility='hidden'"><span>${l}</span></button>`;}).join('');
   const szs=SIZES.slice(0,9).map(s=>`<button class="${WA.size===s?'on':''}" onclick="waSize(${s})">${s}</button>`).join('');
 
   document.getElementById('waBody').innerHTML=`
@@ -263,7 +263,7 @@ function renderShared(d){
       let img='';
       if(w.k){try{img=IMG[w.k]||pickImg(w.k)||'';}catch(e){img='';}}
       const sub=[szTxt(w.s),(w.q>1?'×'+w.q:''),w.n||''].filter(Boolean).join(' · ');
-      return `<div class="shwi">${img?`<img src="${img}" alt="">`:'<div class="shph">♡</div>'}`
+      return `<div class="shwi">${img?`<img src="${img}" alt="" onerror="this.style.visibility='hidden'">`:'<div class="shph">♡</div>'}`
         +`<div class="sht"><b>${esc2(expandAbbr(w.l))}</b>${sub?`<s>${esc2(sub)}</s>`:''}</div></div>`;
     }).join('')
   ).join('');

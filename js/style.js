@@ -82,27 +82,41 @@ function lookImgs(keys){
   if(!LOOK_CACHE[ck])LOOK_CACHE[ck]=bestLooks(keys);
   const looks=LOOK_CACHE[ck];
   const pick=looks.length?looks[variant%looks.length]:[];
-  const out={}; keys.forEach((k,i)=>{out[k]=pick[i]?IMG[pick[i]]:pickImg(k);});
+  const out={}; keys.forEach((k,i)=>{out[k]=pick[i]?IMG[pick[i]]:(pickImg(k)||'');});
   return LASTLOOK=out;
 }
 function bestLooks(keys){
-  let lists=keys.map(k=>{const l=candFor(k), daily=l.filter(id=>!FANCY[id]); return (daily.length?daily:l).slice(0,8);});
-  if(lists.some(l=>!l.length))return [];
+  // виды без картинок пропускаем: сочетание подбираем по тем вещам, что есть
+  const all0=keys.map(k=>{const l=candFor(k).filter(id=>IMG[id]), daily=l.filter(id=>!FANCY[id]); return (daily.length?daily:l).slice(0,8);});
+  const at=keys.map((k,i)=>i).filter(i=>all0[i].length);
+  if(!at.length)return [];
+  let lists=at.map(i=>all0[i]); const ks=at.map(i=>keys[i]);
   // ограничиваем перебор: урезаем самые длинные списки
   const prod=()=>lists.reduce((p,l)=>p*l.length,1);
   while(prod()>20000){let mi=0;lists.forEach((l,i)=>{if(l.length>lists[mi].length)mi=i;});lists[mi]=lists[mi].slice(0,lists[mi].length-1);}
   const all=[]; const cur=[];
   (function walk(i){
-    if(i===lists.length){all.push({ids:cur.slice(),s:lookScore(cur,keys)});return;}
+    if(i===lists.length){all.push({ids:cur.slice(),s:lookScore(cur,ks)});return;}
     for(const id of lists[i]){cur[i]=id;walk(i+1);}
   })(0);
   all.sort((a,b)=>b.s-a.s);
   // 4 лучших, заметно отличающихся друг от друга (хотя бы половина вещей — другие)
-  const need=Math.max(1,Math.ceil(keys.length/2)), picked=[];
+  const need=Math.max(1,Math.ceil(ks.length/2)), picked=[];
   for(const c of all){
     if(picked.length>=4)break;
     if(picked.every(p=>p.ids.filter((id,i)=>id!==c.ids[i]).length>=need))picked.push(c);
   }
   for(const c of all){ if(picked.length>=4)break; if(!picked.includes(c))picked.push(c); }
-  return picked.map(c=>c.ids);
+  // обратно в порядок keys: у видов без картинок — пусто
+  return picked.map(c=>{const r=keys.map(()=>null); at.forEach((i,j)=>{r[i]=c.ids[j];}); return r;});
+}
+
+/* картинки для образа + список без вещей, для которых картинок пока нет.
+   Одна вещь в образе смотрится одиноко — в прохладу добавляем носочки, если есть картинка */
+function lookWithImgs(list){
+  let L=lookImgs(list.map(x=>x[0]));
+  let out=list.filter(x=>L[x[0]]);
+  if(out.length<2&&effTemp()<22&&!out.some(x=>x[0]==='socks')&&pickImg('socks'))out.push(['socks','носочки']);
+  if(out.length!==list.length)L=lookImgs(out.map(x=>x[0]));
+  return {list:out,LOOK:L};
 }

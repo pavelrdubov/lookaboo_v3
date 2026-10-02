@@ -56,7 +56,7 @@ function wdRender(){
         : (have===0 ? `нет · обычно берут ${norm}`
         : (short>0 ? `есть ${have} · обычно ${norm}` : `есть ${have} · хватает`));
       return `<div class="wrow2">
-        <img src="${pickImg(key,0)}" alt="">
+        <img src="${pickImg(key,0)}" alt="" onerror="this.style.visibility='hidden'">
         <div class="t"><b>${label}</b><s class="${short>0?'need':''}">${note}</s></div>
         <div class="cnt">
           <button onclick="wdBump('${key}',-1)">−</button>

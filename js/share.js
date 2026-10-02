@@ -220,11 +220,11 @@ async function renderLookPNG(){
   if(items.length<2)items.push(swaddleFor(effTemp()));
   const heroes=items.filter(i=>!NOTLAYER.includes(i[0]));
   const acc=items.filter(i=>NOTLAYER.includes(i[0]));
-  let ordered=heroes.concat(acc).slice(0,6);
-  if(!heroes.length)ordered=items.slice(0,6);
+  let ordered0=heroes.concat(acc).slice(0,6);
+  if(!heroes.length)ordered0=items.slice(0,6);
   const padX=44,padY=34;
   const BW=AW-padX*2, BH=AH-padY*2;
-  const LOOK=lookImgs(ordered.map(x=>x[0]));
+  const {list:ordered,LOOK}=lookWithImgs(ordered0);
   const noteFs=Math.max(40,Math.min(52,Math.min(BW,BH)*0.08));
   /* та же раскладка и та же пометка, что на экране (js/layout.js) */
   const NOTES=pickNotes(ordered,effTemp(),S.setIdx).map(n=>Object.assign({fs:n.style==='fact'?noteFs*.86:noteFs},n));

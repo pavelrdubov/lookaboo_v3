@@ -169,7 +169,7 @@ function evRender(){
     const on=!!WISH[id];
     const isz=direct?sz:sizeForItem(k,em,sz);
     return `<div class="evcell${on?' in':''}" onclick="evWish('${k}','${String(label).replace(/'/g,'')}',${direct?1:0})">
-      ${src?`<img src="${src}" alt="">`:'<div class="ph">♡</div>'}
+      ${src?`<img src="${src}" alt="" onerror="this.remove()">`:'<div class="ph">♡</div>'}
       <b>${label}</b>${isz?`<s>${szTxt(isz)}</s>`:''}
       ${on?'<div class="heart" style="right:4px;top:4px">♥</div>':''}
     </div>`;}).join('');

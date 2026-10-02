@@ -21,6 +21,7 @@ const BOX={}; CATALOG.forEach(c=>{BOX[c.file]={b:c.b||[0,0,1,1],r:c.r||1};});
    Возвращает вещи (rects) и rects.notes — где стоят пометки. */
 const LAYOUT_CACHE={};
 function layoutLook(items,W,H,seed,notes,arch){
+  if(!items.length){const e=[];e.notes=[];return e;}            // картинок для образа пока нет
   const n=Math.min(6,Math.max(2,items.length)), tpls=MAGV[n]||MAGV[4], tpl=tpls[seed%tpls.length];
   const ck=[items.map(i=>i.src).join(','),Math.round(W),Math.round(H),seed%tpls.length,(notes||[]).map(x=>x.key+x.text+x.fs).join(';'),arch&&arch.r].join('|');
   if(LAYOUT_CACHE[ck])return LAYOUT_CACHE[ck];

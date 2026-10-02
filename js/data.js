@@ -32,8 +32,13 @@ function okFor(n,g){
 }
 /* картинки для вещи: свой пол + нейтральные, подходящие по возрасту; нарядное — в конец.
    m — возраст в месяцах (по умолчанию сейчас). Нет подходящих по возрасту — берём без учёта возраста */
+/* пока картинок какого-то вида нет — показываем похожую вещь (подпись остаётся своя) */
+const SUBST={bodyT:['bodyS'],tank:['bodyS'],wrap:['bodyL'],wrapbody:['bodyL','bodyS'],footpants:['pants'],
+  romper:['bodyS'],ovWinter:['ovDemi','ovFleece'],ovDemi:['ovFleece'],slipKnit:['slip']};
 function candFor(key,m){
-  const g=S.gender, all=(CAND[key]||[]).filter(n=>IMG[n]&&okFor(n,g));
+  const g=S.gender;
+  let src=key; if(!(CAND[key]||[]).some(n=>IMG[n]))src=(SUBST[key]||[]).find(k=>(CAND[k]||[]).some(n=>IMG[n]))||key;
+  const all=(CAND[src]||[]).filter(n=>IMG[n]&&okFor(n,g));
   const age=m==null?ageMonthsExact():m;
   // мальчику розового не предлагаем совсем (в том числе нейтральные вещи розоватого цвета)
   if(g==='boy'&&typeof pinkish==='function'){const np=all.filter(n=>!pinkish(n)); if(np.length)all.splice(0,all.length,...np);}
@@ -42,11 +47,11 @@ function candFor(key,m){
   const tag=g==='girl'?'g':(g==='boy'?'b':'_');
   const score=n=>(GT[n]===tag?2:0)-(FANCY[n]?3:0);
   l.sort((a,b)=>score(b)-score(a));
-  return l.length?l:(CAND[key]||[]).slice(0,1);
+  return l.length?l:(CAND[src]||[]).filter(n=>IMG[n]).slice(0,1);
 }
 function pickImg(key,v,m){
   const l=candFor(key,m); if(!l.length)return '';
-  return IMG[l[((v||0)%l.length+l.length)%l.length]]||IMG[l[0]];
+  return IMG[l[((v||0)%l.length+l.length)%l.length]]||IMG[l[0]]||'';
 }
 
 /* медианный рост по ВОЗ (length-for-age, 50-й перцентиль), см */

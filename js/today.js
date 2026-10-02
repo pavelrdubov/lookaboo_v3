@@ -226,10 +226,10 @@ function drawStage(set,sz){
 
   const heroes=items.filter(x=>!NOTLAYER.includes(x[0]));
   const acc   =items.filter(x=>NOTLAYER.includes(x[0]));
-  let list=heroes.concat(acc).slice(0,6);
-  if(!heroes.length)list=items.slice(0,6);
+  let list0=heroes.concat(acc).slice(0,6);
+  if(!heroes.length)list0=items.slice(0,6);
 
-  const LOOK=lookImgs(list.map(x=>x[0]));      // картинки подобраны по сочетанию цветов
+  const {list,LOOK}=lookWithImgs(list0);       // картинки подобраны по сочетанию цветов
   const SHADOW='drop-shadow(6px 12px 15px rgba(90,74,58,.26))';
   const noteFs=Math.max(19,Math.min(24,Math.min(B.w,B.h)*0.072));
   /* раскладка по правилам (js/layout.js); по бокам место под стрелки */
@@ -257,6 +257,7 @@ function drawStage(set,sz){
       +`</svg>`
       +notes.map(n=>`<div class="gnote" style="left:${Math.round(SIDE+n.x)}px;top:${Math.round(n.y)}px;width:${Math.round(n.w)}px;font-size:${n.fs.toFixed(1)}px">${n.text}</div>`).join('');
   }
+  if(!rects.length)html='<div class="gempty">Картинки к этому образу скоро добавим</div>';
   st.innerHTML=html;
 }
 
