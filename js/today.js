@@ -339,5 +339,44 @@ function sceneArt(w,ph,season){
     const dz=(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})" opacity="${dim}">${[0,45,90,135,180,225,270,315].map(d=>`<ellipse cx="${(4.6*Math.cos(d*Math.PI/180)).toFixed(1)}" cy="${(4.6*Math.sin(d*Math.PI/180)).toFixed(1)}" rx="2.6" ry="1.5" transform="rotate(${d} ${(4.6*Math.cos(d*Math.PI/180)).toFixed(1)} ${(4.6*Math.sin(d*Math.PI/180)).toFixed(1)})" fill="#fff"></ellipse>`).join('')}<circle r="2.2" fill="#F2B33C"></circle></g>`;
     a+=dz(18,224,1)+dz(40,234,.8);
   }
+  a+=holidayArt(holidayNow(),night);
   return svg+a+'</svg>';
+}
+
+/* праздник сегодня (несколько дней до него — тоже): украшение в шапке */
+function holidayNow(d){
+  d=d||new Date(); const m=d.getMonth()+1, day=d.getDate();
+  if(S.dob){const b=new Date(S.dob);
+    if(!isNaN(b)&&b.getDate()===day){ if(b.getMonth()+1===m&&d.getFullYear()>b.getFullYear())return 'bday';
+      if(d>b&&ageMonths()>=1&&ageMonths()<12)return 'mday'; }}            // день рождения и «месяцовщина»
+  if(m===10&&day>=25)return 'halloween';
+  if((m===12&&day>=20)||(m===1&&day<=10))return 'newyear';
+  if(m===2&&day>=12&&day<=14)return 'valentine';
+  if(m===3&&day>=5&&day<=8)return 'march8';
+  if((m===5&&day>=30)||(m===6&&day===1))return 'childday';
+  return '';
+}
+function holidayArt(h,night){
+  if(!h)return '';
+  const pumpkin=(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 -13c-2-5 0-9 4-10" stroke="#6B8E4E" stroke-width="3" stroke-linecap="round"></path><ellipse cx="-9" cy="0" rx="9" ry="12" fill="#D9772A"></ellipse><ellipse cx="9" cy="0" rx="9" ry="12" fill="#D9772A"></ellipse><ellipse cx="0" cy="0" rx="9" ry="13" fill="#EE8F35"></ellipse>${night?'<path d="M-8 -3l3-3 3 3zM2 -3l3-3 3 3zM-7 4c4 4 10 4 14 0l-3 1-2-2-2 2-2-2-2 2z" fill="#FBD36B"></path>':''}</g>`;
+  const balloon=(x,y,c,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 14c-2 8 4 14 0 24" stroke="#fff" stroke-width="1.4" opacity=".8"></path><ellipse cx="0" cy="0" rx="11" ry="14" fill="${c}"></ellipse><path d="M-2 13l2 3 2-3z" fill="${c}"></path><ellipse cx="-4" cy="-5" rx="2.6" ry="4" fill="#fff" opacity=".45"></ellipse></g>`;
+  const heart=(x,y,k,c)=>`<path transform="translate(${x} ${y}) scale(${k})" d="M0 6C-9 0-9-7-4.5-7-2-7 0-5 0-3 0-5 2-7 4.5-7 9-7 9 0 0 6z" fill="${c}"></path>`;
+  const tulip=(x,y,c)=>`<g transform="translate(${x} ${y})"><path d="M0 0v18" stroke="#7FA563" stroke-width="2.4" stroke-linecap="round"></path><path d="M0 14c-6-2-8-7-8-10 4 1 7 4 8 8" fill="#8DB36F"></path><path d="M-6 -10c0 7 3 10 6 10s6-3 6-10l-3 3-3-5-3 5z" fill="${c}"></path></g>`;
+  if(h==='halloween')return pumpkin(28,222,1.35)+pumpkin(66,230,1)
+    +(night?'<path transform="translate(236 58)" d="M0 0c4-6 8-6 10-2 2-4 6-4 8 0l2-6 2 6c2-4 6-4 8 0 2-4 6-4 10 2-6-2-10 0-12 4-2-2-4-2-6 0-2-2-4-2-6 0-2-4-6-6-12-4z" fill="#26203A" opacity=".85"></path>'
+      :'<path transform="translate(214 150) scale(.8)" d="M0 0c4-6 8-6 10-2 2-4 6-4 8 0l2-6 2 6c2-4 6-4 8 0 2-4 6-4 10 2-6-2-10 0-12 4-2-2-4-2-6 0-2-2-4-2-6 0-2-4-6-6-12-4z" fill="#3B3350" opacity=".6"></path>');
+  if(h==='newyear'){  // гирлянда сверху и ёлочка
+    let g='<path d="M168 6c40 26 80 26 120 0s70-18 100-4" stroke="#3E5A3A" stroke-width="1.6" fill="none" opacity=".7"></path>';
+    const C=['#F2C14E','#E2574C','#6FC4A2','#6BA6CC','#F49AC1'];
+    for(let k=0;k<9;k++){const t=k/8,x=168+t*220,y=k<5?6+Math.sin(t*Math.PI*1.8)*17:4+Math.sin(t*Math.PI*1.8)*13;
+      g+=`<circle cx="${x.toFixed(0)}" cy="${(y+5).toFixed(0)}" r="3.6" fill="${C[k%C.length]}"${night?' style="filter:drop-shadow(0 0 4px '+C[k%C.length]+')"':''}></circle>`;}
+    return g+'<g transform="translate(36 212) scale(1.3)"><path d="M0 -26l14 18h-7l11 14H-18l11-14h-7z" fill="#4F7A4A"></path><rect x="-2.5" y="6" width="5" height="6" fill="#8C5A3C"></rect><circle cx="-5" cy="-4" r="2" fill="#E2574C"></circle><circle cx="6" cy="0" r="2" fill="#F2C14E"></circle><circle cx="0" cy="-14" r="1.8" fill="#6BA6CC"></circle><path d="M0 -31l2 4 4 .4-3 2.6 1 4-4-2-4 2 1-4-3-2.6 4-.4z" fill="#F2C14E"></path></g>';
+  }
+  if(h==='valentine')return heart(210,40,1.4,'#F08AA0')+heart(352,140,1.1,'#F5B3C1')+heart(240,176,1,'#E86F8A')+heart(372,64,.9,'#F5B3C1');
+  if(h==='march8')return '<g transform="translate(0 -10) scale(1.3)">'+tulip(12,170,'#F28AA0')+tulip(26,175,'#F6C64F')+tulip(40,172,'#E86F8A')+'</g>'
+    +'<g fill="#F6D24A">'+[[344,132],[354,126],[350,140],[362,138],[358,150]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.2"></circle>`).join('')+'</g>';
+  if(h==='childday'||h==='bday')return balloon(330,136,'#F28AA0',1.1)+balloon(354,118,'#6FC4A2',1.2)+balloon(376,142,'#F2C14E',1)
+    +(h==='bday'?'<g>'+[[186,24,'#F28AA0'],[250,176,'#6BA6CC'],[300,196,'#F2C14E'],[214,190,'#6FC4A2'],[372,60,'#E2574C']].map(([x,y,c])=>`<rect x="${x}" y="${y}" width="5" height="3" rx="1" fill="${c}" transform="rotate(${x%60} ${x} ${y})"></rect>`).join('')+'</g>':'');
+  if(h==='mday')return balloon(356,132,'#F2C14E',1.1);                    // месяц малышу — один шарик
+  return '';
 }
