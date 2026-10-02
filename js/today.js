@@ -124,7 +124,7 @@ function paintMain(){
 
   const b=bandFor(effTemp());
   const list=setsFor(b);
-  const set0=list[S.setIdx%list.length];
+  const set0=curSet(list);
   const set={name:set0.name, it:lookItems(set0.it)};   // машина — без объёмного комбинезона, прогулочная — плед на ножки
   const nl=set.it.filter(x=>!NOTLAYER.includes(x[0])).length;
   document.getElementById('tLayers').textContent=`${nl} ${nl===1?'слой':(nl<5?'слоя':'слоёв')}`;
@@ -145,7 +145,7 @@ function paintMain(){
   const tpEl=document.getElementById('tipText'); if(tpEl)tpEl.textContent=tipTxt;
 
   /* сколько всего образов: наборы × удачные сочетания картинок к каждому */
-  const tot=list.length*LOOK_VARIANTS, cur=S.setIdx%tot;
+  const tot=lookTotal(list.length), cur=S.setIdx%tot;
   const dots=document.getElementById('setDots');
   dots.innerHTML=tot<=8?Array.from({length:tot},(_,i)=>`<i class="${i===cur?'a':''}"></i>`).join('')
     :`<span class="cnt">${cur+1} / ${tot}</span>`;
@@ -164,7 +164,7 @@ function flip(d){
   const p=document.getElementById('tipPop');if(p)p.classList.remove('on');
   const tb=document.getElementById('tipBtn');if(tb)tb.classList.remove('act');
   // стрелки листают и наборы, и другие сочетания картинок (см. lookImgs)
-  const n=setsFor(bandFor(effTemp())).length*LOOK_VARIANTS;
+  const n=lookTotal(setsFor(bandFor(effTemp())).length);
   S.setIdx=(S.setIdx+d+n)%n;
   paintMain();
 }

@@ -1,7 +1,7 @@
 /* вишлист, ручное добавление, ссылка на список */
 /* ---- явный выбор вещей для вишлиста ---- */
 function openPick(){
-  const b=bandFor(effTemp()), list=setsFor(b), set=list[S.setIdx%list.length];
+  const b=bandFor(effTemp()), list=setsFor(b), set=curSet(list);
   const sz=sizeFor(heightNow());
   document.getElementById('sheet').innerHTML=
     `<h3>Что докупить?</h3><p>Отметьте вещи из сегодняшнего набора — они попадут в вишлист с размером.</p>`

@@ -75,10 +75,15 @@ function lookScore(ids,keys){
 /* картинки для образа: keys — виды вещей. Перебираем сочетания, берём лучшие и разные между собой;
    стрелки «другой образ» сначала листают наборы, потом — следующий удачный вариант картинок. */
 const LOOK_CACHE={};
-const LOOK_VARIANTS=4;          // сколько разных сочетаний картинок показываем на один набор
+const LOOK_VARIANTS=4;          // сколько разных сочетаний картинок подбираем на один набор
+/* сколько образов листать: 3–5, сначала разные наборы, потом другие сочетания картинок.
+   Каждый день подборка сдвигается — образы не повторяются изо дня в день */
+function lookTotal(n){ return Math.max(Math.min(3,n*LOOK_VARIANTS),Math.min(5,n*LOOK_VARIANTS)); }
+function daySeed(){ const d=new Date(); return Math.floor((d-new Date(d.getFullYear(),0,1))/864e5); }
+function curSet(list){ return list[(S.setIdx+daySeed())%list.length]; }
 let LASTLOOK={};
 function lookImgs(keys){
-  const n=setsFor(bandFor(effTemp())).length||1, variant=Math.floor(S.setIdx/n);
+  const n=setsFor(bandFor(effTemp())).length||1, variant=Math.floor(S.setIdx/n)+daySeed();
   const ck=[keys.join(','),S.gender,Math.floor(ageMonthsExact())].join('|');
   if(!LOOK_CACHE[ck])LOOK_CACHE[ck]=bestLooks(keys);
   const looks=LOOK_CACHE[ck];
