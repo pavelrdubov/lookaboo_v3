@@ -193,4 +193,47 @@ function setTheme(c){
   document.documentElement.style.background=c;
   document.body.style.background=c;
 }
-function themeFor(id){return id==='main'?(THEME[S.weather]||'#A8C0D2'):(SCRTHEME[id]||'#FCF7F0');}
+function themeFor(id){return id==='main'?skyFor(S.weather).top:(SCRTHEME[id]||'#FCF7F0');}
+
+/* ---- небо в шапке: время суток и сезон ----
+   Восход и заход считаем сами по широте и долготе (формулы NOAA), без запроса к погоде:
+   так шапка верна и без интернета. Время берём всемирное — часовой пояс не нужен. */
+function sunTimes(lat,lon,d){
+  const rad=Math.PI/180, y0=Date.UTC(d.getUTCFullYear(),0,1), N=Math.floor((d-y0)/864e5)+1;
+  const g=2*Math.PI/365*(N-1);
+  const eq=229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g));
+  const dec=0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)+0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g);
+  const c=Math.cos(90.833*rad)/(Math.cos(lat*rad)*Math.cos(dec))-Math.tan(lat*rad)*Math.tan(dec);
+  if(c>1)return {polar:'night'}; if(c<-1)return {polar:'day'};
+  const ha=Math.acos(c)/rad;
+  return {rise:720-4*(lon+ha)-eq, set:720-4*(lon-ha)-eq};      // минуты от полуночи UTC
+}
+/* 'dawn' | 'day' | 'dusk' | 'night' */
+function dayPhase(now){
+  now=now||new Date();
+  const lat=S.lat!=null?+S.lat:55.75, lon=S.lon!=null?+S.lon:37.62;      // без города — Москва
+  const t=sunTimes(lat,lon,now); if(t.polar)return t.polar;
+  const m=now.getUTCHours()*60+now.getUTCMinutes();
+  const df=x=>((m-x)%1440+1440+720)%1440-720;                            // от −720 до +720 минут
+  if(df(t.rise)>=-45&&df(t.rise)<=50)return 'dawn';
+  if(df(t.set)>=-60&&df(t.set)<=35)return 'dusk';
+  const dayLen=((t.set-t.rise)%1440+1440)%1440;
+  return (((m-t.rise)%1440+1440)%1440)<dayLen?'day':'night';
+}
+/* сезон по месяцу; в южном полушарии наоборот */
+function seasonNow(d){
+  const m=(d||new Date()).getMonth(), s=['winter','winter','spring','spring','spring','summer','summer','summer','autumn','autumn','autumn','winter'][m];
+  if(S.lat!=null&&+S.lat<0)return {winter:'summer',summer:'winter',spring:'autumn',autumn:'spring'}[s];
+  return s;
+}
+/* градиент неба: погода × время суток. top — цвет строки состояния */
+const SKY={
+  night:{rain:['#2E3A55','#56627E'],snow:['#2A3461','#5B6893'],sun:['#1C2346','#3D4A7E'],cloud:['#283255','#56618B'],frost:['#1A2045','#3A4680']},
+  dawn: {rain:['#7F8AA2','#D7B9A8'],snow:['#7C86B0','#E2C6C4'],sun:['#86A5CC','#F6C9A6'],cloud:['#93A7C2','#EFCDB8'],frost:['#6F80B2','#F1C3AE']},
+  dusk: {rain:['#6F7392','#D2A08C'],snow:['#6A6E9E','#D9AFB3'],sun:['#6D6CA3','#F3A27C'],cloud:['#7C7DA6','#EDB08F'],frost:['#575C96','#EE9F80']}
+};
+function skyFor(w){
+  const ph=dayPhase(), c=(SKY[ph]||{})[w];
+  if(!c){const sc=SCENES[w]||SCENES.cloud; return {grad:sc.grad, top:THEME[w]||'#A8C0D2', ph};}
+  return {grad:`linear-gradient(172deg,${c[0]},${c[1]})`, top:c[0], ph};
+}

@@ -53,11 +53,13 @@ function carFilter(items){
   if(!r.some(x=>!NOTLAYER.includes(x[0])))r.unshift(['bodyL','боди д/р']);
   return r;
 }
+/* время суток меняется — раз в 10 минут перерисовываем шапку, если экран открыт */
+setInterval(()=>{if(S.screen==='main'&&document.visibilityState==='visible')paintMain();},600000);
 function paintMain(){
-  const sc=SCENES[S.weather]||SCENES.cloud;
-  document.getElementById('wband').style.background=sc.grad;
+  const sc=SCENES[S.weather]||SCENES.cloud, sky=skyFor(S.weather);
+  document.getElementById('wband').style.background=sky.grad;
   document.getElementById('bband').style.background=sc.band;
-  document.getElementById('wart').innerHTML=sceneArt(S.weather);
+  document.getElementById('wart').innerHTML=sceneArt(S.weather,sky.ph,seasonNow());
 
   const m=ageMonths(), sz=sizeFor(heightNow()), k=kid();
   /* аватарка и имя в углу */
@@ -273,28 +275,69 @@ function drawStage(set,sz){
 }
 
 
-function sceneArt(w){
-  const base='<svg width="390" height="244" viewBox="0 0 390 244" fill="none" style="position:absolute;left:0;top:0">';
-  const clouds='<path d="M250 76a28 28 0 0 1 0-56 34 34 0 0 1 62 9 24 24 0 0 1 15 47z" fill="#EDF1F3"></path><path d="M312 96a22 22 0 0 1 0-44 26 26 0 0 1 48 7 19 19 0 0 1 11 37z" fill="#fff" opacity=".88"></path>';
-  if(w==='rain')return base+clouds+
-    '<g stroke="#E9EEF1" stroke-width="3" stroke-linecap="round" opacity=".76"><path d="M262 98l-9 26M286 106l-9 26M310 116l-9 26M334 102l-9 26M358 118l-9 26M274 144l-7 18M322 156l-7 18M350 164l-7 18"></path></g>'+
-    '<path d="M292 182c11-13 29-11 33 2 3 11-7 20-17 20-12 0-23-11-16-22z" fill="#C4613C" opacity=".92"></path><path d="M308 204c-5-9-2-20 5-27" stroke="#8C4426" stroke-width="2.6" stroke-linecap="round"></path>'+
-    '<path d="M344 206c9-10 22-9 25 2 2 9-5 16-13 16-9 0-18-9-12-18z" fill="#D89A4E" opacity=".88"></path></svg>';
-  if(w==='snow')return base+clouds+
-    '<g fill="#fff" opacity=".92"><circle cx="266" cy="112" r="4"></circle><circle cx="300" cy="140" r="3.4"></circle><circle cx="338" cy="118" r="4.4"></circle><circle cx="356" cy="156" r="3.2"></circle><circle cx="242" cy="152" r="3.6"></circle><circle cx="286" cy="182" r="4"></circle><circle cx="322" cy="196" r="3"></circle><circle cx="204" cy="132" r="3"></circle><circle cx="180" cy="176" r="3.6"></circle><circle cx="252" cy="212" r="3.2"></circle></g>'+
-    '<path d="M0 244c30-40 62-40 92 0z" fill="#EAEDF8" opacity=".55"></path><path d="M232 244c34-44 60-44 94 0z" fill="#EAEDF8" opacity=".4"></path></svg>';
-  if(w==='sun')return base+
-    '<g stroke="#F2A03C" stroke-width="5" stroke-linecap="round"><path d="M300 14v18M300 128v18M240 80h18M342 80h18M258 38l12 12M330 110l12 12M342 38l-12 12M270 110l-12 12"></path></g>'+
-    '<circle cx="300" cy="80" r="36" fill="#F2A03C"></circle>'+
-    '<path d="M150 170a22 22 0 0 1 0-44 27 27 0 0 1 49 7 18 18 0 0 1 12 37z" fill="#fff" opacity=".92"></path>'+
-    '<path d="M0 244c30-22 62-22 92 0z" fill="#FFF6D8" opacity=".55"></path></svg>';
-  if(w==='frost')return base+
-    '<circle cx="300" cy="64" r="30" fill="#E8B75A"></circle><circle cx="288" cy="56" r="27" fill="#4A5590"></circle>'+
-    '<g fill="#fff" opacity=".9"><circle cx="216" cy="44" r="2.6"></circle><circle cx="252" cy="106" r="2.2"></circle><circle cx="332" cy="128" r="2.8"></circle><circle cx="196" cy="96" r="2.2"></circle><circle cx="352" cy="72" r="2.2"></circle><circle cx="228" cy="152" r="2.6"></circle><circle cx="286" cy="160" r="2.2"></circle><circle cx="180" cy="140" r="2.4"></circle></g>'+
-    '<path d="M0 244c26-34 46-34 72 0z" fill="#EAEDF8" opacity=".5"></path></svg>';
-  return base+
-    '<path d="M300 60a26 26 0 0 1 0-52 31 31 0 0 1 57 8 22 22 0 0 1 14 44z" fill="#fff" opacity=".9"></path>'+
-    '<path d="M214 110a22 22 0 0 1 0-44 27 27 0 0 1 49 7 18 18 0 0 1 12 37z" fill="#fff" opacity=".7"></path>'+
-    '<g stroke="#fff" stroke-width="3.4" stroke-linecap="round" opacity=".6"><path d="M176 156c24-11 48 7 72-3M206 182c22-10 44 6 66-3"></path></g>'+
-    '<path d="M0 244c0-26 18-44 40-44-10 16-4 32 10 44z" fill="#B9CBA8" opacity=".6"></path></svg>';
+/* картинка в шапке: погода × время суток (рассвет, день, закат, ночь) × сезонные детали
+   (осенью листья, зимой снежинки и сугроб, весной цветы, летом ромашки). Детали чуть меняются по дням */
+function sceneArt(w,ph,season){
+  ph=ph||'day';
+  const night=ph==='night', low=ph==='dawn'||ph==='dusk';
+  const svg='<svg width="390" height="244" viewBox="0 0 390 244" fill="none" style="position:absolute;left:0;top:0">';
+  const day0=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,1))/864e5);
+  const rnd=k=>{const x=Math.sin((day0+1)*12.9898+k*78.233)*43758.5453;return x-Math.floor(x);};   // своё на каждый день
+  const cA=night?'#6C789F':(ph==='dawn'?'#FCE7DC':(ph==='dusk'?'#F7D3C4':'#EDF1F3'));
+  const cB=night?'#7D88AD':(low?'#FFF1EA':'#fff');
+  const clouds=(op)=>`<path d="M250 76a28 28 0 0 1 0-56 34 34 0 0 1 62 9 24 24 0 0 1 15 47z" fill="${cA}" opacity="${op||1}"></path><path d="M312 96a22 22 0 0 1 0-44 26 26 0 0 1 48 7 19 19 0 0 1 11 37z" fill="${cB}" opacity="${(op||1)*.88}"></path>`;
+  const stars=n=>{let o='<g fill="#fff">';for(let k=0;k<n;k++)o+=`<circle cx="${(170+rnd(k)*210).toFixed(0)}" cy="${(14+rnd(k+40)*150).toFixed(0)}" r="${(1.4+rnd(k+80)*1.6).toFixed(1)}" opacity="${(.5+rnd(k+90)*.45).toFixed(2)}"></circle>`;return o+'</g>';};
+  const moon='<mask id="mn"><rect width="390" height="244" fill="#fff"></rect><circle cx="288" cy="54" r="26" fill="#000"></circle></mask><circle cx="300" cy="62" r="29" fill="#F3D891" mask="url(#mn)"></circle>';
+  const lowSun=c=>`<circle cx="300" cy="206" r="66" fill="${c}" opacity=".22"></circle><circle cx="300" cy="206" r="40" fill="${c}"></circle>`;
+  const sunC=ph==='dawn'?'#F9C98E':'#F5A472';
+  let a='';
+
+  // небо и погода
+  if(w==='rain'||w==='snow'){
+    a+=clouds();
+    if(w==='rain')a+=`<g stroke="${night?'#A9BBD6':'#E9EEF1'}" stroke-width="3" stroke-linecap="round" opacity=".76"><path d="M262 98l-9 26M286 106l-9 26M310 116l-9 26M334 102l-9 26M358 118l-9 26M274 144l-7 18M322 156l-7 18M350 164l-7 18"></path></g>`;
+    else a+='<g fill="#fff" opacity=".92"><circle cx="266" cy="112" r="4"></circle><circle cx="300" cy="140" r="3.4"></circle><circle cx="338" cy="118" r="4.4"></circle><circle cx="356" cy="156" r="3.2"></circle><circle cx="242" cy="152" r="3.6"></circle><circle cx="286" cy="182" r="4"></circle><circle cx="322" cy="196" r="3"></circle><circle cx="204" cy="132" r="3"></circle><circle cx="180" cy="176" r="3.6"></circle><circle cx="252" cy="212" r="3.2"></circle></g>';
+  }else if(night){
+    a+=stars(w==='cloud'?7:13)+moon;
+    if(w==='cloud')a+='<path d="M214 118a22 22 0 0 1 0-44 27 27 0 0 1 49 7 18 18 0 0 1 12 37z" fill="#6C789F" opacity=".85"></path><path d="M318 128a20 20 0 0 1 0-40 24 24 0 0 1 44 6 16 16 0 0 1 11 34z" fill="#7D88AD" opacity=".75"></path>';
+  }else if(low){
+    a+=lowSun(sunC);
+    if(w==='cloud')a+=`<path d="M300 60a26 26 0 0 1 0-52 31 31 0 0 1 57 8 22 22 0 0 1 14 44z" fill="${cB}" opacity=".9"></path><path d="M214 110a22 22 0 0 1 0-44 27 27 0 0 1 49 7 18 18 0 0 1 12 37z" fill="${cA}" opacity=".85"></path>`;
+    else a+=`<path d="M190 120a20 20 0 0 1 0-40 25 25 0 0 1 45 6 17 17 0 0 1 11 34z" fill="${cB}" opacity=".7"></path>`;
+  }else if(w==='sun'){
+    a+='<g stroke="#F2A03C" stroke-width="5" stroke-linecap="round"><path d="M300 14v18M300 128v18M240 80h18M342 80h18M258 38l12 12M330 110l12 12M342 38l-12 12M270 110l-12 12"></path></g>'
+      +'<circle cx="300" cy="80" r="36" fill="#F2A03C"></circle>'
+      +'<path d="M150 170a22 22 0 0 1 0-44 27 27 0 0 1 49 7 18 18 0 0 1 12 37z" fill="#fff" opacity=".92"></path>';
+  }else if(w==='frost'){                     // ясный мороз днём — бледное зимнее солнце
+    a+='<g stroke="#F6DFA4" stroke-width="4" stroke-linecap="round" opacity=".8"><path d="M300 24v12M300 120v12M246 78h12M342 78h12M262 40l8 8M330 108l8 8M338 40l-8 8M270 108l-8 8"></path></g>'
+      +'<circle cx="300" cy="78" r="30" fill="#F6DFA4"></circle>';
+  }else{
+    a+='<path d="M300 60a26 26 0 0 1 0-52 31 31 0 0 1 57 8 22 22 0 0 1 14 44z" fill="#fff" opacity=".9"></path>'
+      +'<path d="M214 110a22 22 0 0 1 0-44 27 27 0 0 1 49 7 18 18 0 0 1 12 37z" fill="#fff" opacity=".7"></path>'
+      +'<g stroke="#fff" stroke-width="3.4" stroke-linecap="round" opacity=".6"><path d="M176 156c24-11 48 7 72-3M206 182c22-10 44 6 66-3"></path></g>';
+  }
+
+  // сезонные детали: по краям, чтобы не мешать тексту
+  const dim=night?.55:1;
+  const hill=c=>`<path d="M0 244c0-26 18-44 40-44-10 16-4 32 10 44z" fill="${c}" opacity="${.6*dim}"></path>`;
+  const spots=[[208,36],[352,134],[238,176],[334,200],[186,104],[372,62]];
+  const pick=n=>{const o=[];for(let k=0;k<spots.length&&o.length<n;k++){const q=spots[(k+day0)%spots.length];o.push([q[0]+(rnd(k+5)-.5)*16,q[1]+(rnd(k+15)-.5)*16,(rnd(k+25)-.5)*140]);}return o;};
+  if(season==='autumn'){
+    a+=hill('#D9A25B');
+    if(w!=='snow'){const L=['#D9813E','#C4613C','#E2A846','#B5562F'];
+      pick(3+Math.floor(rnd(1)*2)).forEach(([x,y,r],k)=>{a+=`<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) rotate(${r.toFixed(0)})" opacity="${.92*dim}"><path d="M0 -10C7 -6 8 4 0 10C-8 4 -7 -6 0 -10z" fill="${L[(k+day0)%L.length]}"></path><path d="M0 -8V12" stroke="#8C4426" stroke-width="1.3" stroke-linecap="round" opacity=".6"></path></g>`;});}
+  }else if(season==='winter'){
+    a+=`<path d="M0 244c30-40 62-40 92 0z" fill="#EEF1FA" opacity="${.5*dim}"></path>`;
+    if(w!=='snow')pick(3+Math.floor(rnd(2)*2)).forEach(([x,y,r])=>{a+=`<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) rotate(${r.toFixed(0)})" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="${.8*dim}"><path d="M0 -7V7M-6 -3.5L6 3.5M-6 3.5L6 -3.5"></path></g>`;});
+  }else if(season==='spring'){
+    a+=hill('#B9CBA8');
+    const fl=(x,y,c,k)=>`<g transform="translate(${x} ${y}) scale(${k})" opacity="${dim}">${[0,72,144,216,288].map(d=>`<circle cx="${(4*Math.cos(d*Math.PI/180)).toFixed(1)}" cy="${(4*Math.sin(d*Math.PI/180)).toFixed(1)}" r="3.3" fill="${c}"></circle>`).join('')}<circle r="2.2" fill="#F2C14E"></circle></g>`;
+    a+=fl(16,222,'#F4B6C2',1)+fl(34,232,'#FFF4F6',.85)+fl(56,238,'#F4B6C2',.75);
+    if(w!=='rain'&&w!=='snow')pick(2).forEach(([x,y,r])=>{a+=`<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="4.5" ry="2.6" transform="rotate(${r.toFixed(0)} ${x.toFixed(0)} ${y.toFixed(0)})" fill="#F7C5CF" opacity="${.85*dim}"></ellipse>`;});
+  }else{                                       // лето — ромашки на пригорке
+    a+=hill('#A9C98F');
+    const dz=(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})" opacity="${dim}">${[0,45,90,135,180,225,270,315].map(d=>`<ellipse cx="${(4.6*Math.cos(d*Math.PI/180)).toFixed(1)}" cy="${(4.6*Math.sin(d*Math.PI/180)).toFixed(1)}" rx="2.6" ry="1.5" transform="rotate(${d} ${(4.6*Math.cos(d*Math.PI/180)).toFixed(1)} ${(4.6*Math.sin(d*Math.PI/180)).toFixed(1)})" fill="#fff"></ellipse>`).join('')}<circle r="2.2" fill="#F2B33C"></circle></g>`;
+    a+=dz(18,224,1)+dz(40,234,.8);
+  }
+  return svg+a+'</svg>';
 }
