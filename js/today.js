@@ -42,7 +42,20 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return oneCloth(coverFilter(headFilter(legsFilter(carFilter(it))))); }
+function lookItems(it){ return oneCloth(coverFilter(headFilter(legsFilter(legLayer(carFilter(it)))))); }
+/* слои считаем и на теле, и на ножках: боди ножки не закрывает. В прохладу под комбинезон —
+   ползунки или штанишки, чтобы на ногах было столько же слоёв, сколько на теле */
+const TORSO=['bodyL','bodyS','bodyT','wrap','wrapbody','tank','cardigan','sweater','slip','slipKnit','romper','dress','dungarees','ovFleece','ovDemi','ovWinter','jacket','vest'];
+const LEGS=['slip','slipKnit','footpants','pants','dungarees','ovFleece','ovDemi','ovWinter'];
+function layerCount(items){ const t=items.filter(x=>TORSO.includes(x[0])&&x[0]!=='vest').length, l=items.filter(x=>LEGS.includes(x[0])).length;
+  return {torso:t, legs:l, n:Math.max(t,l)}; }
+function legLayer(items){
+  const t=S.ctx==='sling'?airTemp():effTemp(); if(t>14)return items;
+  const c=layerCount(items); if(c.legs>=c.torso||c.legs>=2||items.some(x=>x[0]==='pants'||x[0]==='footpants'))return items;
+  const add=ageMonths()>=6?['pants','штанишки']:['footpants','ползунки'];
+  const at=items.findIndex(x=>!['bodyL','bodyS','bodyT','wrap','wrapbody','tank'].includes(x[0]));   // сразу после боди
+  const r=items.slice(); r.splice(at<0?r.length:at,0,add); return r;
+}
 /* в коляске до +16 малыш лежит без движения — пелёнки мало, нужен тонкий плед */
 function coverFilter(items){
   if(S.ctx!=='stroller'||effTemp()>16||items.some(x=>x[0]==='blanket'))return items;
@@ -138,7 +151,7 @@ function paintMain(){
   const list=setsFor(b);
   const set0=curSet(list);
   const set={name:set0.name, it:lookItems(set0.it)};   // машина — без объёмного комбинезона, прогулочная — плед на ножки
-  const nl=set.it.filter(x=>!NOTLAYER.includes(x[0])).length;
+  const nl=layerCount(set.it).n||set.it.filter(x=>!NOTLAYER.includes(x[0])).length;
   document.getElementById('tLayers').textContent=`${nl} ${nl===1?'слой':(nl<5?'слоя':'слоёв')}`;
   document.getElementById('bTitle').textContent=b.title;
   document.getElementById('bName').textContent=personize(set.name);
@@ -289,7 +302,7 @@ function drawStage(set,sz){
       +`width:${Math.round(r.iw)}px;height:${Math.round(r.ih)}px;transform-origin:${Math.round(r.ox)}px ${Math.round(r.oy)}px;`
       +`transform:rotate(${r.rot}deg);z-index:${r.z}">`
       +`<img src="${r.src}" alt="" onerror="this.parentNode.style.display='none'" style="width:100%;height:100%;max-width:none;max-height:none;filter:${SHADOW}${lack?';opacity:.5':''}">`
-      +`${lack?`<div class="gap">нет в ${sz}</div>`:''}${inW?'<div class="heart">♥</div>':''}</div>`;
+      +`${lack?`<div class="gap">нет в ${sz}</div>`:''}${inW?`<div class="heart" style="right:auto;left:${Math.round(r.ox+r.w/2-16)}px;top:${Math.round(r.oy-r.h/2-4)}px">♥</div>`:''}</div>`;
   });
   /* пометки-выноски: только то, чего не видно на картинке (js/layout.js) */
   const notes=rects.notes||[];
