@@ -75,6 +75,7 @@ function lookScore(ids,keys){
 /* картинки для образа: keys — виды вещей. Перебираем сочетания, берём лучшие и разные между собой;
    стрелки «другой образ» сначала листают наборы, потом — следующий удачный вариант картинок. */
 const LOOK_CACHE={};
+const LOOK_VARIANTS=4;          // сколько разных сочетаний картинок показываем на один набор
 let LASTLOOK={};
 function lookImgs(keys){
   const n=setsFor(bandFor(effTemp())).length||1, variant=Math.floor(S.setIdx/n);
@@ -103,10 +104,10 @@ function bestLooks(keys){
   // 4 лучших, заметно отличающихся друг от друга (хотя бы половина вещей — другие)
   const need=Math.max(1,Math.ceil(ks.length/2)), picked=[];
   for(const c of all){
-    if(picked.length>=4)break;
+    if(picked.length>=LOOK_VARIANTS)break;
     if(picked.every(p=>p.ids.filter((id,i)=>id!==c.ids[i]).length>=need))picked.push(c);
   }
-  for(const c of all){ if(picked.length>=4)break; if(!picked.includes(c))picked.push(c); }
+  for(const c of all){ if(picked.length>=LOOK_VARIANTS)break; if(!picked.includes(c))picked.push(c); }
   // обратно в порядок keys: у видов без картинок — пусто
   return picked.map(c=>{const r=keys.map(()=>null); at.forEach((i,j)=>{r[i]=c.ids[j];}); return r;});
 }

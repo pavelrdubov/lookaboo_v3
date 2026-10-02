@@ -117,8 +117,11 @@ function paintMain(){
   S.tipText=tipTxt;
   const tpEl=document.getElementById('tipText'); if(tpEl)tpEl.textContent=tipTxt;
 
+  /* сколько всего образов: наборы × удачные сочетания картинок к каждому */
+  const tot=list.length*LOOK_VARIANTS, cur=S.setIdx%tot;
   const dots=document.getElementById('setDots');
-  dots.innerHTML=list.map((_,i)=>`<i class="${i===S.setIdx%list.length?'a':''}"></i>`).join('');
+  dots.innerHTML=tot<=8?Array.from({length:tot},(_,i)=>`<i class="${i===cur?'a':''}"></i>`).join('')
+    :`<span class="cnt">${cur+1} / ${tot}</span>`;
   drawStage(set,sz);
 }
 
@@ -133,7 +136,8 @@ function dayWish(key,label,quiet){
 function flip(d){
   const p=document.getElementById('tipPop');if(p)p.classList.remove('on');
   const tb=document.getElementById('tipBtn');if(tb)tb.classList.remove('act');
-  const n=setsFor(bandFor(effTemp())).length;
+  // стрелки листают и наборы, и другие сочетания картинок (см. lookImgs)
+  const n=setsFor(bandFor(effTemp())).length*LOOK_VARIANTS;
   S.setIdx=(S.setIdx+d+n)%n;
   paintMain();
 }

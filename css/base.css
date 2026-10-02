@@ -32,6 +32,7 @@ button{font-family:inherit}
 .dots{position:absolute;left:0;right:0;display:flex;justify-content:center;gap:7px;z-index:8}
 .dots i{width:8px;height:8px;border-radius:50%;background:#DCD3C6;display:block}
 .dots i.a{width:22px;border-radius:999px;background:var(--accent)}
+.dots .cnt{font-size:12px;font-weight:800;color:#A9987F;letter-spacing:.02em}
 .headline{position:absolute;left:20px;z-index:7;color:#fff}
 .headline h1{margin:0;font-size:42px;font-weight:800;line-height:.96;letter-spacing:-.03em}
 .headline p{margin:10px 0 0;font-family:"Caveat","Marck Script",cursive;font-size:22px;line-height:1.1;color:#FFF3E6}
