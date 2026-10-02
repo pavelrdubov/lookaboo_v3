@@ -66,6 +66,12 @@ function lookScore(ids,keys){
   // девочке голубое можно отдельными вещами, но не весь образ: голубого не больше половины одежды
   if(S.gender==='girl'){ const cl=it.filter(x=>x.w>=1), all=cl.reduce((t,x)=>t+x.w,0);
     const blue=cl.filter(isBlueC).reduce((t,x)=>t+x.w,0); if(all&&blue/all>.5)s-=3; }
+  // два комбинезона почти одного цвета рядом выглядят как одна вещь дважды
+  const OV=['ovWinter','ovDemi','ovFleece','jacket','slip','slipKnit'];
+  for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++){
+    if(!OV.includes(keys[i])||!OV.includes(keys[j]))continue;
+    const a=it[i],b=it[j]; if(Math.abs(a.l-b.l)<.08&&Math.abs(a.c-b.c)<.08&&(hueDist(a.h,b.h)<20||Math.max(a.c,b.c)<.1))s-=2.5;
+  }
   // слишком много цвета в целом
   const loud=chrom.reduce((t,x)=>t+x.w*Math.min(1,x.c*2),0);
   if(loud>2.5)s-=(loud-2.5);
@@ -103,7 +109,7 @@ function bestLooks(keys){
   const all=[]; const cur=[];
   (function walk(i){
     if(i===lists.length){all.push({ids:cur.slice(),s:lookScore(cur,ks)});return;}
-    for(const id of lists[i]){cur[i]=id;walk(i+1);}
+    for(const id of lists[i]){if(cur.slice(0,i).includes(id))continue;cur[i]=id;walk(i+1);}   // одна картинка — не на две вещи
   })(0);
   all.sort((a,b)=>b.s-a.s);
   // 4 лучших, заметно отличающихся друг от друга (хотя бы половина вещей — другие)
