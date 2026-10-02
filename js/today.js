@@ -339,7 +339,7 @@ function sceneArt(w,ph,season){
     const dz=(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})" opacity="${dim}">${[0,45,90,135,180,225,270,315].map(d=>`<ellipse cx="${(4.6*Math.cos(d*Math.PI/180)).toFixed(1)}" cy="${(4.6*Math.sin(d*Math.PI/180)).toFixed(1)}" rx="2.6" ry="1.5" transform="rotate(${d} ${(4.6*Math.cos(d*Math.PI/180)).toFixed(1)} ${(4.6*Math.sin(d*Math.PI/180)).toFixed(1)})" fill="#fff"></ellipse>`).join('')}<circle r="2.2" fill="#F2B33C"></circle></g>`;
     a+=dz(18,224,1)+dz(40,234,.8);
   }
-  a+=holidayArt(holidayNow(),night);
+  a+=holidayArt(holidayNow(),night,w);
   return svg+a+'</svg>';
 }
 
@@ -349,34 +349,74 @@ function holidayNow(d){
   if(S.dob){const b=new Date(S.dob);
     if(!isNaN(b)&&b.getDate()===day){ if(b.getMonth()+1===m&&d.getFullYear()>b.getFullYear())return 'bday';
       if(d>b&&ageMonths()>=1&&ageMonths()<12)return 'mday'; }}            // день рождения и «месяцовщина»
+  const ea=easterOrth(d.getFullYear()), toE=Math.round((ea-new Date(d.getFullYear(),m-1,day))/864e5);
+  if(toE>=0&&toE<=3)return 'easter';                                         // Пасха и три дня до неё
   if(m===10&&day>=25)return 'halloween';
+  if(m===2&&day>=21&&day<=23)return 'feb23';
+  if(m===5&&day>=7&&day<=9)return 'may9';
+  if((m===8&&day>=30)||(m===9&&day===1))return 'sep1';
   if((m===12&&day>=20)||(m===1&&day<=10))return 'newyear';
   if(m===2&&day>=12&&day<=14)return 'valentine';
   if(m===3&&day>=5&&day<=8)return 'march8';
   if((m===5&&day>=30)||(m===6&&day===1))return 'childday';
   return '';
 }
-function holidayArt(h,night){
+/* православная Пасха (по юлианскому календарю + 13 дней), дата в этом году */
+function easterOrth(y){
+  const a=y%4,b=y%7,c=y%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7,mo=Math.floor((d+e+114)/31),dy=(d+e+114)%31+1;
+  return new Date(y,mo-1,dy+13);
+}
+/* украшение к празднику. ground — то, что стоит на пригорке; air — то, что в воздухе.
+   Погода: в дождь в воздухе ничего, над пригорком зонтик; в снег — шапочки снега на украшениях;
+   салют — только ясной ночью */
+function holidayArt(h,night,w){
   if(!h)return '';
   const pumpkin=(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 -13c-2-5 0-9 4-10" stroke="#6B8E4E" stroke-width="3" stroke-linecap="round"></path><ellipse cx="-9" cy="0" rx="9" ry="12" fill="#D9772A"></ellipse><ellipse cx="9" cy="0" rx="9" ry="12" fill="#D9772A"></ellipse><ellipse cx="0" cy="0" rx="9" ry="13" fill="#EE8F35"></ellipse>${night?'<path d="M-8 -3l3-3 3 3zM2 -3l3-3 3 3zM-7 4c4 4 10 4 14 0l-3 1-2-2-2 2-2-2-2 2z" fill="#FBD36B"></path>':''}</g>`;
   const balloon=(x,y,c,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 14c-2 8 4 14 0 24" stroke="#fff" stroke-width="1.4" opacity=".8"></path><ellipse cx="0" cy="0" rx="11" ry="14" fill="${c}"></ellipse><path d="M-2 13l2 3 2-3z" fill="${c}"></path><ellipse cx="-4" cy="-5" rx="2.6" ry="4" fill="#fff" opacity=".45"></ellipse></g>`;
   const heart=(x,y,k,c)=>`<path transform="translate(${x} ${y}) scale(${k})" d="M0 6C-9 0-9-7-4.5-7-2-7 0-5 0-3 0-5 2-7 4.5-7 9-7 9 0 0 6z" fill="${c}"></path>`;
   const tulip=(x,y,c)=>`<g transform="translate(${x} ${y})"><path d="M0 0v18" stroke="#7FA563" stroke-width="2.4" stroke-linecap="round"></path><path d="M0 14c-6-2-8-7-8-10 4 1 7 4 8 8" fill="#8DB36F"></path><path d="M-6 -10c0 7 3 10 6 10s6-3 6-10l-3 3-3-5-3 5z" fill="${c}"></path></g>`;
-  if(h==='halloween')return pumpkin(28,222,1.35)+pumpkin(66,230,1)
-    +(night?'<path transform="translate(236 58)" d="M0 0c4-6 8-6 10-2 2-4 6-4 8 0l2-6 2 6c2-4 6-4 8 0 2-4 6-4 10 2-6-2-10 0-12 4-2-2-4-2-6 0-2-2-4-2-6 0-2-4-6-6-12-4z" fill="#26203A" opacity=".85"></path>'
-      :'<path transform="translate(214 150) scale(.8)" d="M0 0c4-6 8-6 10-2 2-4 6-4 8 0l2-6 2 6c2-4 6-4 8 0 2-4 6-4 10 2-6-2-10 0-12 4-2-2-4-2-6 0-2-2-4-2-6 0-2-4-6-6-12-4z" fill="#3B3350" opacity=".6"></path>');
-  if(h==='newyear'){  // гирлянда сверху и ёлочка
-    let g='<path d="M168 6c40 26 80 26 120 0s70-18 100-4" stroke="#3E5A3A" stroke-width="1.6" fill="none" opacity=".7"></path>';
+  const egg=(x,y,c,s,r)=>`<g transform="translate(${x} ${y}) rotate(${r||0})"><ellipse rx="7" ry="9" fill="${c}"></ellipse><path d="M-7 0c3-2 5 2 7 0s4-2 7 0" stroke="${s}" stroke-width="1.6" fill="none"></path><circle cy="-4.5" r="1.4" fill="${s}"></circle></g>`;
+  const carn=(x,y)=>`<g transform="translate(${x} ${y})"><path d="M0 0v20" stroke="#6E9A57" stroke-width="2" stroke-linecap="round"></path><path d="M-6 -2l2-5 2 3 2-5 2 5 2-3 2 5c-2 3-10 3-12 0z" fill="#D63C3C"></path></g>`;
+  const flower=(x,y,c)=>`<g transform="translate(${x} ${y})">${[0,60,120,180,240,300].map(d=>`<circle cx="${(4.2*Math.cos(d*Math.PI/180)).toFixed(1)}" cy="${(4.2*Math.sin(d*Math.PI/180)).toFixed(1)}" r="3" fill="${c}"></circle>`).join('')}<circle r="2.2" fill="#F2C14E"></circle></g>`;
+  const firework=(x,y,c)=>`<g transform="translate(${x} ${y})" stroke="${c}" stroke-width="1.8" stroke-linecap="round">${[0,45,90,135,180,225,270,315].map(d=>`<path d="M${(5*Math.cos(d*Math.PI/180)).toFixed(1)} ${(5*Math.sin(d*Math.PI/180)).toFixed(1)}L${(13*Math.cos(d*Math.PI/180)).toFixed(1)} ${(13*Math.sin(d*Math.PI/180)).toFixed(1)}"></path>`).join('')}</g>`;
+  const bat=(x,y,k,c,o)=>`<path transform="translate(${x} ${y}) scale(${k})" d="M0 0c4-6 8-6 10-2 2-4 6-4 8 0l2-6 2 6c2-4 6-4 8 0 2-4 6-4 10 2-6-2-10 0-12 4-2-2-4-2-6 0-2-2-4-2-6 0-2-4-6-6-12-4z" fill="${c}" opacity="${o}"></path>`;
+  let g='', air='', caps=[];          // caps — где положить снежную шапочку: [x, y, ширина]
+  if(h==='halloween'){g=pumpkin(28,222,1.35)+pumpkin(66,230,1); caps=[[28,206,24],[66,218,18]];
+    air=night?bat(236,58,1,'#26203A',.85):bat(214,150,.8,'#3B3350',.6);}
+  else if(h==='newyear'){  // гирлянда — в любую погоду, ёлочка на пригорке
+    air='<path d="M168 6c40 26 80 26 120 0s70-18 100-4" stroke="#3E5A3A" stroke-width="1.6" fill="none" opacity=".7"></path>';
     const C=['#F2C14E','#E2574C','#6FC4A2','#6BA6CC','#F49AC1'];
     for(let k=0;k<9;k++){const t=k/8,x=168+t*220,y=k<5?6+Math.sin(t*Math.PI*1.8)*17:4+Math.sin(t*Math.PI*1.8)*13;
-      g+=`<circle cx="${x.toFixed(0)}" cy="${(y+5).toFixed(0)}" r="3.6" fill="${C[k%C.length]}"${night?' style="filter:drop-shadow(0 0 4px '+C[k%C.length]+')"':''}></circle>`;}
-    return g+'<g transform="translate(36 212) scale(1.3)"><path d="M0 -26l14 18h-7l11 14H-18l11-14h-7z" fill="#4F7A4A"></path><rect x="-2.5" y="6" width="5" height="6" fill="#8C5A3C"></rect><circle cx="-5" cy="-4" r="2" fill="#E2574C"></circle><circle cx="6" cy="0" r="2" fill="#F2C14E"></circle><circle cx="0" cy="-14" r="1.8" fill="#6BA6CC"></circle><path d="M0 -31l2 4 4 .4-3 2.6 1 4-4-2-4 2 1-4-3-2.6 4-.4z" fill="#F2C14E"></path></g>';
+      air+=`<circle cx="${x.toFixed(0)}" cy="${(y+5).toFixed(0)}" r="3.6" fill="${C[k%C.length]}"${night?' style="filter:drop-shadow(0 0 4px '+C[k%C.length]+')"':''}></circle>`;}
+    g='<g transform="translate(36 212) scale(1.3)"><path d="M0 -26l14 18h-7l11 14H-18l11-14h-7z" fill="#4F7A4A"></path><rect x="-2.5" y="6" width="5" height="6" fill="#8C5A3C"></rect><circle cx="-5" cy="-4" r="2" fill="#E2574C"></circle><circle cx="6" cy="0" r="2" fill="#F2C14E"></circle><circle cx="0" cy="-14" r="1.8" fill="#6BA6CC"></circle><path d="M0 -31l2 4 4 .4-3 2.6 1 4-4-2-4 2 1-4-3-2.6 4-.4z" fill="#F2C14E"></path></g>';
+    caps=[[36,190,14],[36,203,26]];
+    if(night&&w!=='rain'&&w!=='snow')air+=firework(352,150,'#F2C14E')+firework(220,170,'#F49AC1');}
+  else if(h==='valentine'){g=heart(30,224,1.6,'#E86F8A'); caps=[[30,214,20]];
+    air=heart(210,40,1.4,'#F08AA0')+heart(352,140,1.1,'#F5B3C1')+heart(372,64,.9,'#F5B3C1');}
+  else if(h==='march8'){g='<g transform="translate(0 -10) scale(1.3)">'+tulip(12,170,'#F28AA0')+tulip(26,175,'#F6C64F')+tulip(40,172,'#E86F8A')+'</g>'; caps=[[16,201,14],[34,208,14],[52,203,14]];
+    air='<g fill="#F6D24A">'+[[344,132],[354,126],[350,140],[362,138],[358,150]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.2"></circle>`).join('')+'</g>';}
+  else if(h==='feb23'){g='<g transform="translate(30 226)"><path d="M-16 0h32l-6 8h-20z" fill="#5A7FA8"></path><path d="M0 0v-22l12 14H0z" fill="#fff"></path><path d="M0 -22l-10 14H0z" fill="#E8EEF5"></path></g>'; caps=[[30,224,30]];   // кораблик
+    air='<path transform="translate(330 128) rotate(-12)" d="M0 0l30-10-10 22-6-8z" fill="#fff" opacity=".9"></path><path transform="translate(330 128) rotate(-12)" d="M14 4l6 8" stroke="#C9D3DF" stroke-width="1.2"></path>';}
+  else if(h==='easter'){g=egg(22,228,'#F2A7B8','#fff',-12)+egg(40,232,'#9CC9E3','#fff',8)+egg(58,228,'#F6D36B','#fff',-4)
+      +'<g transform="translate(78 218)"><rect x="-9" y="-2" width="18" height="18" rx="3" fill="#C98A4A"></rect><path d="M-10 -2c0-9 20-9 20 0z" fill="#fff"></path><circle cx="-3" cy="-6" r="1" fill="#E2574C"></circle><circle cx="3" cy="-5" r="1" fill="#6FC4A2"></circle></g>';
+    caps=[[22,219,12],[40,223,12],[58,219,12]];
+    air=flower(350,134,'#F7C5CF')+flower(366,150,'#FFF4F6');}
+  else if(h==='may9'){g='<g transform="scale(1.2)">'+carn(14,180)+carn(26,184)+carn(38,181)+'</g>'; caps=[[17,212,12],[31,217,12],[46,213,12]];
+    if(night&&w!=='rain'&&w!=='snow')air=firework(340,140,'#E2574C')+firework(218,168,'#F2C14E')+firework(372,86,'#F49AC1');}
+  else if(h==='sep1'){g='<g transform="translate(30 222)"><path d="M-4 18l4-16 4 16z" fill="#8DB36F"></path></g>'+flower(24,214,'#E2574C')+flower(36,210,'#F2C14E')+flower(30,202,'#9C7FC9')+flower(42,218,'#F28AA0'); caps=[[32,196,24]];
+    air='<path transform="translate(344 136) rotate(-30)" d="M0 0h26v6H0z" fill="#F2C14E"></path><path transform="translate(344 136) rotate(-30)" d="M26 0l6 3-6 3z" fill="#E9C9A0"></path>';}   // карандаш
+  else if(h==='childday'||h==='bday'||h==='mday'){
+    const big=h!=='mday';
+    if(w==='rain'||w==='snow')g=balloon(30,206,'#F28AA0',.9)+(big?balloon(52,198,'#6FC4A2',1)+balloon(72,210,'#F2C14E',.85):'');   // в непогоду — шарики «держим» у земли
+    else air=big?balloon(330,136,'#F28AA0',1.1)+balloon(354,118,'#6FC4A2',1.2)+balloon(376,142,'#F2C14E',1):balloon(356,132,'#F2C14E',1.1);
+    if(h==='bday'&&w!=='rain')air+='<g>'+[[186,24,'#F28AA0'],[250,176,'#6BA6CC'],[300,196,'#F2C14E'],[214,190,'#6FC4A2'],[372,60,'#E2574C']].map(([x,y,c])=>`<rect x="${x}" y="${y}" width="5" height="3" rx="1" fill="${c}" transform="rotate(${x%60} ${x} ${y})"></rect>`).join('')+'</g>';
   }
-  if(h==='valentine')return heart(210,40,1.4,'#F08AA0')+heart(352,140,1.1,'#F5B3C1')+heart(240,176,1,'#E86F8A')+heart(372,64,.9,'#F5B3C1');
-  if(h==='march8')return '<g transform="translate(0 -10) scale(1.3)">'+tulip(12,170,'#F28AA0')+tulip(26,175,'#F6C64F')+tulip(40,172,'#E86F8A')+'</g>'
-    +'<g fill="#F6D24A">'+[[344,132],[354,126],[350,140],[362,138],[358,150]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.2"></circle>`).join('')+'</g>';
-  if(h==='childday'||h==='bday')return balloon(330,136,'#F28AA0',1.1)+balloon(354,118,'#6FC4A2',1.2)+balloon(376,142,'#F2C14E',1)
-    +(h==='bday'?'<g>'+[[186,24,'#F28AA0'],[250,176,'#6BA6CC'],[300,196,'#F2C14E'],[214,190,'#6FC4A2'],[372,60,'#E2574C']].map(([x,y,c])=>`<rect x="${x}" y="${y}" width="5" height="3" rx="1" fill="${c}" transform="rotate(${x%60} ${x} ${y})"></rect>`).join('')+'</g>':'');
-  if(h==='mday')return balloon(356,132,'#F2C14E',1.1);                    // месяц малышу — один шарик
-  return '';
+  if(w==='rain'){                            // в дождь: над пригорком зонтик, в воздухе — ничего, кроме гирлянды
+    if(h!=='newyear')air='';
+    g+='<g transform="translate(104 206) scale(.75)"><path d="M-34 14C-30 -6 30 -6 34 14c-6-4-11-4-17 0-6-4-11-4-17 0-6-4-11-4-17 0z" fill="#C4613C" opacity=".92"></path><path d="M0 2v30c0 4 6 4 6 0" stroke="#7A3E26" stroke-width="2" fill="none" stroke-linecap="round"></path></g>';
+  }else if(w==='snow'){                      // в снег — шапочки снега, из воздушного остаются гирлянда и конфетти
+    if(h!=='newyear'&&h!=='bday')air='';
+    g+=caps.map(([x,y,wd])=>`<ellipse cx="${x}" cy="${y}" rx="${wd/2}" ry="3.2" fill="#fff" opacity=".95"></ellipse>`).join('');
+  }
+  return g+air;
 }
