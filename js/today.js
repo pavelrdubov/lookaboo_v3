@@ -50,13 +50,15 @@ const LEGS=['slip','slipKnit','footpants','pants','dungarees','ovFleece','ovDemi
 function layerCount(items){ const t=items.filter(x=>TORSO.includes(x[0])&&x[0]!=='vest').length, l=items.filter(x=>LEGS.includes(x[0])).length;
   return {torso:t, legs:l, n:Math.max(t,l)}; }
 function legLayer(items){
-  // под любой комбинезон или куртку — что-то на ножки: слип, ползунки или штанишки (а не голые ноги под флисом)
-  const OUTER=['ovFleece','ovDemi','ovWinter','jacket'], BASE=['slip','slipKnit','footpants','pants','dungarees'];
-  const hasBase=items.some(x=>BASE.includes(x[0]));
-  if(hasBase)return items;
+  /* три слоя: низ — боди (боди-майка), середина — кофта со штанишками, слип или флис, верх — комбинезон.
+     Ножкам нужен хотя бы один слой под самым верхним: если ноги закрывает только верхний комбинезон
+     (боди + комбинезон) — добавляем ползунки или штанишки */
+  const OUTER=['ovWinter','ovDemi','ovFleece','jacket'];                    // от тёплого к лёгкому
+  const top=OUTER.find(k=>items.some(x=>x[0]===k));
+  const under=items.filter(x=>LEGS.includes(x[0])&&x[0]!==top).length;
   const t=S.ctx==='sling'?airTemp():effTemp(), c=layerCount(items);
-  const needed=items.some(x=>OUTER.includes(x[0]))||(t<=14&&c.legs<c.torso);
-  if(!needed)return items;
+  const needed=top?under===0:(t<=14&&c.legs<c.torso&&c.legs<2);
+  if(!needed||items.some(x=>x[0]==='pants'||x[0]==='footpants'))return items;
   const add=ageMonths()>=6?['pants','штанишки']:['footpants','ползунки'];
   const at=items.findIndex(x=>!['bodyL','bodyS','bodyT','wrap','wrapbody','tank'].includes(x[0]));   // сразу после боди
   const r=items.slice(); r.splice(at<0?r.length:at,0,add); return r;
