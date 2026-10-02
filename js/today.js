@@ -37,7 +37,14 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return legsFilter(carFilter(it)); }
+function lookItems(it){ return oneCloth(legsFilter(carFilter(it))); }
+/* пелёнка и плед вместе — две одинаковые «тряпочки» в образе: оставляем плед, вместо пелёнки — игрушка */
+function oneCloth(items){
+  if(!(items.some(x=>x[0]==='muslin')&&items.some(x=>x[0]==='blanket')))return items;
+  const r=items.filter(x=>x[0]!=='muslin');
+  if(!r.some(x=>x[0]==='toy'))r.push(['toy','игрушка']);
+  return r;
+}
 function carFilter(items){
   if(S.ctx!=='car')return items;
   const OUT=['ovWinter','ovDemi','ovFleece','jacket'];
