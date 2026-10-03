@@ -324,6 +324,8 @@ function drawStage(set,sz){
   if(!heroes.length)list0=items.slice(0,6);
 
   const {list,LOOK}=lookWithImgs(list0);       // картинки подобраны по сочетанию цветов
+  // носки добавились из-за комбинезона без стопы — пишем и в строке под образом
+  if(list.some(x=>x[0]==='socks')&&!set.it.some(x=>x[0]==='socks')){const el=document.getElementById('items'); if(el)el.textContent+=' · носки';}
   const SHADOW='drop-shadow(6px 12px 15px rgba(90,74,58,.26))';
   const noteFs=Math.max(19,Math.min(24,Math.min(B.w,B.h)*0.072));
   /* раскладка по правилам (js/layout.js); по бокам место под стрелки */
