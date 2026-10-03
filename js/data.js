@@ -38,7 +38,10 @@ const SUBST={bodyT:['bodyS'],tank:['bodyS'],wrap:['bodyL'],wrapbody:['bodyL','bo
 function candFor(key,m){
   const g=S.gender;
   let src=key; if(!(CAND[key]||[]).some(n=>IMG[n]))src=(SUBST[key]||[]).find(k=>(CAND[k]||[]).some(n=>IMG[n]))||key;
-  const all=(CAND[src]||[]).filter(n=>IMG[n]&&okFor(n,g));
+  let all=(CAND[src]||[]).filter(n=>IMG[n]&&okFor(n,g));
+  // в холод ножки малыша должен закрывать сам комбинезон или слип — без стопы не берём, если есть другие
+  if(['ovFleece','ovDemi','ovWinter','slipKnit','slip'].includes(key)&&typeof effTemp==='function'&&effTemp()<=3){
+    const f=all.filter(n=>!/nofeet/.test(n)); if(f.length)all=f; }
   const age=m==null?ageMonthsExact():m;
   // мальчику розового не предлагаем совсем (в том числе нейтральные вещи розоватого цвета)
   if(g==='boy'&&typeof pinkish==='function'){const np=all.filter(n=>!pinkish(n)); if(np.length)all.splice(0,all.length,...np);}

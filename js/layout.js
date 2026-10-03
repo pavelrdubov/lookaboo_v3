@@ -26,9 +26,9 @@ function layoutLook(items,W,H,seed,notes,arch){
   const ck=[items.map(i=>i.src).join(','),Math.round(W),Math.round(H),seed%tpls.length,(notes||[]).map(x=>x.key+x.text+x.fs).join(';'),arch&&arch.r].join('|');
   if(LAYOUT_CACHE[ck])return LAYOUT_CACHE[ck];
   const keys=(notes||[]).map(x=>x.key);
-  const place=R=>{ const placed=[];
-    // 1) сначала вещи, 2) потом пометка — на свободное место; нет места — чуть уменьшаем коллаж (до 80%)
-    for(const nt of (notes||[])){
+  const place=(R,ns)=>{ const placed=[];
+    // 1) сначала вещи, 2) потом пометка — на свободное место; нет места — чуть уменьшаем коллаж (до 88%)
+    for(const nt of (ns||notes||[])){
       // первая пометка может чуть уменьшить коллаж; следующие — только в готовой раскладке и не на другие пометки
       const obst=placed.map(q=>({x:q.x+q.w/2,y:q.y+q.h/2,w:q.w,h:q.h}));
       let p=null;
@@ -42,6 +42,9 @@ function layoutLook(items,W,H,seed,notes,arch){
   if(keys.length&&!res.placed.some(p=>p.key===keys[0]))
     for(let q=1;q<items.length;q++){ const r2=place(solveLayout(items,tpl,W,H,arch,keys,q));
       if(r2.placed.some(p=>p.key===keys[0])){res=r2;break;} }
+  // и так не встала — пробуем запасные пометки (к другим вещам), по одной
+  if(keys.length&&!res.placed.length&&notes.alts)
+    for(const alt of notes.alts.slice(0,3)){ const r2=place(solveLayout(items,tpl,W,H,arch,[alt.key]),[alt]); if(r2.placed.length){res=r2;break;} }
   const R=res.R, placed=res.placed;
   return LAYOUT_CACHE[ck]=finishRects(R,placed);
 }
@@ -247,8 +250,9 @@ function finishRects(R,placed){
 function lookNotes(items,eff){
   const has=k=>items.some(x=>x[0]===k), out=[];
   // все пометки рукописные; факт с цифрами («250 г утеплителя») — чуть мельче, совет — крупнее, если есть место
-  const add=(k,text,pr)=>{ if(has(k)&&!out.some(n=>n.key===k))out.push({key:k,text,pr,style:/\d/.test(text)?'fact':'hand'}); };
-  if(has('ovWinter')||has('ovDemi')){ const g=insFor(eff).g; add(has('ovWinter')?'ovWinter':'ovDemi',/пух/.test(g)?g:g+' утеплителя',10); }
+  const add=(k,text,pr,again)=>{ if(has(k)&&(again||!out.some(n=>n.key===k)))out.push({key:k,text,pr,style:/\d/.test(text)?'fact':'hand'}); };
+  if(has('ovWinter')||has('ovDemi')){ const g=insFor(eff).g, k=has('ovWinter')?'ovWinter':'ovDemi'; add(k,/пух/.test(g)?g:g+' утеплителя',10);
+    add(k,'ножки закрыты — тепло',9,true); }        // у комбинезонов на утеплителе стопа закрыта
   if(S.ctx==='car')add('blanket','поверх ремней, не под них',9);
   if(S.ctx==='stroller'&&strollerKind()==='seat'&&eff<=6)add('blanket','укрыть ножки — в прогулочной дует',9);
   add('wrap','швы наружу — коже мягко',8);
@@ -268,6 +272,7 @@ function lookNotes(items,eff){
 function pickNotes(items,eff,variant){
   const all=lookNotes(items,eff); if(!all.length)return [];
   const max=items.length<=4?2:1, k=Math.min(max,all.length), off=((variant||0)*k)%all.length;
-  const out=[]; for(let i=0;i<k;i++)out.push(all[(off+i)%all.length]);
+  const out=[]; for(let i=0;i<all.length&&out.length<k;i++){const n=all[(off+i)%all.length]; if(!out.some(o=>o.key===n.key))out.push(n);}   // две пометки — к разным вещам
+  out.alts=all.filter(n=>!out.includes(n)&&!out.some(o=>o.key===n.key));      // запасные, если эти не встанут
   return out;
 }

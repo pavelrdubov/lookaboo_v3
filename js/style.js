@@ -93,7 +93,7 @@ function curSet(list){ return list[(S.setIdx+daySeed())%list.length]; }
 let LASTLOOK={};
 function lookImgs(keys){
   const n=setsFor(bandFor(effTemp())).length||1, variant=Math.floor(S.setIdx/n)+daySeed();
-  const ck=[keys.join(','),S.gender,Math.floor(ageMonthsExact())].join('|');
+  const ck=[keys.join(','),S.gender,Math.floor(ageMonthsExact()),effTemp()<=3?'cold':''].join('|');
   if(!LOOK_CACHE[ck])LOOK_CACHE[ck]=bestLooks(keys);
   const looks=LOOK_CACHE[ck];
   const pick=looks.length?looks[variant%looks.length]:[];
@@ -134,7 +134,8 @@ function lookWithImgs(list){
   const FOOTED=['slip','slipKnit','footpants','ovFleece','ovDemi','ovWinter'];
   let L=lookImgs(list.map(x=>x[0]));
   const feetOK=list.some(x=>FOOTED.includes(x[0])&&L[x[0]]&&!/nofeet/.test(L[x[0]]));
-  if(!feetOK&&!list.some(x=>x[0]==='socks')&&effTemp()<=22)list=list.concat([['socks','носки']]);
+  const sockL=effTemp()<=5?'тёплые пинетки':'носки или пинетки';
+  if(!feetOK&&!list.some(x=>x[0]==='socks')&&effTemp()<=22)list=list.concat([['socks',sockL]]);
   const DROP=['socks','mittens','toy','muslin','blanket'];
   for(const k of DROP){ if(list.length<=5)break; if(S.ctx==='car'&&k==='blanket')continue; if(k==='socks'&&!feetOK)continue; list=list.filter(x=>x[0]!==k); }
   L=lookImgs(list.map(x=>x[0]));
@@ -142,7 +143,7 @@ function lookWithImgs(list){
   if(!list.some(x=>FOOTED.includes(x[0])&&L[x[0]]&&!/nofeet/.test(L[x[0]]))&&!list.some(x=>x[0]==='socks')&&effTemp()<=22){
     const drop=['mittens','toy','muslin','blanket'].find(k=>list.some(x=>x[0]===k)&&!(S.ctx==='car'&&k==='blanket'));
     if(drop&&list.length>=5)list=list.filter(x=>x[0]!==drop);
-    list=list.concat([['socks','носки']]); L=lookImgs(list.map(x=>x[0]));
+    list=list.concat([['socks',effTemp()<=5?'тёплые пинетки':'носки или пинетки']]); L=lookImgs(list.map(x=>x[0]));
   }
   let out=list.filter(x=>L[x[0]]);
   if(out.length<2&&effTemp()<22&&!out.some(x=>x[0]==='socks')&&pickImg('socks'))out.push(['socks','носочки']);

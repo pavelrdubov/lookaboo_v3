@@ -227,7 +227,8 @@ async function renderLookPNG(){
   const {list:ordered,LOOK}=lookWithImgs(ordered0);
   const noteFs=Math.max(40,Math.min(52,Math.min(BW,BH)*0.08));
   /* та же раскладка и та же пометка, что на экране (js/layout.js) */
-  const NOTES=pickNotes(ordered,effTemp(),S.setIdx).map(n=>Object.assign({fs:n.style==='fact'?noteFs*.86:noteFs},n));
+  const PN=pickNotes(ordered,effTemp(),S.setIdx), nfs=n=>Object.assign({fs:n.style==='fact'?noteFs*.86:noteFs},n);
+  const NOTES=PN.map(nfs); NOTES.alts=(PN.alts||[]).map(nfs);
   const rects=layoutLook(ordered.map(x=>({key:x[0],src:LOOK[x[0]]})),BW,BH,(S.setIdx||0)+new Date().getDate(),NOTES,{r:380,ox:padX,oy:padY});
   const srcs=await Promise.all(rects.map(r=>loadImg(r.src)));
   rects.slice().sort((a,b)=>a.z-b.z).forEach(r=>{

@@ -69,7 +69,7 @@ function socksFilter(items){
   if(!items.some(x=>x[0]==='pants')||items.some(x=>x[0]==='socks'))return items;
   if(items.some(x=>['ovFleece','slip','slipKnit','footpants'].includes(x[0])))return items;
   if(effTemp()>22)return items;
-  const at=items.findIndex(x=>x[0]==='pants'); const r=items.slice(); r.splice(at+1,0,['socks','носки']); return r;
+  const at=items.findIndex(x=>x[0]==='pants'); const r=items.slice(); r.splice(at+1,0,['socks',effTemp()<=5?'тёплые носки':'носки']); return r;
 }
 /* слои считаем и на теле, и на ножках: боди ножки не закрывает. Под комбинезон или куртку всегда
    что-то на ножки; в прохладу на ногах столько же слоёв, сколько на теле */
@@ -325,12 +325,13 @@ function drawStage(set,sz){
 
   const {list,LOOK}=lookWithImgs(list0);       // картинки подобраны по сочетанию цветов
   // носки добавились из-за комбинезона без стопы — пишем и в строке под образом
-  if(list.some(x=>x[0]==='socks')&&!set.it.some(x=>x[0]==='socks')){const el=document.getElementById('items'); if(el)el.textContent+=' · носки';}
+  if(list.some(x=>x[0]==='socks')&&!set.it.some(x=>x[0]==='socks')){const el=document.getElementById('items'); if(el)el.textContent+=' · '+list.find(x=>x[0]==='socks')[1];}
   const SHADOW='drop-shadow(6px 12px 15px rgba(90,74,58,.26))';
   const noteFs=Math.max(19,Math.min(24,Math.min(B.w,B.h)*0.072));
   /* раскладка по правилам (js/layout.js); по бокам место под стрелки */
   const SIDE=18, ARCH={r:140,ox:SIDE,oy:0};
-  const NOTES=pickNotes(list,effTemp(),S.setIdx).map(n=>Object.assign({fs:n.style==='fact'?noteFs*.86:noteFs},n));
+  const PN=pickNotes(list,effTemp(),S.setIdx), nfs=n=>Object.assign({fs:n.style==='fact'?noteFs*.86:noteFs},n);
+  const NOTES=PN.map(nfs); NOTES.alts=(PN.alts||[]).map(nfs);
   const rects=layoutLook(list.map(x=>({key:x[0],src:LOOK[x[0]]})),B.w-2*SIDE,B.h-14,(S.setIdx||0)+new Date().getDate(),NOTES,ARCH);
   let html='';
   rects.forEach(r=>{
