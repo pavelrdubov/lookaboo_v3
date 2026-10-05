@@ -4,13 +4,15 @@
 #evHead{position:absolute;left:0;right:0;top:0;height:158px;background:linear-gradient(168deg,#8C7FA8,#CBC3DC);z-index:2;transition:background .4s}
 #evBack{position:absolute;left:14px;top:20px;width:40px;height:40px;border:none;background:rgba(255,255,255,.24);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9;padding:0}
 #evBody{position:absolute;left:0;right:0;top:158px;bottom:62px;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:5;padding:16px 18px 30px}
-.evgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-.evcell{min-width:0;background:#FCF9F4;border-radius:16px;padding:10px 8px 8px;text-align:center;cursor:pointer;position:relative;border:2px solid transparent}
+/* вещи — каруселью со свайпом: карточки крупные, следующая выглядывает справа */
+.evgrid{display:flex;gap:12px;margin:12px -17px 0;padding:2px 17px 8px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 17px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.evgrid::-webkit-scrollbar{display:none}
+.evcell{flex:0 0 64%;scroll-snap-align:start;min-width:0;background:#FCF9F4;border-radius:16px;padding:10px 8px 8px;text-align:center;cursor:pointer;position:relative;border:2px solid transparent}
 .evcell.in{border-color:var(--accent);background:#FFF7F1}
-.evcell img{width:100%;height:76px;object-fit:contain;filter:drop-shadow(3px 5px 7px rgba(90,74,58,.18))}
-.evcell .ph{height:76px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#D7CBB7}
-.evcell b{display:block;font-size:11px;font-weight:800;color:var(--ink-strong);line-height:1.25;margin-top:5px}
-.evcell s{display:block;text-decoration:none;font-size:10px;font-weight:700;color:#A9987F;margin-top:2px}
+.evcell img{width:100%;height:190px;object-fit:contain;filter:drop-shadow(3px 5px 7px rgba(90,74,58,.18))}
+.evcell .ph{height:190px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#D7CBB7}
+.evcell b{display:block;font-size:13px;font-weight:800;color:var(--ink-strong);line-height:1.25;margin-top:5px}
+.evcell s{display:block;text-decoration:none;font-size:11px;font-weight:700;color:#A9987F;margin-top:2px}
 
 /* аксессуары к нарядному образу — маленький ряд под вещами */
 .evacc{margin-top:12px}

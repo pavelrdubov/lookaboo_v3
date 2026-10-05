@@ -231,8 +231,8 @@ function evRender(){
 
   const sz=e.size||sizeOn(e.d);
   const em=Math.max(0,monthsUntil(e.szDate||e.d));
-  // сетка по три — без одинокой карточки во всю ширину
-  const all=(e.items||[]), items=all.length>3?all.slice(0,Math.floor(all.length/3)*3):all;
+  // вещи — каруселью (свайп вбок), карточки крупные
+  const items=(e.items||[]);
   // к нарядному девочке — повязка или бантик (маленьким рядом снизу)
   const acc=e.fancy&&S.gender==='girl'?(CAND.headband||[]).filter(n=>IMG[n]).slice(0,4):[];
   const accRow=acc.length?`<div class="evacc"><span>к образу</span><div>${acc.map(n=>{const on=!!WISH['plan'+e.d+':'+n];
@@ -254,7 +254,7 @@ function evRender(){
       <h3>${e.type==='size'?'Что закончится первым':'Что пригодится'}</h3>
       <div class="sub">${personize(e.why||e.sub)}</div>
       ${items.length?`<div class="evgrid">${cells}</div>${accRow}
-        <div class="pfnote">Нажмите на вещь — она попадёт в вишлист с размером ${sz}.</div>`
+        <div class="pfnote">${items.length>1?'Листайте вбок · ':''}нажмите на вещь — она попадёт в вишлист с размером ${sz}.</div>`
         :`<div class="pfnote" style="margin-top:10px">Картинок для этого события пока нет. Размер к этой дате: <b>${sz}</b>.</div>`}
     </div>
     <div class="card">
