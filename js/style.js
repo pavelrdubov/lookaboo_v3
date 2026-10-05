@@ -33,7 +33,7 @@ function pinkish(id){ if(!(id in PINK_CACHE))PINK_CACHE[id]=(COLOR[id]||[]).some
 function hueDist(a,b){ const d=Math.abs(a-b)%360; return d>180?360-d:d; }
 /* насколько вещь «весит» в образе: верх и основная одежда — главное, аксессуары и игрушка — акцент */
 const LOOKW={ovWinter:1.3,ovDemi:1.3,ovFleece:1.2,jacket:1.2,vest:1,hat:.6,hatWarm:.6,panama:.6,socks:.5,mittens:.5,
-  muslin:.5,blanket:.5,toy:.3};
+  muslin:.5,blanket:.5,toy:.3,headband:.3};
 const lookW=k=>LOOKW[k]||1;
 
 function lookScore(ids,keys){

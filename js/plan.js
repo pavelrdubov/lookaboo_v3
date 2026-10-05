@@ -236,10 +236,10 @@ function evRender(){
   const em=Math.max(0,monthsUntil(e.szDate||e.d));
   // вещи — каруселью (свайп вбок), карточки крупные
   const items=(e.items||[]);
-  // к нарядному девочке — повязка или бантик (маленьким рядом снизу)
-  const acc=e.fancy&&S.gender==='girl'?(CAND.headband||[]).filter(n=>IMG[n]).slice(0,4):[];
-  const accRow=acc.length?`<div class="evacc"><span>к образу</span><div>${acc.map(n=>{const on=!!WISH['plan'+e.d+':'+n];
-    return `<div class="ac${on?' in':''}" onclick="evWish('${n}','повязка с бантиком',1)"><img src="${IMG[n]}" alt="" onerror="this.remove()"></div>`;}).join('')}</div></div>`:'';
+  const isLook=!!e.fancy||evCanDel(e);          // праздник, месяц, своё событие — образами; план (сезон, размер) — списком
+  // картинка каждой вещи — по ней подбираем аксессуары в тон
+  EVIDS=items.map(([k])=>IMG[k]?k:(CAND[k]?(pickImg(k,0,em).split('/').pop()||'').replace(/\.webp$/,''):''));
+  const accRow=isLook&&items.length?`<div class="evacc"><span>к образу</span><div id="evAcc">${evAccHtml(0)}</div></div>`:'';
   const cells=items.map(([k,label])=>{
     const direct=!!IMG[k];                       // прямое имя картинки (нарядное)
     const src=direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null);
@@ -256,7 +256,14 @@ function evRender(){
     <div class="card">
       <h3>${e.type==='size'?'Что закончится первым':'Что пригодится'}</h3>
       <div class="sub">${personize(e.why||e.sub)}</div>
-      ${items.length?`<div class="evwrap"><div class="evgrid" id="evGrid" onscroll="evDots()">${cells}</div>
+      ${items.length&&!isLook?`<div class="evlist">${items.map(([k,label])=>{
+          const direct=!!IMG[k], src=direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null), on=!!WISH['plan'+e.d+':'+k], isz=direct?sz:sizeForItem(k,em,sz);
+          return `<div class="item${on?' wl':''}" onclick="evWish('${k}','${String(label).replace(/'/g,'')}',${direct?1:0})">
+            ${src?`<img class="th" src="${src}" alt="" loading="lazy" onerror="this.remove()">`:'<span class="th"></span>'}
+            <div class="nm">${label}${isz?`<s>${szTxt(isz)}</s>`:''}</div>
+            <button class="add${on?' in':''}" aria-label="${on?'убрать из вишлиста':'в вишлист'}"><svg width="15" height="15" viewBox="0 0 24 24" fill="${on?'currentColor':'none'}" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></button></div>`;}).join('')}</div>
+        <div class="pfnote">Нажмите на вещь — она попадёт в вишлист с размером ${sz}.</div>`
+      :items.length?`<div class="evwrap"><div class="evgrid" id="evGrid" onscroll="evDots()">${cells}</div>
         ${items.length>1?`<button class="nav" style="left:-6px" aria-label="Предыдущая вещь" onclick="evFlip(-1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#40372F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></button>
         <button class="nav" style="right:-6px" aria-label="Следующая вещь" onclick="evFlip(1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#40372F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></button>`:''}</div>
         ${items.length>1?`<div class="dots evdots" id="evDots">${items.map((_,i)=>`<i class="${i?'':'a'}"></i>`).join('')}</div>`:''}${accRow}
@@ -285,7 +292,35 @@ function evFlip(d){
   const n=g.children.length, i=((evIdx()+d)%n+n)%n, c=g.children[i];
   g.scrollTo({left:c.offsetLeft-g.firstElementChild.offsetLeft,behavior:'smooth'});
 }
-function evDots(){ const el=document.getElementById('evDots'); if(!el)return; const i=evIdx(); [...el.children].forEach((x,j)=>x.className=j===i?'a':''); }
+function evDots(){ const i=evIdx(), el=document.getElementById('evDots');
+  if(el)[...el.children].forEach((x,j)=>x.className=j===i?'a':'');
+  const ac=document.getElementById('evAcc'); if(ac&&ac.dataset.i!=String(i)){ac.innerHTML=evAccHtml(i);ac.dataset.i=i;} }
+/* аксессуары к вещи, которая сейчас на экране: в тон ей по цвету. Девочке — повязки и игрушки, мальчику — игрушки */
+let EVIDS=[];
+/* насколько аксессуар в тон вещи: тот же или соседний оттенок — лучше всего, спокойный нейтральный — всегда можно,
+   «через четверть круга» (розовый к оливковому) — спорит */
+function accTone(base,n){
+  const bc=(COLOR[base]||[]).map(hexHsl), a=(COLOR[n]||[])[0]; if(!bc.length||!a)return 0;
+  const x=hexHsl(a), tint=c=>c.c>=.06;
+  if(!tint(x))return .6-Math.abs(x.l-bc[0].l)*.5;                      // молочный, серый, беж — ко всему
+  let best=-9;
+  bc.forEach(b=>{ let v;
+    if(!tint(b))v=.4-x.c;                                                // к нейтральной вещи — приглушённый акцент
+    else{ const d=hueDist(x.h,b.h); v=d<=35?1.6-d/50:(d>=150?.2:-1.2); }
+    best=Math.max(best,v-Math.abs(x.l-b.l)*.4); });
+  return best;
+}
+function evAccHtml(i){
+  const e=EVCUR, base=EVIDS[i]; if(!e)return '';
+  const pool=(S.gender==='girl'?(CAND.headband||[]):[]).concat(CAND.toy||[]).filter(n=>IMG[n]&&(S.gender!=='boy'||GT[n]!=='g'));
+  const kind=n=>(CAND_KINDS[n]||[]).includes('headband')?'headband':'toy';
+  const sc=n=>accTone(base,n);
+  const ranked=pool.map(n=>({n,s:sc(n)})).sort((a,b)=>b.s-a.s).map(x=>x.n);
+  // девочке — 2 повязки и 2 игрушки, лучшие по цвету; мальчику — 4 игрушки
+  const hb=ranked.filter(n=>kind(n)==='headband').slice(0,2), ty=ranked.filter(n=>kind(n)==='toy').slice(0,4-hb.length);
+  return hb.concat(ty).map(n=>{const on=!!WISH['plan'+e.d+':'+n], lb=kind(n)==='headband'?'повязка с бантиком':'игрушка';
+    return `<div class="ac${on?' in':''}" onclick="evWish('${n}','${lb}',1)"><img src="${IMG[n]}" alt="" onerror="this.remove()"></div>`;}).join('');
+}
 function ageWordAt(d){
   const am=Math.max(0,monthsUntil(d)), f=Math.floor(am);
   if(am-f>=0.6)return 'почти '+(f+1)+' '+monthsWord(f+1);
@@ -296,7 +331,7 @@ function evWish(k,label,direct){
   const sz=e.size||sizeOn(e.d);
   const em=Math.max(0,monthsUntil(e.szDate||e.d));
   const id='plan'+e.d+':'+k;
-  const acc=(CAND_KINDS[k]||[]).includes('headband');       // повязка — без размера одежды
+  const acc=(CAND_KINDS[k]||[]).some(x=>x==='headband'||x==='toy');       // повязка, игрушка — без размера одежды
   const added=wishToggle(id,{label:label,size:acc?'':(direct?sz:sizeForItem(k,em,sz)),
     src:(evCanDel(e)?'Событие · ':'План · ')+e.title,ev:evKey(e),d:e.d,
     img:(direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null))||null,key:k});

@@ -24,3 +24,9 @@
 .evacc .ac{flex:none;width:64px;height:64px;border-radius:14px;background:#FCF9F4;border:2px solid transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
 .evacc .ac.in{border-color:var(--accent);background:#FFF7F1}
 .evacc .ac img{width:52px;height:52px;object-fit:contain}
+
+/* план (сезон, размер) — списком, как вещи в поездке */
+.evlist{margin-top:12px}
+.evlist .item{cursor:pointer;background:#FCF9F4;box-shadow:none}
+.evlist .item .th{width:48px;height:48px}
+.evlist .item .nm s{display:block;text-decoration:none;font-size:11px;font-weight:700;color:#A9987F;margin-top:2px}
