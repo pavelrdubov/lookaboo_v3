@@ -187,17 +187,19 @@ function uvTip(u){
     :' На открытые места — детский крем SPF 50+ с минеральным фильтром за 15 минут до выхода, обновлять каждые 2 часа.';
   return lead+age;
 }
-/* в часть образов (каждый второй при листании) — что-нибудь дополнительное: девочке в тепло без солнца — повязку
-   с бантиком, иначе игрушку. Только если в образе есть место (больше 5 вещей не помещается) */
+/* аксессуары: девочке с 3 месяцев — бантик (повязка) в двух образах из трёх, когда шапка не нужна
+   (тепло, в машине, без солнца — тогда и панамка не обязательна); в остальных — игрушка в каждом втором.
+   Больше 5 вещей в коллаж не помещается: бантик встаёт вместо игрушки */
 function accFilter(items){
-  if(S.setIdx%2!==1||items.some(x=>x[0]==='headband'))return items;
-  // тепло и не солнечно — панамка не обязательна: девочке вместо неё повязка с бантиком
-  const sunny=S.weather==='sun'||uvNow()>=3, warm=effTemp()>16;
-  if(S.gender==='girl'&&ageMonthsExact()>=3&&warm&&!sunny&&(CAND.headband||[]).length&&!items.some(x=>x[0]==='hat'||x[0]==='hatWarm')){
-    const r=items.filter(x=>x[0]!=='panama');
+  if(items.some(x=>x[0]==='headband'))return items;
+  const sunny=S.weather==='sun'||uvNow()>=3, warm=effTemp()>16||(S.ctx==='car'&&airTemp()>12);
+  const hbOK=S.gender==='girl'&&ageMonthsExact()>=3&&(CAND.headband||[]).length&&warm&&!sunny&&!items.some(x=>x[0]==='hat'||x[0]==='hatWarm');
+  if(hbOK&&S.setIdx%3!==0){
+    let r=items.filter(x=>x[0]!=='panama');
+    if(r.length>4)r=r.filter(x=>x[0]!=='toy');
     if(r.length<=4)return r.concat([['headband','повязка с бантиком']]);
   }
-  if(items.length>4||items.some(x=>x[0]==='toy'))return items;
+  if(S.setIdx%2!==1||items.length>4||items.some(x=>x[0]==='toy'))return items;
   return items.concat([[ 'toy', S.ctx==='sling'?'грызунок':S.ctx==='car'?'игрушка в дорогу':'игрушка в коляску' ]]);
 }
 /* пелёнка и плед вместе — две одинаковые «тряпочки» в образе: оставляем плед, вместо пелёнки — игрушка */
