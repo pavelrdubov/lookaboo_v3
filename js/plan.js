@@ -222,7 +222,9 @@ const EVGRAD={size:'linear-gradient(168deg,#C4613C,#E8A87C)',season:'linear-grad
   month:'linear-gradient(168deg,#C98AA6,#EAC7D8)',custom:'linear-gradient(168deg,#8C6E9E,#D6BFDF)'};
 let EVCUR=null;
 function evOpen(i){EVCUR=TLEV[i];if(!EVCUR)return;go('ev');evRender();}
+let EVLAST=null;
 function evRender(){
+  const keep=EVLAST===EVCUR?evIdx():0; EVLAST=EVCUR;   // сердечко перерисовывает экран — остаёмся на той же вещи
   const e=EVCUR; if(!e)return;
   const days=Math.round((new Date(e.d)-new Date(todayStr()))/MS);
   const when=days<=0?'сегодня':(days<7?`через ${days} дн.`:(days<45?`через ${Math.round(days/7)} нед.`:`через ${Math.round(days/30)} мес.`));
@@ -270,6 +272,9 @@ function evRender(){
     ${evCanDel(e)?`<button class="ghost2" style="color:#C06A4A;border-color:#E8CBBF" onclick="evDel()">Удалить событие</button>`:''}
     <button class="ghost2" onclick="go('tl')">Назад в план</button>
     <div style="height:14px"></div>`;
+  const g=document.getElementById('evGrid');
+  if(g&&keep&&g.children[keep])g.scrollLeft=g.children[keep].offsetLeft-g.firstElementChild.offsetLeft;
+  evDots();
 }
 /* карнавальные и нарядные вещи часто из синтетики — к праздничным образам */
 const COSTUME_TIP='Посмотрите состав на ярлыке: карнавальные костюмы часто из синтетики, кожа под ней не дышит. Такой костюм — только на время фотосессии, а потом снова хлопок. Под костюм — хлопковое боди, без мелких пайеток и бусин, которые можно оторвать.';
