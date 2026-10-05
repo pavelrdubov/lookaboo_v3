@@ -3,6 +3,8 @@
 /* картинки берутся из каталога js/catalog.js (собирается tools/catalog.py, правила — IMAGES.md):
    IMG — имя → файл, CAND — вид вещи → имена, GT — пол (g/b; нейтральные без метки), AGE — [от, до) месяцев */
 const IMG={}, CAND={}, GT={}, AGE={}, FANCY={}, COLOR={}, CAND_KINDS={};
+/* ручные правки из каталога (catalog.html) — пол, возраст, вид; живут на этом устройстве, пока файлы не переименованы */
+try{const F=JSON.parse(localStorage.getItem('mpp-catfix')||'{}')||{}; CATALOG.forEach(c=>{const f=F[c.id]; if(f)Object.assign(c,f);});}catch(e){}
 CATALOG.forEach(c=>{IMG[c.id]=c.file; AGE[c.id]=c.a; COLOR[c.id]=c.c||[]; CAND_KINDS[c.id]=c.kinds; if(c.g!=='n')GT[c.id]=c.g;
   c.kinds.forEach(k=>{if(k==='fancy')FANCY[c.id]=1; (CAND[k]=CAND[k]||[]).push(c.id);});});
 

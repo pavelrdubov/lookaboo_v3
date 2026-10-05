@@ -38,6 +38,20 @@ h2 s{text-decoration:none;font-weight:700;color:var(--muted);font-size:12px}
 .sw{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.12);vertical-align:middle}
 .id{color:var(--muted);font-size:10.5px;word-break:break-all}
 .id a{color:inherit}
+.ed{display:flex;flex-direction:column;gap:5px;margin-top:4px;padding-top:6px;border-top:1px dashed var(--line)}
+.ed .gs{display:flex;gap:4px}
+.ed .gs button{flex:1;min-width:0;font:inherit;font-size:10.5px;font-weight:800;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:3px 0;cursor:pointer}
+.ed .gs button.on.g{background:#FBE3E6;color:#A5566A;border-color:#E9B9C3}.ed .gs button.on.b{background:#DDE9F5;color:#3F6690;border-color:#B5CBE3}.ed .gs button.on.n{background:#E7F0E4;color:#4F7350;border-color:#BFD3B9}
+.ed .ar{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+.ed input{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:#fff;color:var(--ink);min-width:0}
+.ed .ar input{width:34px;padding:3px 2px;text-align:center}
+.ed input.kd{width:100%}
+.card.chg{outline:2px solid var(--accent)}
+.was{font-size:10.5px;color:var(--accent);font-weight:700}
+.bar{position:sticky;top:0;z-index:5;display:none;align-items:center;gap:8px;flex-wrap:wrap;background:#FFF3EC;border-bottom:1px solid #F0D2C2;padding:8px 16px;font-size:13px;font-weight:700}
+.bar.on{display:flex}
+.bar button{font:inherit;font-size:12px;font-weight:800;border:none;border-radius:999px;padding:6px 12px;cursor:pointer;background:var(--accent);color:#fff}
+.bar button.gh{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .none{color:var(--muted);padding:30px 0;text-align:center}
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){--ink:#E8DFD3;--ink-strong:#F5EDE2;--muted:#A99A86;--cream:#1F1B17;--card:#2A2520;--line:#3A332C}
@@ -50,6 +64,7 @@ h2 s{text-decoration:none;font-weight:700;color:var(--muted);font-size:12px}
   <a class="back" href="index.html">‹ в приложение</a>
   <h1>Каталог картинок</h1>
   <div class="sub" id="sum"></div>
+  <div class="sub" style="margin-top:4px">Пол, возраст и вид можно поправить прямо на карточке.</div>
   <div class="flt">
     <input type="search" id="q" placeholder="Поиск: номер, вид, подпись">
     <select id="fk"><option value="">Все виды</option></select>
@@ -57,7 +72,12 @@ h2 s{text-decoration:none;font-weight:700;color:var(--muted);font-size:12px}
     <select id="fa"><option value="">Любой возраст</option></select>
   </div>
 </header>
+<div class="bar" id="bar"><span id="barT"></span>
+  <button onclick="fixCopy()">Скопировать правки для Claude</button>
+  <button class="gh" onclick="fixReset()">Сбросить</button>
+  <span style="font-weight:600;color:var(--muted);font-size:11.5px;flex-basis:100%">Правки сразу работают в приложении на этом устройстве. Чтобы они стали у всех — отправьте скопированный текст в чат, переименую файлы.</span></div>
 <main id="out"></main>
+<datalist id="kl"></datalist>
 <script src="js/catalog.js"></script>
 <script>
 (function(){
@@ -66,17 +86,44 @@ h2 s{text-decoration:none;font-weight:700;color:var(--muted);font-size:12px}
   const kindRu=k=>(KIND_RU[k]||['',k])[1];
   const ageTxt=a=>`${a[0]}–${a[1]} мес`;
   const KINDS=Object.keys(KIND_RU).filter(k=>k!=='fancy'&&k!=='costume');
+  $('kl').innerHTML=Object.keys(KIND_RU).map(k=>`<option value="${k}">${esc(kindRu(k))}</option>`).join('');
+  /* ручные правки: хранятся на устройстве (их же видит приложение), список можно скопировать и отправить */
+  const ORIG={}; CATALOG.forEach(c=>ORIG[c.id]={g:c.g,a:c.a.slice(),kinds:c.kinds.slice()});
+  let FIX={}; try{FIX=JSON.parse(localStorage.getItem('mpp-catfix')||'{}')||{};}catch(e){}
+  const cur=c=>Object.assign({},ORIG[c.id],FIX[c.id]||{});
+  const save=()=>{try{localStorage.setItem('mpp-catfix',JSON.stringify(FIX));}catch(e){} bar();};
+  function setFix(id,patch){
+    const o=ORIG[id], f=Object.assign({},FIX[id]||{},patch);
+    if(f.g===o.g)delete f.g;
+    if(f.a&&f.a[0]===o.a[0]&&f.a[1]===o.a[1])delete f.a;
+    if(f.kinds&&f.kinds.join('+')===o.kinds.join('+'))delete f.kinds;
+    if(Object.keys(f).length)FIX[id]=f; else delete FIX[id];
+    save(); const el=document.querySelector(`[data-id="${CSS.escape(id)}"]`); if(el)el.outerHTML=card(CATALOG.find(c=>c.id===id));
+  }
+  window.fixG=(id,g)=>setFix(id,{g});
+  window.fixA=(id,i,v)=>{const a=cur({id}).a.slice(); a[i]=Math.max(0,Math.min(48,parseInt(v)||0)); if(a[0]<a[1])setFix(id,{a}); else render();};
+  window.fixK=(id,v)=>{const k=v.split('+').map(x=>x.trim()).filter(Boolean); if(k.length&&k.every(x=>KIND_RU[x]))setFix(id,{kinds:k}); else {alert('Неизвестный вид. Можно: '+Object.keys(KIND_RU).join(', ')); render();}};
+  function bar(){ const n=Object.keys(FIX).length; $('bar').classList.toggle('on',n>0); $('barT').textContent=`Правок: ${n}`; }
+  window.fixCopy=async()=>{
+    const txt='Правки каталога Lookaboo:\n'+Object.entries(FIX).map(([id,f])=>{const c=Object.assign({},ORIG[id],f);
+      return `${id} → ${c.kinds.join('+')}__${c.g}__${c.a[0]}-${c.a[1]}`;}).join('\n')+'\n\n'+JSON.stringify(FIX);
+    try{await navigator.clipboard.writeText(txt); alert('Скопировано — вставьте в чат с Claude.');}
+    catch(e){prompt('Скопируйте текст:',txt);}
+  };
+  window.fixReset=()=>{ if(!confirm('Сбросить все правки на этом устройстве?'))return; FIX={}; save(); render(); };
 
   // фильтры
   KINDS.forEach(k=>{const n=CATALOG.filter(c=>c.kinds.includes(k)).length;
     $('fk').insertAdjacentHTML('beforeend',`<option value="${k}">${esc(kindRu(k))} (${n})</option>`);});
   [0,1,2,3,4,5,6,7,8,9,10,11,12,18].forEach(m=>$('fa').insertAdjacentHTML('beforeend',`<option value="${m}">подходит в ${m} мес</option>`));
 
-  const card=c=>{
+  const card=c0=>{
+    const c=Object.assign({},c0,cur(c0)), chg=!!FIX[c.id], o=ORIG[c.id];
     const main=c.kinds.filter(k=>k!=='fancy'&&k!=='costume');
     const extra=c.kinds.filter(k=>k==='fancy'||k==='costume');
+    const jid=esc(JSON.stringify(c.id));
     const cap=(c.id.split('__')[3]||'');
-    return `<div class="card">
+    return `<div class="card${chg?' chg':''}" data-id="${esc(c.id)}">
       <a class="ph" href="${esc(c.file)}" target="_blank" title="открыть картинку"><img src="${esc(c.file)}" alt="" loading="lazy"></a>
       <div class="inf">
         <b>${main.map(kindRu).map(esc).join(' / ')}</b>
@@ -84,14 +131,20 @@ h2 s{text-decoration:none;font-weight:700;color:var(--muted);font-size:12px}
           ${extra.map(k=>`<span class="tag f">${esc(kindRu(k))}</span>`).join('')}</div>
         <div class="row">${(c.c||[]).map(h=>`<span class="sw" style="background:${esc(h)}" title="${esc(h)}"></span>`).join('')}${cap?` <span class="id">№ ${esc(cap)}</span>`:''}</div>
         <div class="id"><a href="${esc(c.file)}" target="_blank">${esc(c.file.replace(/^img\//,''))}</a></div>
+        ${chg?`<div class="was">было: ${esc(o.kinds.join('+'))} · ${esc(GENDER_RU[o.g])} · ${ageTxt(o.a)}</div>`:''}
+        <div class="ed">
+          <div class="gs">${['g','b','n'].map(g=>`<button class="${g}${c.g===g?' on':''}" onclick='fixG(${jid},"${g}")'>${{g:'дев.',b:'мальч.',n:'нейтр.'}[g]}</button>`).join('')}</div>
+          <div class="ar">возраст <input inputmode="numeric" value="${c.a[0]}" onchange='fixA(${jid},0,this.value)'> – <input inputmode="numeric" value="${c.a[1]}" onchange='fixA(${jid},1,this.value)'> мес</div>
+          <input class="kd" list="kl" value="${esc(c.kinds.join('+'))}" title="вид: несколько через +" onchange='fixK(${jid},this.value)'>
+        </div>
       </div></div>`;
   };
 
   function render(){
     const q=$('q').value.trim().toLowerCase(), fk=$('fk').value, fg=$('fg').value, fa=$('fa').value;
-    const ok=c=>(!fk||c.kinds.includes(fk))&&(!fg||c.g===fg)
+    const ok=c0=>{const c=Object.assign({},c0,cur(c0)); return (!fk||c.kinds.includes(fk))&&(!fg||c.g===fg)
       &&(fa===''||(+fa>=c.a[0]&&+fa<c.a[1]))
-      &&(!q||(c.id+' '+c.kinds.map(kindRu).join(' ')+' '+(GENDER_RU[c.g]||'')).toLowerCase().includes(q));
+      &&(!q||(c.id+' '+c.kinds.map(kindRu).join(' ')+' '+(GENDER_RU[c.g]||'')).toLowerCase().includes(q));};
     const list=CATALOG.filter(ok);
     $('sum').textContent=`Всего ${CATALOG.length} картинок · показано ${list.length}. Нажмите на картинку, чтобы открыть её целиком (клетчатый фон — прозрачные места).`;
 
@@ -106,14 +159,14 @@ h2 s{text-decoration:none;font-weight:700;color:var(--muted);font-size:12px}
     // по видам; вещь показываем в разделе её главного (первого) вида
     const order=KINDS.concat(['fancy','costume']);
     order.forEach(k=>{
-      const its=list.filter(c=>(c.kinds.find(x=>x!=='fancy'&&x!=='costume')||c.kinds[0])===k);
+      const its=list.filter(c0=>{const c=cur(c0); return (c.kinds.find(x=>x!=='fancy'&&x!=='costume')||c.kinds[0])===k;});
       if(!its.length)return;
       html+=`<h2>${esc(kindRu(k))} <s>${its.length}</s></h2><div class="grid">${its.map(card).join('')}</div>`;
     });
     $('out').innerHTML=html||'<div class="none">Ничего не нашлось</div>';
   }
   ['q','fk','fg','fa'].forEach(id=>$(id).addEventListener('input',render));
-  render();
+  render(); bar();
 })();
 </script>
 </body>
