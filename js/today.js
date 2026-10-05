@@ -332,6 +332,7 @@ function stageBox(){
   const st=document.getElementById('stage');
   return {w:st.clientWidth||362, h:st.clientHeight||300};
 }
+let LASTSTAGE=null;
 function drawStage(set,sz){
   const st=document.getElementById('stage');
   const B=stageBox();
@@ -353,6 +354,7 @@ function drawStage(set,sz){
   if(!heroes.length)list0=items.slice(0,6);
 
   const {list,LOOK}=lookWithImgs(list0);       // картинки подобраны по сочетанию цветов
+  LASTSTAGE={list,LOOK,items:set.it.concat(list.filter(x=>x[0]==='socks'&&!set.it.some(y=>y[0]==='socks')).map(x=>[x[0],x[1]]))};          // «показать бабушке» и «в вишлист» берут ровно то, что на экране
   // носки добавились из-за комбинезона без стопы — пишем и в строке под образом
   if(list.some(x=>x[0]==='socks')&&!set.it.some(x=>x[0]==='socks')){const el=document.getElementById('items'); if(el)el.textContent+=' · '+list.find(x=>x[0]==='socks')[1];}
   const SHADOW='drop-shadow(6px 12px 15px rgba(90,74,58,.26))';

@@ -7,7 +7,7 @@ function openCard(){
     `<b>${S.temp>0?'+':''}${S.temp}°</b><s>${sc.word}</s>`;
   const n=document.getElementById('tLayers').textContent;
   const ctxP={stroller:'в коляске',sling:'в слинге',car:'в машине'}[S.ctx]||'в коляске';
-  document.getElementById('gTitle').textContent=personize(`Малышу ${ctxP} нужно ${n}`);
+  document.getElementById('gTitle').textContent=S.ctx==='home'?personize(`${document.getElementById('bTitle').textContent}: праздничный образ дома`):personize(`Малышу ${ctxP} нужно ${n}`);
   document.getElementById('gItems').textContent=document.getElementById('items').textContent;
   document.getElementById('gWhy').textContent=S.whyText||'';
   document.getElementById('gTip').textContent=S.tipText||'';
@@ -25,6 +25,7 @@ function cardText(){
   const head=`${S.temp>0?'+':''}${S.temp}°, ${sc.word}`;
   const layers=document.getElementById('tLayers').textContent;
   const items=expandAbbr(document.getElementById('items').textContent);
+  if(S.ctx==='home')return personize(`${document.getElementById('bTitle').textContent} — праздничный образ дома:`)+`\n${items}\n\n`+(S.tipText||'')+`\n\nСписок собран в Lookaboo`;
   return personize(`${head}. ${cap1(ctxP)} малышу нужно ${layers}:`)+`\n${items}\n\n`
     +`${S.whyText||''}`
     +`${S.tipText?'\n\n'+S.tipText:''}`
@@ -215,16 +216,11 @@ async function renderLookPNG(){
   x.restore();
 
   /* тот же набор, что на экране */
-  const band=bandFor(effTemp()), list=setsFor(band), set=curSet(list);
-  let items=lookItems(set.it).slice();
-  if(items.length<2)items.push(swaddleFor(effTemp()));
-  const heroes=items.filter(i=>!NOTLAYER.includes(i[0]));
-  const acc=items.filter(i=>NOTLAYER.includes(i[0]));
-  let ordered0=heroes.concat(acc).slice(0,6);
-  if(!heroes.length)ordered0=items.slice(0,6);
+  /* ровно то, что сейчас на экране (в том числе праздничный образ «дома») */
+  if(!LASTSTAGE)paintMain();
+  const ordered=LASTSTAGE.list, LOOK=LASTSTAGE.LOOK;
   const padX=44,padY=34;
   const BW=AW-padX*2, BH=AH-padY*2;
-  const {list:ordered,LOOK}=lookWithImgs(ordered0);
   const noteFs=Math.max(40,Math.min(52,Math.min(BW,BH)*0.08));
   /* та же раскладка и та же пометка, что на экране (js/layout.js) */
   const PN=pickNotes(ordered,effTemp(),S.setIdx), nfs=n=>Object.assign({fs:n.style==='fact'?noteFs*.86:noteFs},n);
@@ -259,12 +255,12 @@ async function renderLookPNG(){
 
   /* подпись снизу */
   let y=AY+AH+76;
-  const title=band.title;
+  const title=document.getElementById('bTitle').textContent, sub=document.getElementById('bName').textContent;
   x.fillStyle='#3B2E22'; x.font='800 58px Nunito, sans-serif';
   x.fillText(title,60,y);
   const tw=x.measureText(title).width;
   x.fillStyle='#7A6450'; x.font='600 44px Caveat, cursive';
-  x.fillText(set.name,60+tw+18,y);
+  x.fillText(sub,60+tw+18,y);
 
   y+=54;
   x.fillStyle='#3B2E22'; x.font='700 30px Nunito, sans-serif';

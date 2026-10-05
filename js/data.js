@@ -116,7 +116,7 @@ function accSize(key,m){
 function swaddleFor(t){ return t>=22?['muslin','муслиновая пелёнка']:(t>=17?['muslin','хлопковая пелёнка']:(t>=10?['blanket','тонкий плед']:['blanket','плед'])); }
 function sizeForItem(key,m,clothSize){
   const a=accSize(key,m); if(a!==null)return a;
-  if(key==='muslin'||key==='blanket'||key==='toy')return '';
+  if(key==='muslin'||key==='blanket'||key==='toy'||key==='headband'||key==='raincover'||key==='umbrella'||key==='spf')return '';
   if(key==='costume'){const L=[50,56,62,68,74,80,86,92,98,104];const i=L.indexOf(+clothSize);return i>=0&&i<L.length-1?L[i+1]:clothSize;} // костюм — поверх одежды, на размер больше
   return clothSize;
 }
