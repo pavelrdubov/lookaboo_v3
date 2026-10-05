@@ -32,7 +32,7 @@ const PINK_CACHE={};
 function pinkish(id){ if(!(id in PINK_CACHE))PINK_CACHE[id]=(COLOR[id]||[]).some(c=>isPinkC(hexHsl(c))); return PINK_CACHE[id]; }
 function hueDist(a,b){ const d=Math.abs(a-b)%360; return d>180?360-d:d; }
 /* насколько вещь «весит» в образе: верх и основная одежда — главное, аксессуары и игрушка — акцент */
-const LOOKW={ovWinter:1.3,ovDemi:1.3,ovFleece:1.2,jacket:1.2,vest:1,hat:.6,hatWarm:.6,panama:.6,socks:.5,mittens:.5,
+const LOOKW={envelope:1.3,ovWinter:1.3,ovDemi:1.3,ovFleece:1.2,jacket:1.2,vest:1,hat:.6,hatWarm:.6,panama:.6,socks:.5,mittens:.5,
   muslin:.5,blanket:.5,toy:.3,headband:.3};
 const lookW=k=>LOOKW[k]||1;
 
@@ -131,7 +131,7 @@ function bestLooks(keys){
 function lookWithImgs(list){
   // на картинке не больше 5 вещей — так они крупнее; мелочь (носки, варежки, игрушка, пелёнка) остаётся в строке под образом
   // носки с картинки не убираем, если стопу больше ничего не закрывает (у комбинезона или слипа без стопы — «_nofeet» в имени)
-  const FOOTED=['slip','slipKnit','footpants','ovFleece','ovDemi','ovWinter'];
+  const FOOTED=['envelope','slip','slipKnit','footpants','ovFleece','ovDemi','ovWinter'];
   // праздник дома: вещи — конкретные картинки (костюм, нарядное), носки не добавляем
   if(S.ctx==='home'){ const L0=lookImgs(list.filter(x=>!IMG[x[0]]).map(x=>x[0])); list.forEach(x=>{if(IMG[x[0]])L0[x[0]]=IMG[x[0]];});
     const out0=list.filter(x=>L0[x[0]]); return {list:out0,LOOK:L0}; }

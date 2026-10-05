@@ -10,7 +10,7 @@
    Пометка ставится ПОСЛЕ раскладки — только на свободное место, никогда не на вещь (см. fitNote). */
 
 /* относительный размер вещи — какая вещь главнее */
-const ROLE={suit:.96,ovWinter:1,ovDemi:1,ovFleece:.98,slip:.96,slipKnit:.96,romper:.92,dress:.92,dungarees:.92,
+const ROLE={envelope:1,suit:.96,ovWinter:1,ovDemi:1,ovFleece:.98,slip:.96,slipKnit:.96,romper:.92,dress:.92,dungarees:.92,
   bodyL:.84,bodyS:.8,bodyT:.78,wrapbody:.8,wrap:.76,cardigan:.84,sweater:.84,jacket:.88,vest:.76,tank:.74,
   pants:.8,shorts:.66,footpants:.78,muslin:.62,blanket:.66,hat:.46,hatWarm:.48,panama:.48,socks:.36,mittens:.38,toy:.38,headband:.36,spf:.34,umbrella:.5,raincover:.5};
 const roleOf=k=>ROLE[k]||.7;
@@ -78,7 +78,7 @@ function solveLayout(items,tpl,W,H,arch,noteKeys,swapTo){
   /* высокие вещи (штанишки, ползунки, слип) в верхний угол под аркой не ставим — их там обрезает
      и они «уезжают»; меняем местами с плоской вещью (плед, пелёнка, шапка, носки) из середины */
   const corner=sl=>sl&&sl.y<.36&&(sl.x<.3||sl.x>.7);
-  const TALL=['suit','pants','footpants','slip','slipKnit','dungarees'], FLATK=['blanket','muslin','hat','hatWarm','panama','socks','mittens','toy','headband','spf','umbrella','raincover'];
+  const TALL=['envelope','suit','pants','footpants','slip','slipKnit','dungarees'], FLATK=['blanket','muslin','hat','hatWarm','panama','socks','mittens','toy','headband','spf','umbrella','raincover'];
   order.forEach((ii,rank)=>{
     if(rank===0||!TALL.includes(items[ii].key)||!corner(slots[Math.min(rank,slots.length-1)]))return;
     const q=order.findIndex((jj,r2)=>r2>0&&r2<slots.length&&FLATK.includes(items[jj].key)&&!corner(slots[r2])&&!(noteKeys||[]).includes(items[jj].key));
@@ -254,6 +254,7 @@ function lookNotes(items,eff){
   if(has('ovWinter')||has('ovDemi')){ const g=insFor(eff).g, k=has('ovWinter')?'ovWinter':'ovDemi'; add(k,/пух/.test(g)?g:g+' утеплителя',10);
     add(k,'ножки закрыты — тепло',9,true); }        // у комбинезонов на утеплителе стопа закрыта
   if(S.ctx==='home'&&items[0]){ out.push({key:items[0][0],text:'для праздничного фото',pr:12,style:'hand'}); return out; }
+  add('envelope','ножкам свободно и тепло',9);
   if(S.ctx==='car')add('blanket','поверх ремней, не под них',9);
   if(S.ctx==='stroller'&&strollerKind()==='seat'&&eff<=6)add('blanket','укрыть ножки — в прогулочной дует',9);
   add('wrap','швы наружу — коже мягко',8);

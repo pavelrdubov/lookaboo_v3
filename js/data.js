@@ -20,7 +20,7 @@ const INS=[
   {max:99,  g:'60–100 г',  note:''}
 ];
 function insFor(eff){for(const x of INS){if(eff<=x.max)return x;}return INS[INS.length-1];}
-const INSKEYS=['ovWinter','ovDemi'];
+const INSKEYS=['ovWinter','ovDemi','envelope'];
 const SHORT={ovFleece:'флис',ovWinter:'зимний',ovDemi:'демисезонный',bodyL:'боди д/р',bodyS:'боди к/р',
   bodyT:'боди-майка',slip:'слип',slipKnit:'вязаный слип',cardigan:'кофта',sweater:'свитер',
   pants:'штанишки',shorts:'шорты',dungarees:'полукомбинезон',jacket:'куртка',vest:'жилет',

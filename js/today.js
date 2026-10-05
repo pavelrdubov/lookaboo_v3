@@ -47,7 +47,7 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(legLayer(carFilter(it)))))))))),ageMonthsExact()); }
+function lookItems(it){ return newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(envFilter(legLayer(carFilter(it))))))))))),ageMonthsExact()); }
 /* что с какого возраста. Первые 2 месяца — только слипы, распашонки (и боди-распашонки на запах) и ползунки:
    ничего через голову, никаких «взрослых» раздельных вещей. Дальше — по мере того, как малыш держит голову,
    сидит и ползает. Вещь «не по возрасту» заменяем на подходящую того же назначения (или убираем) */
@@ -80,8 +80,8 @@ function newbornFilter(items,m){
 /* насколько плотные нижние слои: зависит от погоды и от того, что сверху.
    Под зимним комбинезоном можно потоньше, под одним флисом или демисезонным — потеплее */
 function density(items){
-  const top=['ovWinter','ovDemi','ovFleece','jacket'].find(k=>items.some(x=>x[0]===k));
-  const shift={ovWinter:6,ovDemi:3}[top]||0, v=effTemp()+shift;
+  const top=['ovWinter','envelope','ovDemi','ovFleece','jacket'].find(k=>items.some(x=>x[0]===k));
+  const shift={ovWinter:6,envelope:5,ovDemi:3}[top]||0, v=effTemp()+shift;
   const lv=v<=-6?2:(v<=9?1:0);                                      // 0 — тонкие, 1 — плотные, 2 — тёплые
   const L={pants:['хлопковые штанишки','штанишки из футера','тёплые штанишки (начёс, флис)'],
     cardigan:['тонкая кофта','плотная кофта','тёплая вязаная кофта'],
@@ -100,6 +100,12 @@ function density(items){
 /* штанишки без стопы — к ним носки. Под комбинезон на синтепоне (демисезонный, зимний) — тоже:
    иначе это как обувь на голую ногу. Не нужны, только если стопу уже закрывает слип, ползунки
    или флисовый комбинезон со стопой поверх штанишек */
+/* конверт — для новорождённых в люльке (до 3 месяцев включительно): в каждом втором образе вместо
+   зимнего или демисезонного комбинезона, если есть картинка. В машину и слинг конверт не берём */
+function envFilter(items){
+  if(ageMonthsExact()>=4||S.ctx!=='stroller'||S.setIdx%2!==1||!(CAND.envelope||[]).some(n=>IMG[n]&&okFor(n,S.gender)))return items;
+  return items.map(x=>x[0]==='ovWinter'?['envelope','зимний конверт']:(x[0]==='ovDemi'?['envelope','демисезонный конверт']:x));
+}
 /* спортивный костюм (кофта + штаны одним комплектом) — с 3 месяцев, в каждом втором образе вместо пары «кофта/свитер + штанишки» */
 function suitFilter(items){
   if(ageMonthsExact()<3||S.setIdx%2!==0||!(CAND.suit||[]).some(n=>IMG[n]&&okFor(n,S.gender)))return items;
@@ -115,15 +121,15 @@ function socksFilter(items){
 }
 /* слои считаем и на теле, и на ножках: боди ножки не закрывает. Под комбинезон или куртку всегда
    что-то на ножки; в прохладу на ногах столько же слоёв, сколько на теле */
-const TORSO=['suit','bodyL','bodyS','bodyT','wrap','wrapbody','tank','cardigan','sweater','slip','slipKnit','romper','dress','dungarees','ovFleece','ovDemi','ovWinter','jacket','vest'];
-const LEGS=['suit','slip','slipKnit','footpants','pants','dungarees','ovFleece','ovDemi','ovWinter'];
+const TORSO=['envelope','suit','bodyL','bodyS','bodyT','wrap','wrapbody','tank','cardigan','sweater','slip','slipKnit','romper','dress','dungarees','ovFleece','ovDemi','ovWinter','jacket','vest'];
+const LEGS=['envelope','suit','slip','slipKnit','footpants','pants','dungarees','ovFleece','ovDemi','ovWinter'];
 function layerCount(items){ const t=items.filter(x=>TORSO.includes(x[0])&&x[0]!=='vest').length, l=items.filter(x=>LEGS.includes(x[0])).length;
   return {torso:t, legs:l, n:Math.max(t,l)}; }
 function legLayer(items){
   /* три слоя: низ — боди (боди-майка), середина — кофта со штанишками, слип или флис, верх — комбинезон.
      Ножкам нужен хотя бы один слой под самым верхним: если ноги закрывает только верхний комбинезон
      (боди + комбинезон) — добавляем ползунки или штанишки */
-  const OUTER=['ovWinter','ovDemi','ovFleece','jacket'];                    // от тёплого к лёгкому
+  const OUTER=['ovWinter','envelope','ovDemi','ovFleece','jacket'];                    // от тёплого к лёгкому
   const top=OUTER.find(k=>items.some(x=>x[0]===k));
   const under=items.filter(x=>LEGS.includes(x[0])&&x[0]!==top).length;
   const t=S.ctx==='sling'?airTemp():effTemp(), c=layerCount(items);
