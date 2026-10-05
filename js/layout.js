@@ -12,7 +12,7 @@
 /* относительный размер вещи — какая вещь главнее */
 const ROLE={ovWinter:1,ovDemi:1,ovFleece:.98,slip:.96,slipKnit:.96,romper:.92,dress:.92,dungarees:.92,
   bodyL:.84,bodyS:.8,bodyT:.78,wrapbody:.8,wrap:.76,cardigan:.84,sweater:.84,jacket:.88,vest:.76,tank:.74,
-  pants:.8,shorts:.66,footpants:.78,muslin:.62,blanket:.66,hat:.46,hatWarm:.48,panama:.48,socks:.36,mittens:.38,toy:.38};
+  pants:.8,shorts:.66,footpants:.78,muslin:.62,blanket:.66,hat:.46,hatWarm:.48,panama:.48,socks:.36,mittens:.38,toy:.38,headband:.36};
 const roleOf=k=>ROLE[k]||.7;
 const BOX={}; CATALOG.forEach(c=>{BOX[c.file]={b:c.b||[0,0,1,1],r:c.r||1};});
 
@@ -78,7 +78,7 @@ function solveLayout(items,tpl,W,H,arch,noteKeys,swapTo){
   /* высокие вещи (штанишки, ползунки, слип) в верхний угол под аркой не ставим — их там обрезает
      и они «уезжают»; меняем местами с плоской вещью (плед, пелёнка, шапка, носки) из середины */
   const corner=sl=>sl&&sl.y<.36&&(sl.x<.3||sl.x>.7);
-  const TALL=['pants','footpants','slip','slipKnit','dungarees'], FLATK=['blanket','muslin','hat','hatWarm','panama','socks','mittens','toy'];
+  const TALL=['pants','footpants','slip','slipKnit','dungarees'], FLATK=['blanket','muslin','hat','hatWarm','panama','socks','mittens','toy','headband'];
   order.forEach((ii,rank)=>{
     if(rank===0||!TALL.includes(items[ii].key)||!corner(slots[Math.min(rank,slots.length-1)]))return;
     const q=order.findIndex((jj,r2)=>r2>0&&r2<slots.length&&FLATK.includes(items[jj].key)&&!corner(slots[r2])&&!(noteKeys||[]).includes(items[jj].key));

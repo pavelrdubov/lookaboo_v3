@@ -255,7 +255,8 @@ function evRender(){
       <h3>${e.type==='size'?'Что закончится первым':'Что пригодится'}</h3>
       <div class="sub">${personize(e.why||e.sub)}</div>
       ${items.length?`<div class="evgrid">${cells}</div>${accRow}
-        <div class="pfnote">${items.length>1?'Листайте вбок · ':''}нажмите на вещь — она попадёт в вишлист с размером ${sz}.</div>`
+        <div class="pfnote">${items.length>1?'Листайте вбок · ':''}нажмите на вещь — она попадёт в вишлист с размером ${sz}.</div>
+        ${e.fancy?`<div class="pfnote" style="margin-top:6px">${COSTUME_TIP}</div>`:''}`
         :`<div class="pfnote" style="margin-top:10px">Картинок для этого события пока нет. Размер к этой дате: <b>${sz}</b>.</div>`}
     </div>
     <div class="card">
@@ -267,6 +268,8 @@ function evRender(){
     <button class="ghost2" onclick="go('tl')">Назад в план</button>
     <div style="height:14px"></div>`;
 }
+/* карнавальные и нарядные вещи часто из синтетики — к праздничным образам */
+const COSTUME_TIP='Посмотрите состав на ярлыке: карнавальные костюмы часто из синтетики, кожа под ней не дышит. Такой костюм — только на время фотосессии, а потом снова хлопок. Под костюм — хлопковое боди, без мелких пайеток и бусин, которые можно оторвать.';
 function ageWordAt(d){
   const am=Math.max(0,monthsUntil(d)), f=Math.floor(am);
   if(am-f>=0.6)return 'почти '+(f+1)+' '+monthsWord(f+1);

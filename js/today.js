@@ -146,6 +146,19 @@ function uvTip(u){
     :' На открытые места — детский крем SPF 50+ с минеральным фильтром за 15 минут до выхода, обновлять каждые 2 часа.';
   return lead+age;
 }
+/* в часть образов (каждый второй при листании) — что-нибудь дополнительное: девочке в тепло без солнца — повязку
+   с бантиком, иначе игрушку. Только если в образе есть место (больше 5 вещей не помещается) */
+function accFilter(items){
+  if(S.setIdx%2!==1||items.some(x=>x[0]==='headband'))return items;
+  // тепло и не солнечно — панамка не обязательна: девочке вместо неё повязка с бантиком
+  const sunny=S.weather==='sun'||uvNow()>=3, warm=effTemp()>16;
+  if(S.gender==='girl'&&warm&&!sunny&&(CAND.headband||[]).length&&!items.some(x=>x[0]==='hat'||x[0]==='hatWarm')){
+    const r=items.filter(x=>x[0]!=='panama');
+    if(r.length<=4)return r.concat([['headband','повязка с бантиком']]);
+  }
+  if(items.length>4||items.some(x=>x[0]==='toy'))return items;
+  return items.concat([[ 'toy', S.ctx==='sling'?'грызунок':S.ctx==='car'?'игрушка в дорогу':'игрушка в коляску' ]]);
+}
 /* пелёнка и плед вместе — две одинаковые «тряпочки» в образе: оставляем плед, вместо пелёнки — игрушка */
 function oneCloth(items){
   if(!(items.some(x=>x[0]==='muslin')&&items.some(x=>x[0]==='blanket')))return items;
@@ -183,7 +196,7 @@ function paintHoliday(h,sz){
   document.getElementById('bTitle').textContent=h.title;
   document.getElementById('bName').textContent='дома';
   document.getElementById('items').textContent=it.map(x=>x[1]).join(' · ');
-  const tip=personize(`Сегодня ${h.title.toLowerCase().startsWith('день')||/месяц/.test(h.title)?'особенный день':h.title}! Не забудьте о праздничной фотосессии: нарядное надевайте прямо перед съёмкой, а потом — снова домашнее, чтобы малыш не перегрелся и не испачкал костюм.`);
+  const tip=personize(`Сегодня ${h.title.toLowerCase().startsWith('день')||/месяц/.test(h.title)?'особенный день':h.title}! Не забудьте о праздничной фотосессии: нарядное надевайте прямо перед съёмкой, а потом — снова домашнее. Проверьте состав: карнавальные костюмы часто из синтетики — в ней кожа не дышит, так что недолго пофотографироваться можно, а носить весь день не стоит.`);
   S.tipText=tip; const tpEl=document.getElementById('tipText'); if(tpEl)tpEl.textContent=tip;
   document.getElementById('setDots').innerHTML=Array.from({length:n},(_,i)=>`<i class="${i===v?'a':''}"></i>`).join('');
   drawStage({name:'дома',it},sz);
@@ -247,7 +260,7 @@ function paintMain(){
   const b=bandFor(effTemp());
   const list=setsFor(b);
   const set0=curSet(list);
-  const set={name:set0.name, it:lookItems(set0.it)};   // машина — без объёмного комбинезона, прогулочная — плед на ножки
+  const set={name:set0.name, it:accFilter(lookItems(set0.it))};   // машина — без объёмного комбинезона, прогулочная — плед на ножки
   const nl=layerCount(set.it).n||set.it.filter(x=>!NOTLAYER.includes(x[0])).length;
   document.getElementById('tLayers').textContent=`${nl} ${nl===1?'слой':(nl<5?'слоя':'слоёв')}`;
   document.getElementById('bTitle').textContent=b.title;
