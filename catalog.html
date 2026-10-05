@@ -90,6 +90,8 @@ h2 s{text-decoration:none;font-weight:700;color:var(--muted);font-size:12px}
   /* ручные правки: хранятся на устройстве (их же видит приложение), список можно скопировать и отправить */
   const ORIG={}; CATALOG.forEach(c=>ORIG[c.id]={g:c.g,a:c.a.slice(),kinds:c.kinds.slice()});
   let FIX={}; try{FIX=JSON.parse(localStorage.getItem('mpp-catfix')||'{}')||{};}catch(e){}
+  Object.keys(FIX).forEach(id=>{if(!ORIG[id])delete FIX[id];});        // правки уже внесены в файлы (картинку переименовали)
+  try{localStorage.setItem('mpp-catfix',JSON.stringify(FIX));}catch(e){}
   const cur=c=>Object.assign({},ORIG[c.id],FIX[c.id]||{});
   const save=()=>{try{localStorage.setItem('mpp-catfix',JSON.stringify(FIX));}catch(e){} bar();};
   function setFix(id,patch){
