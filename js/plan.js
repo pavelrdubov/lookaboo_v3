@@ -254,8 +254,11 @@ function evRender(){
     <div class="card">
       <h3>${e.type==='size'?'Что закончится первым':'Что пригодится'}</h3>
       <div class="sub">${personize(e.why||e.sub)}</div>
-      ${items.length?`<div class="evgrid">${cells}</div>${accRow}
-        <div class="pfnote">${items.length>1?'Листайте вбок · ':''}нажмите на вещь — она попадёт в вишлист с размером ${sz}.</div>
+      ${items.length?`<div class="evwrap"><div class="evgrid" id="evGrid" onscroll="evDots()">${cells}</div>
+        ${items.length>1?`<button class="nav" style="left:-6px" aria-label="Предыдущая вещь" onclick="evFlip(-1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#40372F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></button>
+        <button class="nav" style="right:-6px" aria-label="Следующая вещь" onclick="evFlip(1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#40372F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></button>`:''}</div>
+        ${items.length>1?`<div class="dots evdots" id="evDots">${items.map((_,i)=>`<i class="${i?'':'a'}"></i>`).join('')}</div>`:''}${accRow}
+        <div class="pfnote">Нажмите на вещь — она попадёт в вишлист с размером ${sz}.</div>
         ${e.fancy?`<div class="pfnote" style="margin-top:6px">${COSTUME_TIP}</div>`:''}`
         :`<div class="pfnote" style="margin-top:10px">Картинок для этого события пока нет. Размер к этой дате: <b>${sz}</b>.</div>`}
     </div>
@@ -270,6 +273,14 @@ function evRender(){
 }
 /* карнавальные и нарядные вещи часто из синтетики — к праздничным образам */
 const COSTUME_TIP='Посмотрите состав на ярлыке: карнавальные костюмы часто из синтетики, кожа под ней не дышит. Такой костюм — только на время фотосессии, а потом снова хлопок. Под костюм — хлопковое боди, без мелких пайеток и бусин, которые можно оторвать.';
+/* стрелки и точки — как на главном экране: по одной вещи, по кругу */
+function evIdx(){ const g=document.getElementById('evGrid'); return g?Math.round(g.scrollLeft/(g.firstElementChild?g.firstElementChild.offsetWidth+34:1)):0; }
+function evFlip(d){
+  const g=document.getElementById('evGrid'); if(!g)return;
+  const n=g.children.length, i=((evIdx()+d)%n+n)%n, c=g.children[i];
+  g.scrollTo({left:c.offsetLeft-g.firstElementChild.offsetLeft,behavior:'smooth'});
+}
+function evDots(){ const el=document.getElementById('evDots'); if(!el)return; const i=evIdx(); [...el.children].forEach((x,j)=>x.className=j===i?'a':''); }
 function ageWordAt(d){
   const am=Math.max(0,monthsUntil(d)), f=Math.floor(am);
   if(am-f>=0.6)return 'почти '+(f+1)+' '+monthsWord(f+1);
