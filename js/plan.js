@@ -30,12 +30,26 @@ const HOLIDAYS=[
 ];
 /* домашний гардероб — то, что заканчивается первым при смене размера */
 const HOMEKIT=[['bodyL','боди д/р'],['bodyS','боди к/р'],['slip','слип'],['footpants','ползунки'],['socks','носки'],['hat','шапочка']];
-function fancyItems(){
-  const g=S.gender;
-  const pool=Object.keys(FANCY).filter(n=>IMG[n]&&okFor(n,g));
+/* нарядное, «официальное» — к праздникам, дню рождения и фото по месяцам (вместе с костюмами).
+   Девочкам — платья, боди и песочники с рюшами; мальчикам — рубашка, поло, жилет; всем — слипы с воротничком,
+   брюки в клетку. Эти вещи носят и в обычные дни, поэтому в образах по погоде они остаются */
+const DRESSY={8990:'нарядное боди-платье',8991:'платье с рюшами',8992:'платье с воротничком',8998:'сарафан в клетку',
+  9091:'боди-платье с рюшами',9095:'боди-платье с рюшами',8993:'боди с рюшами',9096:'песочник с рюшами',9017:'песочник с воротничком',
+  8996:'боди-рубашка',8984:'боди-поло',8987:'боди-поло',8988:'жилет к рубашке',8997:'брюки в клетку',
+  8989:'слип с воротничком',9200:'слип с воротничком',9203:'слип с воротничком',9204:'слип с воротничком',9205:'слип с воротничком'};
+function fancyItems(d,n){
+  const g=S.gender, em=d?Math.max(0,monthsUntil(d)):ageMonthsExact();
+  const num=id=>(id.match(/__(\d{4})(_|$)/)||[])[1];
   const NM={bodyL:'нарядное боди',bodyS:'нарядное боди',dress:'нарядное платье',romper:'нарядный песочник',pants:'нарядные штанишки'};
-  const kindOf=n=>(CAND_KINDS[n]||[]).find(k=>NM[k]);
-  return pool.map(n=>[n,NM[kindOf(n)]||'нарядный комплект']);
+  let pool=Object.keys(IMG).filter(id=>(FANCY[id]||DRESSY[num(id)])&&okFor(id,g));
+  const fit=pool.filter(id=>{const a=AGE[id];return !a||(em>=a[0]&&em<a[1]);}); if(fit.length)pool=fit;
+  // своё для пола — вперёд; порядок сдвигается от даты, чтобы к разным праздникам были разные вещи
+  const tag=g==='girl'?'g':(g==='boy'?'b':'_');
+  pool.sort((a,b)=>(GT[b]===tag)-(GT[a]===tag)||a.localeCompare(b));
+  const own=pool.filter(id=>GT[id]===tag), rest=pool.filter(id=>GT[id]!==tag);
+  const sh=d?new Date(d).getMonth()+new Date(d).getDate():0, rot=L=>L.length?L.slice(sh%L.length).concat(L.slice(0,sh%L.length)):L;
+  const out=rot(own).concat(rot(rest)).slice(0,n||4);
+  return out.map(id=>[id,DRESSY[num(id)]||NM[(CAND_KINDS[id]||[]).find(k=>NM[k])]||'нарядный комплект']);
 }
 
 /* фотосессии по месяцам и праздничные костюмы. В имени картинки — тема и месяцы года, когда её показывать:
@@ -91,7 +105,7 @@ function photoItems(d,mo,used){
   return out;
 }
 const halloweenItems=d=>themedPick('halloween',d,t=>t?`костюм: ${t}`:'костюм');
-const newyearItems=d=>themedPick('newyear',d,t=>t?`«${t}»`:'новогодний образ').concat(fancyItems()).slice(0,8);
+const newyearItems=d=>themedPick('newyear',d,t=>t?`«${t}»`:'новогодний образ',4).concat(fancyItems(d,3));
 
 /* что покупать к зиме — зависит от того, насколько холодно в городе (разгар зимы, среднесуточная) */
 function winterGear(t){
@@ -163,7 +177,7 @@ function tlEvents(){
       const sz=sizeOn(d);
       ev.push({d,type:'holiday',title:x.name,szDate:d,
         sub:x.why||`Размер к этому времени — ${sz}.`,chips:x.need,size:sz,why:x.why,
-        items:x.themed?x.themed(d):(x.fancy?fancyItems():(x.keys||[])),fancy:!!(x.fancy||x.themed)});
+        items:x.themed?x.themed(d):(x.fancy?fancyItems(d,4):(x.keys||[])),fancy:!!(x.fancy||x.themed)});
     }
   });
   // день рождения
@@ -175,7 +189,7 @@ function tlEvents(){
     ev.push({d,type:'holiday',title:age<=1?'Первый день рождения':`День рождения · ${age} года`,
       sub:`Размер к празднику — ${sizeOn(d)}.`,chips:['нарядный комплект'],size:sizeOn(d),
       why:'Главный день года — и главные фотографии. Нарядное берите на размер, который будет к празднику, а не на сегодняшний.',
-      items:fancyItems(),fancy:true});
+      items:fancyItems(d,4),fancy:true});
   }
   // «месяцики» первого года — повод для фотосессии
   const usedPhoto=new Set();
@@ -187,7 +201,7 @@ function tlEvents(){
     ev.push({d,type:'month',title:`${mo} ${monthsWord(mo)}`,
       sub:`Фотосессия «${mo} мес» — образ к размеру ${sizeOn(d)}.`,chips:['образ для фото'],size:sizeOn(d),
       why:'Фото по месяцам: два стиля на выбор — каждый месяц новый костюм. Девочкам — цветы этого времени года, мальчикам — супергерои, фрукты подойдут всем. До полугода — боди и слипы, потом — кофта со штанишками.',
-      items:photoItems(d,mo,usedPhoto),fancy:true});
+      items:photoItems(d,mo,usedPhoto).concat(fancyItems(d,2)),fancy:true});
   }
   // свои события
   CUSTEV.forEach(c=>{
@@ -195,7 +209,7 @@ function tlEvents(){
     ev.push({d:c.d,type:'custom',custom:c.id,title:c.name,
       sub:`Размер к дате — ${sizeOn(c.d)}.`,chips:['нарядный комплект'],size:sizeOn(c.d),
       why:'Ваше событие — нарядное берите на размер, который будет к этой дате.',
-      items:fancyItems(),fancy:true});
+      items:fancyItems(c.d,4),fancy:true});
   });
   return ev.filter(e=>!EVHIDE.includes(evKey(e))).sort((a,b)=>a.d<b.d?-1:1);
 }
