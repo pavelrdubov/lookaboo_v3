@@ -37,6 +37,9 @@ function okFor(n,g){
 /* пока картинок какого-то вида нет — показываем похожую вещь (подпись остаётся своя) */
 const SUBST={bodyT:['bodyS'],tank:['bodyS'],wrap:['bodyL'],wrapbody:['bodyL','bodyS'],footpants:['pants'],
   romper:['bodyS'],ovWinter:['ovDemi','ovFleece'],ovDemi:['ovFleece'],slipKnit:['slip']};
+/* картинки вещей, которые надеваются через голову (нет застёжки спереди до конца) — до 2 месяцев не показываем */
+const HEAD_IMG=['8989','9065','9066','9076','9113','9067','9160'];
+const headImg=n=>HEAD_IMG.includes((n.split('__')[3]||'').split('_')[0]);
 function candFor(key,m){
   const g=S.gender;
   let src=key; if(!(CAND[key]||[]).some(n=>IMG[n]))src=(SUBST[key]||[]).find(k=>(CAND[k]||[]).some(n=>IMG[n]))||key;
@@ -45,6 +48,9 @@ function candFor(key,m){
   if(['ovFleece','ovDemi','ovWinter','slipKnit','slip'].includes(key)&&typeof effTemp==='function'&&effTemp()<=3){
     const f=all.filter(n=>!/nofeet/.test(n)); if(f.length)all=f; }
   const age=m==null?ageMonthsExact():m;
+  // первые 2 месяца — только то, что расстёгивается спереди до конца (кнопки или молния): голову ни через что не протягиваем.
+  // Вязаные слипы без застёжки и слип-худи надеваются через голову — их не берём (номера картинок — HEAD_IMG)
+  if(age<2){const f=all.filter(n=>!headImg(n)); if(f.length)all=f; else if(key==='slipKnit')return candFor('slip',m);}
   // до 3 месяцев кофта — только распашная: картинки, помеченные и свитером (через голову), не берём
   if(age<3&&key==='cardigan'){const c=all.filter(n=>!(CAND_KINDS[n]||[]).includes('sweater')); if(c.length)all=c;}
   // мальчику розового не предлагаем совсем (в том числе нейтральные вещи розоватого цвета)
