@@ -47,7 +47,7 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(legLayer(carFilter(it))))))))),ageMonthsExact()); }
+function lookItems(it){ return newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(legLayer(carFilter(it)))))))))),ageMonthsExact()); }
 /* до 2 месяцев — ничего через голову: боди с кнопками на плече или боди-распашонка (на запах);
    до 3 месяцев — ползунки вместо штанишек; распашонка — до 3 месяцев включительно */
 const OVERHEAD=['bodyL','bodyS','bodyT','tank'];
@@ -73,7 +73,8 @@ function density(items){
     cardigan:['тонкая кофта','плотная кофта','тёплая вязаная кофта'],
     sweater:['тонкий свитшот','свитер','тёплый шерстяной свитер'],
     slip:['хлопковый слип','слип из футера','тёплый слип (начёс)'],
-    footpants:['ползунки','плотные ползунки','тёплые ползунки']};
+    footpants:['ползунки','плотные ползунки','тёплые ползунки'],
+    suit:['хлопковый костюм','костюм из футера','тёплый костюм (начёс)']};
   if(!top&&effTemp()>16)return items;                                // летом подписи из набора
   return items.map(x=>{
     if(L[x[0]])return [x[0],L[x[0]][lv]];
@@ -85,16 +86,23 @@ function density(items){
 /* штанишки без стопы — к ним носки. Под комбинезон на синтепоне (демисезонный, зимний) — тоже:
    иначе это как обувь на голую ногу. Не нужны, только если стопу уже закрывает слип, ползунки
    или флисовый комбинезон со стопой поверх штанишек */
+/* спортивный костюм (кофта + штаны одним комплектом) — с 3 месяцев, в каждом втором образе вместо пары «кофта/свитер + штанишки» */
+function suitFilter(items){
+  if(ageMonthsExact()<3||S.setIdx%2!==0||!(CAND.suit||[]).some(n=>IMG[n]&&okFor(n,S.gender)))return items;
+  const ti=items.findIndex(x=>x[0]==='sweater'||x[0]==='cardigan'), pi=items.findIndex(x=>x[0]==='pants');
+  if(ti<0||pi<0)return items;
+  return items.map((x,i)=>i===ti?['suit','спортивный костюм']:x).filter((x,i)=>i!==pi);
+}
 function socksFilter(items){
-  if(!items.some(x=>x[0]==='pants')||items.some(x=>x[0]==='socks'))return items;
+  if(!items.some(x=>x[0]==='pants'||x[0]==='suit')||items.some(x=>x[0]==='socks'))return items;
   if(items.some(x=>['ovFleece','slip','slipKnit','footpants'].includes(x[0])))return items;
   if(effTemp()>22)return items;
-  const at=items.findIndex(x=>x[0]==='pants'); const r=items.slice(); r.splice(at+1,0,['socks',effTemp()<=5?'тёплые носки':'носки']); return r;
+  const at=items.findIndex(x=>x[0]==='pants'||x[0]==='suit'); const r=items.slice(); r.splice(at+1,0,['socks',effTemp()<=5?'тёплые носки':'носки']); return r;
 }
 /* слои считаем и на теле, и на ножках: боди ножки не закрывает. Под комбинезон или куртку всегда
    что-то на ножки; в прохладу на ногах столько же слоёв, сколько на теле */
-const TORSO=['bodyL','bodyS','bodyT','wrap','wrapbody','tank','cardigan','sweater','slip','slipKnit','romper','dress','dungarees','ovFleece','ovDemi','ovWinter','jacket','vest'];
-const LEGS=['slip','slipKnit','footpants','pants','dungarees','ovFleece','ovDemi','ovWinter'];
+const TORSO=['suit','bodyL','bodyS','bodyT','wrap','wrapbody','tank','cardigan','sweater','slip','slipKnit','romper','dress','dungarees','ovFleece','ovDemi','ovWinter','jacket','vest'];
+const LEGS=['suit','slip','slipKnit','footpants','pants','dungarees','ovFleece','ovDemi','ovWinter'];
 function layerCount(items){ const t=items.filter(x=>TORSO.includes(x[0])&&x[0]!=='vest').length, l=items.filter(x=>LEGS.includes(x[0])).length;
   return {torso:t, legs:l, n:Math.max(t,l)}; }
 function legLayer(items){
@@ -106,7 +114,7 @@ function legLayer(items){
   const under=items.filter(x=>LEGS.includes(x[0])&&x[0]!==top).length;
   const t=S.ctx==='sling'?airTemp():effTemp(), c=layerCount(items);
   const needed=top?under===0:(t<=14&&c.legs===0);           // без комбинезона — если ножки совсем ничем не закрыты
-  if(!needed||items.some(x=>x[0]==='pants'||x[0]==='footpants'))return items;
+  if(!needed||items.some(x=>x[0]==='pants'||x[0]==='footpants'||x[0]==='suit'))return items;
   // с 3 месяцев — штанишки (и носки), раньше — ползунки со стопой
   const add=ageMonths()>=3?['pants','штанишки']:['footpants','ползунки'];
   const at=items.findIndex(x=>!['bodyL','bodyS','bodyT','wrap','wrapbody','tank'].includes(x[0]));   // сразу после боди
