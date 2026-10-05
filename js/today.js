@@ -47,7 +47,18 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(legLayer(carFilter(it))))))))); }
+function lookItems(it){ return newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(legLayer(carFilter(it))))))))),ageMonthsExact()); }
+/* до 2 месяцев — только то, что не через голову: боди и майку меняем на боди-распашонку (на запах);
+   до 3 месяцев — ползунки вместо штанишек */
+const OVERHEAD=['bodyL','bodyS','bodyT','tank'];
+function newbornFilter(items,m){
+  // штанишки — с 3 месяцев, раньше ползунки со стопой (той же плотности)
+  if(m<3)items=items.map(x=>x[0]!=='pants'?x:['footpants',/тёпл|начёс/.test(x[1])?'тёплые ползунки':(/футер|плотн/.test(x[1])?'плотные ползунки':'ползунки')]);
+  if(m>=2||!items.some(x=>OVERHEAD.includes(x[0])))return items.filter((x,i,a)=>a.findIndex(y=>y[0]===x[0])===i);
+  const r=[]; items.forEach(x=>{ const y=OVERHEAD.includes(x[0])?['wrapbody',/шерст/.test(x[1])?'шерстяная боди-распашонка':(x[0]==='bodyL'?'боди-распашонка д/р':'боди-распашонка')]:x;
+    if(!r.some(z=>z[0]===y[0]))r.push(y); });
+  return r;
+}
 /* насколько плотные нижние слои: зависит от погоды и от того, что сверху.
    Под зимним комбинезоном можно потоньше, под одним флисом или демисезонным — потеплее */
 function density(items){

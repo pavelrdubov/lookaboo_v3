@@ -188,7 +188,9 @@ function tripItems(){
   const extra=[];
   if(w.rain>=25)extra.push(['ovDemi','запасной верхний слой — дожди']);
   if(w.uv&&w.uv>=5)extra.push(['panama','панамка']);
-  return {days, road, main:out, extra};
+  const ta=tripAgeMonths();                      // до 2 месяцев — боди только на запах
+  const road2=ta<2?newbornFilter(road,ta).map(x=>x[0]==='wrapbody'?['wrapbody','боди-распашонка на смену']:x):road;
+  return {days, road:road2, main:newbornFilter(out,ta), extra};
 }
 
 function tripRender(){
@@ -239,7 +241,7 @@ function tripRender(){
     <div class="tleg"><span><i class="lg"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"></path><rect x="4" y="7" width="16" height="12" rx="2.5"></rect></svg></i>положить в чемодан</span><span><i class="lh"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></i>купить — в вишлист</span></div>
 
     <div class="sect">В ДОРОГУ — В РУЧНУЮ КЛАДЬ</div>
-    ${I.road.map(([k,l])=>row(k,l,k==='bodyL'?2:1,'road')).join('')}
+    ${I.road.map(([k,l])=>row(k,l,k==='bodyL'||k==='wrapbody'?2:1,'road')).join('')}
 
     <div class="sect">ГАРДЕРОБ НА МЕСТЕ</div>
     ${I.days>5?'<div class="sub" style="margin:-2px 4px 8px">Количества — из расчёта, что бельё за поездку хотя бы раз постирают.</div>':''}
