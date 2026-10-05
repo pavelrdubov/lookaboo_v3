@@ -123,7 +123,7 @@ function waSections(){
 }
 function waCats(){
   const c=WACATS.map(x=>({t:x.t,it:x.it.slice()}));
-  c[4].it=fancyItems().concat([['dress','платье']]);   // нарядное зависит от пола + платье
+  c[4].it=fancyItems(null,12).map(([k,l])=>[k,l.replace(/^праздничный наряд: /,'')]).concat([['dress','платье']]);   // нарядное зависит от пола + платье
   return c.filter(x=>x.it.length);
 }
 function waOpen(id){

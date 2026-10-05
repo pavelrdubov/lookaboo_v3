@@ -49,7 +49,8 @@ function fancyItems(d,n){
   const own=pool.filter(id=>GT[id]===tag), rest=pool.filter(id=>GT[id]!==tag);
   const sh=d?new Date(d).getMonth()+new Date(d).getDate():0, rot=L=>L.length?L.slice(sh%L.length).concat(L.slice(0,sh%L.length)):L;
   const out=rot(own).concat(rot(rest)).slice(0,n||4);
-  return out.map(id=>[id,DRESSY[num(id)]||NM[(CAND_KINDS[id]||[]).find(k=>NM[k])]||'нарядный комплект']);
+  // подпись — как у стилей фотосессии: что это за образ, а потом сама вещь
+  return out.map(id=>[id,'праздничный наряд: '+(DRESSY[num(id)]||NM[(CAND_KINDS[id]||[]).find(k=>NM[k])]||'нарядный комплект')]);
 }
 
 /* фотосессии по месяцам и праздничные костюмы. В имени картинки — тема и месяцы года, когда её показывать:
