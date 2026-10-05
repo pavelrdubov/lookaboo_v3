@@ -132,6 +132,9 @@ function lookWithImgs(list){
   // на картинке не больше 5 вещей — так они крупнее; мелочь (носки, варежки, игрушка, пелёнка) остаётся в строке под образом
   // носки с картинки не убираем, если стопу больше ничего не закрывает (у комбинезона или слипа без стопы — «_nofeet» в имени)
   const FOOTED=['slip','slipKnit','footpants','ovFleece','ovDemi','ovWinter'];
+  // праздник дома: вещи — конкретные картинки (костюм, нарядное), носки не добавляем
+  if(S.ctx==='home'){ const L0=lookImgs(list.filter(x=>!IMG[x[0]]).map(x=>x[0])); list.forEach(x=>{if(IMG[x[0]])L0[x[0]]=IMG[x[0]];});
+    const out0=list.filter(x=>L0[x[0]]); return {list:out0,LOOK:L0}; }
   let L=lookImgs(list.map(x=>x[0]));
   const feetOK=list.some(x=>FOOTED.includes(x[0])&&L[x[0]]&&!/nofeet/.test(L[x[0]]));
   const sockL=effTemp()<=5?'тёплые пинетки':'носки или пинетки';

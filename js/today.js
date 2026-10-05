@@ -9,7 +9,8 @@ function setsFor(b){
 const CTX={
   stroller:{d:-3, why:'малыш лежит в коляске'},
   sling:   {d:+3, why:'в слинге малышу достаётся ваше тепло'},
-  car:     {d:+6, why:'в машине малышу быстро становится жарко'}
+  car:     {d:+6, why:'в машине малышу быстро становится жарко'},
+  home:    {d:0,  why:'дома тепло'}
 };
 /* коляска бывает разной: в люльке малыш лежит закрытый от ветра (капюшон, накидка), в прогулочной —
    сидит открыто, ветер достаёт до ног. По умолчанию: до 6 месяцев люлька, потом прогулочная; можно выбрать в профиле */
@@ -135,6 +136,29 @@ function carFilter(items){
 }
 /* время суток меняется — раз в 10 минут перерисовываем шапку, если экран открыт */
 setInterval(()=>{if(S.screen==='main'&&document.visibilityState==='visible')paintMain();},600000);
+/* праздник сегодня (из «Плана»: Хэллоуин, Новый год, 23 февраля, 8 марта, день рождения, «месяцовщина», своё событие) —
+   тогда на главной появляется вкладка «дома» с праздничным образом */
+let HOLCACHE={k:'',v:null};
+function holidayToday(){
+  const t=todayStr(), key=[t,S.dob,S.gender,(typeof CUSTEV!=='undefined'?CUSTEV.length:0)].join('|');
+  if(HOLCACHE.k===key)return HOLCACHE.v;
+  let v=null; try{ v=tlEvents().find(e=>e.d===t&&['holiday','month','custom'].includes(e.type)&&e.items&&e.items.some(x=>IMG[x[0]]))||null; }catch(e){}
+  HOLCACHE={k:key,v}; return v;
+}
+function holidayPool(h){ return h.items.filter(x=>IMG[x[0]]); }
+function paintHoliday(h,sz){
+  const pool=holidayPool(h), n=Math.min(5,pool.length), v=S.setIdx%n;
+  const it=[pool[v]]; if(pool.length>1)it.push(pool[(v+1)%pool.length]);
+  it.push(S.gender==='girl'&&(CAND.headband||[]).length?['headband','повязка с бантиком']:['toy','любимая игрушка']);
+  document.getElementById('tLayers').textContent='праздник';
+  document.getElementById('bTitle').textContent=h.title;
+  document.getElementById('bName').textContent='дома';
+  document.getElementById('items').textContent=it.map(x=>x[1]).join(' · ');
+  const tip=personize(`Сегодня ${h.title.toLowerCase().startsWith('день')||/месяц/.test(h.title)?'особенный день':h.title}! Не забудьте о праздничной фотосессии: нарядное надевайте прямо перед съёмкой, а потом — снова домашнее, чтобы малыш не перегрелся и не испачкал костюм.`);
+  S.tipText=tip; const tpEl=document.getElementById('tipText'); if(tpEl)tpEl.textContent=tip;
+  document.getElementById('setDots').innerHTML=Array.from({length:n},(_,i)=>`<i class="${i===v?'a':''}"></i>`).join('');
+  drawStage({name:'дома',it},sz);
+}
 function paintMain(){
   const sc=SCENES[S.weather]||SCENES.cloud, sky=skyFor(S.weather);
   document.getElementById('wband').style.background=sky.grad;
@@ -183,7 +207,11 @@ function paintMain(){
   if(S.weather==='sun')full.push('на солнце теплее');
   full.push(personize(ctxNow().why));
   S.whyText=`${full.join(' · ')} — для ${babyCases().gen} это как ${ef0>0?'+':''}${ef0}°`;
+  const hol=holidayToday(), hc=document.getElementById('ctxHome');
+  if(hc)hc.style.display=hol?'':'none';
+  if(S.ctx==='home'&&!hol)S.ctx='stroller';
   document.querySelectorAll('#ctxRow .c').forEach(b=>b.classList.toggle('on',b.dataset.c===S.ctx));
+  if(S.ctx==='home'){ document.getElementById('tWhy').textContent=personize('Дома — праздничный образ для фото'); paintHoliday(hol,sz); return; }
 
   const b=bandFor(effTemp());
   const list=setsFor(b);
@@ -226,8 +254,9 @@ function dayWish(key,label,quiet){
 function flip(d){
   const p=document.getElementById('tipPop');if(p)p.classList.remove('on');
   const tb=document.getElementById('tipBtn');if(tb)tb.classList.remove('act');
-  // стрелки листают и наборы, и другие сочетания картинок (см. lookImgs)
-  const n=lookTotal(setsFor(bandFor(effTemp())).length);
+  // стрелки листают и наборы, и другие сочетания картинок (см. lookImgs); дома в праздник — праздничные вещи
+  const hol=S.ctx==='home'&&holidayToday();
+  const n=hol?Math.min(5,holidayPool(hol).length):lookTotal(setsFor(bandFor(effTemp())).length);
   S.setIdx=(S.setIdx+d+n)%n;
   paintMain();
 }

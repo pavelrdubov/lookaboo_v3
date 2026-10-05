@@ -25,6 +25,8 @@
 #ctxRow{display:flex;align-items:center;gap:5px;margin-top:13px}
 #ctxRow .c{border:none;background:rgba(72,88,102,.32);color:#fff;border-radius:999px;padding:6px 10px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #ctxRow .c.on{background:#fff;color:#3B4A55}
+#ctxRow .c.hol{background:rgba(196,97,60,.55)}
+#ctxRow .c.hol.on{background:#fff;color:#C4613C}
 #shareCard{position:absolute;inset:0;z-index:40;background:rgba(48,38,30,.55);display:none;align-items:center;justify-content:center;padding:22px}
 #shareCard.on{display:flex}
 .gcard{width:100%;background:#FFFCF6;border-radius:26px;overflow:hidden;box-shadow:0 20px 50px rgba(48,38,30,.35)}

@@ -253,6 +253,7 @@ function lookNotes(items,eff){
   const add=(k,text,pr,again)=>{ if(has(k)&&(again||!out.some(n=>n.key===k)))out.push({key:k,text,pr,style:/\d/.test(text)?'fact':'hand'}); };
   if(has('ovWinter')||has('ovDemi')){ const g=insFor(eff).g, k=has('ovWinter')?'ovWinter':'ovDemi'; add(k,/пух/.test(g)?g:g+' утеплителя',10);
     add(k,'ножки закрыты — тепло',9,true); }        // у комбинезонов на утеплителе стопа закрыта
+  if(S.ctx==='home'&&items[0]){ out.push({key:items[0][0],text:'для праздничного фото',pr:12,style:'hand'}); return out; }
   if(S.ctx==='car')add('blanket','поверх ремней, не под них',9);
   if(S.ctx==='stroller'&&strollerKind()==='seat'&&eff<=6)add('blanket','укрыть ножки — в прогулочной дует',9);
   add('wrap','швы наружу — коже мягко',8);
