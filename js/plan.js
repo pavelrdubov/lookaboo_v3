@@ -105,7 +105,7 @@ function photoItems(d,mo,used){
   return out;
 }
 const halloweenItems=d=>themedPick('halloween',d,t=>t?`костюм: ${t}`:'костюм');
-const newyearItems=d=>themedPick('newyear',d,t=>t?`«${t}»`:'новогодний образ',4).concat(fancyItems(d,3));
+const newyearItems=d=>themedPick('newyear',d,t=>t?`«${t}»`:'новогодний образ',3).concat(fancyItems(d,3));
 
 /* что покупать к зиме — зависит от того, насколько холодно в городе (разгар зимы, среднесуточная) */
 function winterGear(t){
@@ -177,7 +177,7 @@ function tlEvents(){
       const sz=sizeOn(d);
       ev.push({d,type:'holiday',title:x.name,szDate:d,
         sub:x.why||`Размер к этому времени — ${sz}.`,chips:x.need,size:sz,why:x.why,
-        items:x.themed?x.themed(d):(x.fancy?fancyItems(d,4):(x.keys||[])),fancy:!!(x.fancy||x.themed)});
+        items:x.themed?x.themed(d):(x.fancy?fancyItems(d,3):(x.keys||[])),fancy:!!(x.fancy||x.themed)});
     }
   });
   // день рождения
@@ -189,7 +189,7 @@ function tlEvents(){
     ev.push({d,type:'holiday',title:age<=1?'Первый день рождения':`День рождения · ${age} года`,
       sub:`Размер к празднику — ${sizeOn(d)}.`,chips:['нарядный комплект'],size:sizeOn(d),
       why:'Главный день года — и главные фотографии. Нарядное берите на размер, который будет к празднику, а не на сегодняшний.',
-      items:fancyItems(d,4),fancy:true});
+      items:fancyItems(d,3),fancy:true});
   }
   // «месяцики» первого года — повод для фотосессии
   const usedPhoto=new Set();
@@ -201,7 +201,7 @@ function tlEvents(){
     ev.push({d,type:'month',title:`${mo} ${monthsWord(mo)}`,
       sub:`Фотосессия «${mo} мес» — образ к размеру ${sizeOn(d)}.`,chips:['образ для фото'],size:sizeOn(d),
       why:'Фото по месяцам: два стиля на выбор — каждый месяц новый костюм. Девочкам — цветы этого времени года, мальчикам — супергерои, фрукты подойдут всем. До полугода — боди и слипы, потом — кофта со штанишками.',
-      items:photoItems(d,mo,usedPhoto).concat(fancyItems(d,2)),fancy:true});
+      items:(()=>{const ph=photoItems(d,mo,usedPhoto); return ph.concat(fancyItems(d,3-ph.length));})(),fancy:true});
   }
   // свои события
   CUSTEV.forEach(c=>{
@@ -209,7 +209,7 @@ function tlEvents(){
     ev.push({d:c.d,type:'custom',custom:c.id,title:c.name,
       sub:`Размер к дате — ${sizeOn(c.d)}.`,chips:['нарядный комплект'],size:sizeOn(c.d),
       why:'Ваше событие — нарядное берите на размер, который будет к этой дате.',
-      items:fancyItems(c.d,4),fancy:true});
+      items:fancyItems(c.d,3),fancy:true});
   });
   return ev.filter(e=>!EVHIDE.includes(evKey(e))).sort((a,b)=>a.d<b.d?-1:1);
 }
@@ -231,7 +231,12 @@ function evRender(){
 
   const sz=e.size||sizeOn(e.d);
   const em=Math.max(0,monthsUntil(e.szDate||e.d));
-  const items=(e.items||[]);
+  // сетка по три — без одинокой карточки во всю ширину
+  const all=(e.items||[]), items=all.length>3?all.slice(0,Math.floor(all.length/3)*3):all;
+  // к нарядному девочке — повязка или бантик (маленьким рядом снизу)
+  const acc=e.fancy&&S.gender==='girl'?(CAND.headband||[]).filter(n=>IMG[n]).slice(0,4):[];
+  const accRow=acc.length?`<div class="evacc"><span>к образу</span><div>${acc.map(n=>{const on=!!WISH['plan'+e.d+':'+n];
+    return `<div class="ac${on?' in':''}" onclick="evWish('${n}','повязка с бантиком',1)"><img src="${IMG[n]}" alt="" onerror="this.remove()"></div>`;}).join('')}</div></div>`:'';
   const cells=items.map(([k,label])=>{
     const direct=!!IMG[k];                       // прямое имя картинки (нарядное)
     const src=direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null);
@@ -248,7 +253,7 @@ function evRender(){
     <div class="card">
       <h3>${e.type==='size'?'Что закончится первым':'Что пригодится'}</h3>
       <div class="sub">${personize(e.why||e.sub)}</div>
-      ${items.length?`<div class="evgrid">${cells}</div>
+      ${items.length?`<div class="evgrid">${cells}</div>${accRow}
         <div class="pfnote">Нажмите на вещь — она попадёт в вишлист с размером ${sz}.</div>`
         :`<div class="pfnote" style="margin-top:10px">Картинок для этого события пока нет. Размер к этой дате: <b>${sz}</b>.</div>`}
     </div>
@@ -271,7 +276,8 @@ function evWish(k,label,direct){
   const sz=e.size||sizeOn(e.d);
   const em=Math.max(0,monthsUntil(e.szDate||e.d));
   const id='plan'+e.d+':'+k;
-  const added=wishToggle(id,{label:label,size:direct?sz:sizeForItem(k,em,sz),
+  const acc=(CAND_KINDS[k]||[]).includes('headband');       // повязка — без размера одежды
+  const added=wishToggle(id,{label:label,size:acc?'':(direct?sz:sizeForItem(k,em,sz)),
     src:(evCanDel(e)?'Событие · ':'План · ')+e.title,ev:evKey(e),d:e.d,
     img:(direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null))||null,key:k});
   toast(added?`«${label}» — в вишлисте`:`«${label}» убрали из вишлиста`);

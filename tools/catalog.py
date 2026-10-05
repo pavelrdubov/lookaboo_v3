@@ -56,6 +56,7 @@ KINDS = {
     'panama':    ('acc',      'панамка'),
     'socks':     ('acc',      'носки / пинетки'),
     'mittens':   ('acc',      'варежки'),
+    'headband':  ('acc',      'повязка, бантик (к нарядному)'),
     # в коляску
     'muslin':    ('stroller', 'муслин'),
     'blanket':   ('stroller', 'плед'),
