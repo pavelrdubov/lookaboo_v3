@@ -23,8 +23,8 @@ const SEASONS=[
    why:'В сентябре разница между утром и днём доходит до десяти градусов.'}
 ];
 const HOLIDAYS=[
-  {m:9, d:31,name:'Хэллоуин',     need:['костюм'], keys:[['costume','костюм']], why:'Тыква, тигрёнок или привидение — костюм надевают поверх одежды, так что берите на размер больше: и наденется легко, и на фото не тесно.'},
-  {m:11,d:31,name:'Новый год',    need:['нарядный комплект'], fancy:1, why:'Фотографий будет много — нарядное стоит заказать за пару недель: к концу декабря нужных размеров уже нет.'},
+  {m:9, d:31,name:'Хэллоуин',     need:['костюм'], themed:d=>halloweenItems(d), why:'Тыква, тигрёнок или привидение — костюм надевают поверх одежды, так что берите на размер больше: и наденется легко, и на фото не тесно.'},
+  {m:11,d:31,name:'Новый год',    need:['новогодний образ'], themed:d=>newyearItems(d), why:'Фотографий будет много — нарядное стоит заказать за пару недель: к концу декабря нужных размеров уже нет.'},
   {m:1, d:23, name:'23 февраля',  need:['нарядный комплект'], fancy:1, why:'Повод для фотографий с папой — и для нарядного, которое потом пойдёт в садик.'},
   {m:2, d:8,  name:'8 марта',     need:['нарядный комплект'], fancy:1, why:'Весенний праздник — нарядное пригодится и на майские.'}
 ];
@@ -37,6 +37,43 @@ function fancyItems(){
   const kindOf=n=>(CAND_KINDS[n]||[]).find(k=>NM[k]);
   return pool.map(n=>[n,NM[kindOf(n)]||'нарядный комплект']);
 }
+
+/* фотосессии по месяцам и праздничные костюмы. В имени картинки — тема и месяцы года, когда её показывать:
+   photo__g__0-6__9384_tulip_m3 — тюльпаны в марте. До 6 месяцев — боди и слипы, старше — костюм из кофты и штанишек.
+   Девочкам — цветы, мальчикам — супергерои, фрукты — всем */
+const THEME_RU={superman:'Супермен',batman:'Бэтмен',spiderman:'Человек-паук',flash:'Флэш',deadpool:'Дэдпул',hulk:'Халк',
+  captain:'Капитан Америка',ironman:'Железный человек',wolverine:'Росомаха',panther:'Чёрная пантера',aquaman:'Аквамен',thor:'Тор',
+  carrot:'морковка',watermelon:'арбуз',blueberry:'черника',tomato:'помидор',lemon:'лимон',orange:'апельсин',apple:'яблоко',
+  pear:'груша',kiwi:'киви',banana:'банан',avocado:'авокадо',pomegranate:'гранат',
+  lily:'ландыши',sakura:'сакура',lavender:'лаванда',forgetmenot:'незабудки',peony:'пионы',daisy:'ромашки',poppy:'маки',
+  sunflower:'подсолнух',chrysanthemum:'хризантемы',tulip:'тюльпаны',alstroemeria:'альстромерия',aster:'астры',
+  ghost:'привидение',skeleton:'скелетик',pumpkin:'тыква',tree:'ёлочка',snowman:'снеговик',reindeer:'оленёнок',santa:'Дед Мороз'};
+function themeOf(id){ const cap=(id.split('__')[3]||'').split('_'); const t=cap.find(x=>THEME_RU[x]);
+  return {name:t?THEME_RU[t]:'', months:(cap.join('_').match(/m\d{1,2}/g)||[]).map(x=>+x.slice(1))}; }
+/* картинки вида kind к дате: по полу малыша, возрасту на эту дату и месяцу года */
+function themedPick(kind,d,label){
+  const em=Math.max(0,monthsUntil(d)), mon=new Date(d).getMonth()+1, g=S.gender;
+  const all=(CAND[kind]||[]).filter(n=>IMG[n]&&okFor(n,g));
+  const ageOk=n=>{const a=AGE[n];return !a||(em>=a[0]&&em<a[1]);};
+  // насколько тема далека от этого месяца (0 — как раз её время)
+  const md=n=>{const m=themeOf(n).months; if(!m.length)return 0; return Math.min(...m.map(x=>Math.min(Math.abs(x-mon),12-Math.abs(x-mon))));};
+  let pool=all.filter(n=>md(n)===0);
+  const fit=pool.filter(ageOk);
+  if(fit.length>=3)pool=fit;
+  else if(em<6){                                   // малышам — только боди и слипы: берём ближайшие по сезону темы своего возраста
+    const near=all.filter(ageOk).sort((a,b)=>md(a)-md(b)).filter(n=>md(n)<=1);
+    pool=fit.concat(near.filter(n=>!fit.includes(n)));
+    if(!pool.length)pool=all.filter(n=>md(n)===0);
+  }else pool=fit.concat(pool.filter(n=>!fit.includes(n)));   // постарше — тема месяца, даже если вещь «малышовая»
+  if(!pool.length)pool=all;
+  // своё для пола (цветы девочке, герои мальчику) — до 5, остальное — общее (фрукты, привидение)
+  const tag=g==='girl'?'g':(g==='boy'?'b':'_');
+  const own=pool.filter(n=>GT[n]===tag).slice(0,5), rest=pool.filter(n=>GT[n]!==tag);
+  return own.concat(rest).slice(0,8).map(n=>{const t=themeOf(n).name; return [n,label(t,n)];});
+}
+const photoItems=d=>themedPick('photo',d,t=>t?`«${t}»`:'образ для фото');
+const halloweenItems=d=>themedPick('halloween',d,t=>t?`костюм: ${t}`:'костюм');
+const newyearItems=d=>themedPick('newyear',d,t=>t?`«${t}»`:'новогодний образ').concat(fancyItems()).slice(0,8);
 
 /* что покупать к зиме — зависит от того, насколько холодно в городе (разгар зимы, среднесуточная) */
 function winterGear(t){
@@ -108,7 +145,7 @@ function tlEvents(){
       const sz=sizeOn(d);
       ev.push({d,type:'holiday',title:x.name,szDate:d,
         sub:x.why||`Размер к этому времени — ${sz}.`,chips:x.need,size:sz,why:x.why,
-        items:x.fancy?fancyItems():(x.keys||[]),fancy:!!x.fancy});
+        items:x.themed?x.themed(d):(x.fancy?fancyItems():(x.keys||[])),fancy:!!(x.fancy||x.themed)});
     }
   });
   // день рождения
@@ -129,9 +166,9 @@ function tlEvents(){
     const d=dISO(new Date(y,m,1).getFullYear(),new Date(y,m,1).getMonth(),Math.min(b0.getDate(),new Date(y,m+1,0).getDate()));
     if(!inFuture(d)||new Date(d)>horizon||monthsUntil(d)>12.5)continue;
     ev.push({d,type:'month',title:`${mo} ${monthsWord(mo)}`,
-      sub:`Фотосессия «${mo} мес» — нарядное к размеру ${sizeOn(d)}.`,chips:['нарядный комплект'],size:sizeOn(d),
-      why:'Каждый месяц многие делают фото — под это пригодится нарядный комплект на текущий размер.',
-      items:fancyItems(),fancy:true});
+      sub:`Фотосессия «${mo} мес» — образ к размеру ${sizeOn(d)}.`,chips:['образ для фото'],size:sizeOn(d),
+      why:'Фото по месяцам: каждый месяц — своя тема. Девочкам — цветы этого времени года, мальчикам — супергерои, фрукты подойдут всем. До полугода удобнее боди и слипы, потом — кофта со штанишками.',
+      items:photoItems(d),fancy:true});
   }
   // свои события
   CUSTEV.forEach(c=>{
