@@ -43,7 +43,7 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return oneCloth(coverFilter(headFilter(legsFilter(density(socksFilter(legLayer(carFilter(it)))))))); }
+function lookItems(it){ return oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(legLayer(carFilter(it))))))))); }
 /* насколько плотные нижние слои: зависит от погоды и от того, что сверху.
    Под зимним комбинезоном можно потоньше, под одним флисом или демисезонным — потеплее */
 function density(items){
@@ -108,14 +108,43 @@ function coverFilter(items){
 function headFilter(items){
   if(S.ctx==='car'&&airTemp()>12)return items;           // в тёплый день в машине шапка не нужна; в холод — на дорогу до машины
   // в коляске — по тому, как ощущается малышу; в слинге и по дороге к машине голова снаружи — по воздуху
-  const t=S.ctx==='stroller'?effTemp():airTemp(), sunny=S.weather==='sun';
+  const t=S.ctx==='stroller'?effTemp():airTemp(), sunny=S.weather==='sun'||uvNow()>=3;
   const want=t<=3?['hatWarm','тёплая шапка']:(t<=10?['hatWarm','шапка потолще, вязаная']
-    :(t<=16?['hat','тонкая шапочка или чепчик']:(sunny?['panama','панамка или чепчик — от солнца']:null)));
+    :(t<=16?(uvNow()>=6?['panama','панамка с полями — от солнца']:['hat','тонкая шапочка или чепчик']):(sunny?['panama','панамка или чепчик — от солнца']:null)));
   const at=items.findIndex(x=>x[0]==='hat'||x[0]==='hatWarm'||x[0]==='panama');
   if(!want)return items;
   if(at<0)return items.concat([want]);
   if(t>16&&items[at][0]==='panama')return items;                  // панамка уже есть
   const r=items.slice(); r[at]=want; return r;
+}
+/* УФ-индекс: из живой погоды; вручную выбрано «солнце» днём — примерно по сезону */
+function uvNow(){
+  if(S.live&&typeof S.uv==='number')return S.uv;
+  if(S.weather!=='sun'||dayPhase()!=='day')return 0;
+  return {summer:7,spring:4,autumn:3,winter:1}[seasonNow()]||3;
+}
+const uvWord=u=>u>=11?'экстремальный':u>=8?'очень высокий':u>=6?'высокий':u>=3?'умеренный':'низкий';
+/* солнце в коляске: муслин накрыть ножки (а не коляску целиком) */
+function sunFilter(items){
+  if(S.ctx!=='stroller'||uvNow()<3||effTemp()<17||items.some(x=>x[0]==='muslin'||x[0]==='blanket'))return items;
+  return items.concat([['muslin','муслиновая пелёнка']]);
+}
+/* что взять с собой, кроме одежды: дождевик или зонт в дождь, крем от солнца при УФ от 3 (с полугода) */
+function extrasNow(){
+  if(S.ctx==='home')return [];
+  const r=[], u=uvNow(), dt=wxDetail();
+  if(['drizzle','rain','shower','heavy','thunder','sleet'].includes(dt.kind)||S.weather==='rain')
+    r.push(S.ctx==='stroller'?['raincover','дождевик на коляску']:S.ctx==='sling'?['umbrella','зонт или слингокуртка']:['umbrella','зонт — дойти до машины']);
+  if(u>=3&&S.ctx!=='car'&&ageMonths()>=6)r.push(['spf','детский крем SPF 50+']);
+  return r;
+}
+function uvTip(u){
+  const lead=u>=8?`УФ ${u} — ${uvWord(u)}: с 11 до 16 лучше переждать дома или в густой тени, гулять утром и вечером.`
+    :u>=6?`УФ ${u} — высокий: гуляйте в тени, панамка с полями — обязательно.`
+    :`УФ ${u}: панамка и тень — и солнцу малыша не подставлять.`;
+  const age=ageMonths()<6?' До полугода крем от солнца не нужен — защищают тень, козырёк коляски и лёгкая одежда с рукавами.'
+    :' На открытые места — детский крем SPF 50+ с минеральным фильтром за 15 минут до выхода, обновлять каждые 2 часа.';
+  return lead+age;
 }
 /* пелёнка и плед вместе — две одинаковые «тряпочки» в образе: оставляем плед, вместо пелёнки — игрушка */
 function oneCloth(items){
@@ -175,10 +204,11 @@ function paintMain(){
   const tT=document.getElementById('tTemp'), tF=document.getElementById('tFeels');
   document.getElementById('tPlace').textContent=S.city||'город не выбран';
   const dt=wxDetail(), word=(dt.kind&&WXWORD[dt.kind])||sc.word;
+  const uvL=S.live&&uvNow()>=3?` · УФ ${uvNow()}`:'';
   const wind=S.wind>=10?` · сильный ветер ${S.wind} м/с`:(S.wind>=5?` · ветер ${S.wind} м/с`:'');
   if(S.wx==='live'){
     tT.textContent=(S.temp>0?'+':'')+S.temp+'°';
-    tF.textContent=word+wind;
+    tF.textContent=word+wind+uvL;
   }else if(S.wx==='loading'){
     tT.textContent='…'; tF.textContent='ищем погоду';
   }else if(S.wx==='manual'){
@@ -205,6 +235,7 @@ function paintMain(){
   if(S.wind>=5)full.push(`ветер ${S.wind} м/с`);
   if(S.weather==='rain')full.push('дождь');
   if(S.weather==='sun')full.push('на солнце теплее');
+  if(uvNow()>=3)full.push(`УФ-индекс ${uvNow()} — ${uvWord(uvNow())}`);
   full.push(personize(ctxNow().why));
   S.whyText=`${full.join(' · ')} — для ${babyCases().gen} это как ${ef0>0?'+':''}${ef0}°`;
   const hol=holidayToday(), hc=document.getElementById('ctxHome');
@@ -222,8 +253,9 @@ function paintMain(){
   document.getElementById('bTitle').textContent=b.title;
   document.getElementById('bName').textContent=personize(set.name);
   const ins=insFor(effTemp());
+  const extras=extrasNow();
   document.getElementById('items').textContent=
-    set.it.map(([k,l])=>l+(INSKEYS.includes(k)?' '+ins.g:'')).join(' · ');
+    set.it.map(([k,l])=>l+(INSKEYS.includes(k)?' '+ins.g:'')).concat(extras.map(x=>x[1])).join(' · ');
   const ef=effTemp();
   let tipTxt=(ef<=-8||ef>=22)?b.tip:(WTIPS[S.weather]||b.tip);
   const insN=insFor(ef).note;
@@ -231,6 +263,8 @@ function paintMain(){
   if(S.ctx==='car')tipTxt=airTemp()<=12?'В кресле — только тонкие слои и флис, ремни впритык. Тёплый комбинезон или конверт возьмите с собой: наденьте, когда выходите из машины, а в салоне укройте малыша пледом поверх пристёгнутых ремней.':'Объёмный комбинезон в машину не надевают: под ремнями он сминается, и они не затянутся плотно. В салоне тепло — тонкие слои, ремни впритык. Согреть можно пледом поверх пристёгнутых ремней (не под спину и не за лямки) — и не закрывая лицо.';
   if(S.ctx==='stroller'&&strollerKind()==='seat'&&ef<=6)tipTxt='В прогулочной коляске ветер достаёт до ног — укройте ножки пледом или накидкой, даже если комбинезон тёплый.';
   if(S.ctx==='sling')tipTxt=airTemp()<=10?'В слинге тело малыша греете вы, а ножки, стопы и голова — на ветру: они мёрзнут первыми. Ниже +10 застегните свою куртку поверх слинга или наденьте слингонакидку, на ножки — тёплые носки или пинетки.':'В слинге малыша греет ваше тело — проверяйте шею сзади, чтобы он не перегрелся под курткой.';
+  const uv=uvNow();
+  if(S.ctx!=='car'&&uv>=3&&(uv>=6||ef>=17))tipTxt=uvTip(uv);
   tipTxt=personize(tipTxt);
   S.tipText=tipTxt;
   const tpEl=document.getElementById('tipText'); if(tpEl)tpEl.textContent=tipTxt;
@@ -241,6 +275,7 @@ function paintMain(){
   dots.innerHTML=tot<=8?Array.from({length:tot},(_,i)=>`<i class="${i===cur?'a':''}"></i>`).join('')
     :`<span class="cnt">${cur+1} / ${tot}</span>`;
   drawStage(set,sz);
+  LASTSTAGE.items=LASTSTAGE.items.concat(extras);    // дождевик, зонт, крем — в вишлист тоже
 }
 
 function dayWish(key,label,quiet){
