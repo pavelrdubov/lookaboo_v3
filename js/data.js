@@ -6,7 +6,7 @@ const IMG={}, CAND={}, GT={}, AGE={}, FANCY={}, COLOR={}, CAND_KINDS={};
 CATALOG.forEach(c=>{IMG[c.id]=c.file; AGE[c.id]=c.a; COLOR[c.id]=c.c||[]; CAND_KINDS[c.id]=c.kinds; if(c.g!=='n')GT[c.id]=c.g;
   c.kinds.forEach(k=>{if(k==='fancy')FANCY[c.id]=1; (CAND[k]=CAND[k]||[]).push(c.id);});});
 
-const NOTLAYER=['hat','hatWarm','panama','socks','mittens','muslin','blanket','toy','headband'];
+const NOTLAYER=['hat','hatWarm','panama','socks','mittens','muslin','blanket','toy','headband','spf','umbrella','raincover'];
 /* ориентир по утеплителю (синтепон/изософт, г/м²) — у брендов отличается */
 const INS=[
   {max:-26, g:'пух 90/10', note:'Ниже −25 синтетика почти не держит тепло — здесь выигрывает пух.'},

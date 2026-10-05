@@ -96,8 +96,12 @@
 | `panama` | панамка | `acc` |
 | `socks` | носки, пинетки | `acc` |
 | `mittens` | варежки | `acc` |
+| `headband` | повязка с бантиком | `acc` |
+| `spf` | детский крем от солнца (тюбик) | `acc` |
+| `umbrella` | зонт | `acc` |
 | `muslin` | муслин | `stroller` — в коляску |
 | `blanket` | плед | `stroller` |
+| `raincover` | дождевик на коляску | `stroller` |
 | `toy` | игрушка, грызунок | `toys` |
 | `fancy` | нарядное (добавляется к виду: `dress+fancy`) | `fancy` |
 | `costume` | карнавальный костюм (`costume` или `romper+costume`) | `costume` |

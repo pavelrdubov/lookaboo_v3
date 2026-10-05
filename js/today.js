@@ -270,7 +270,8 @@ function paintMain(){
   document.getElementById('bTitle').textContent=b.title;
   document.getElementById('bName').textContent=personize(set.name);
   const ins=insFor(effTemp());
-  const extras=extrasNow();
+  // дождевик, зонт, крем: есть картинка — встают в коллаж, нет — только строкой в списке
+  const extras=extrasNow().filter(x=>{ if((CAND[x[0]]||[]).some(n=>IMG[n])){ set.it.push(x); return false; } return true; });
   document.getElementById('items').textContent=
     set.it.map(([k,l])=>l+(INSKEYS.includes(k)?' '+ins.g:'')).concat(extras.map(x=>x[1])).join(' · ');
   const ef=effTemp();
