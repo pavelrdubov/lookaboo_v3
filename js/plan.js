@@ -51,9 +51,9 @@ const THEME_RU={superman:'Супермен',batman:'Бэтмен',spiderman:'Ч�
 function themeOf(id){ const cap=(id.split('__')[3]||'').split('_'); const t=cap.find(x=>THEME_RU[x]);
   return {name:t?THEME_RU[t]:'', months:(cap.join('_').match(/m\d{1,2}/g)||[]).map(x=>+x.slice(1))}; }
 /* картинки вида kind к дате: по полу малыша, возрасту на эту дату и месяцу года */
-function themedPick(kind,d,label){
+function themedPick(kind,d,label,lim,only){
   const em=Math.max(0,monthsUntil(d)), mon=new Date(d).getMonth()+1, g=S.gender;
-  const all=(CAND[kind]||[]).filter(n=>IMG[n]&&okFor(n,g));
+  const all=(CAND[kind]||[]).filter(n=>IMG[n]&&okFor(n,g)&&(!only||only(n)));
   const ageOk=n=>{const a=AGE[n];return !a||(em>=a[0]&&em<a[1]);};
   // насколько тема далека от этого месяца (0 — как раз её время)
   const md=n=>{const m=themeOf(n).months; if(!m.length)return 0; return Math.min(...m.map(x=>Math.min(Math.abs(x-mon),12-Math.abs(x-mon))));};
@@ -63,15 +63,33 @@ function themedPick(kind,d,label){
   else if(em<6){                                   // малышам — только боди и слипы: берём ближайшие по сезону темы своего возраста
     const near=all.filter(ageOk).sort((a,b)=>md(a)-md(b)).filter(n=>md(n)<=1);
     pool=fit.concat(near.filter(n=>!fit.includes(n)));
-    if(!pool.length)pool=all.filter(n=>md(n)===0);
+    if(!pool.length){const y=all.filter(ageOk); const best=Math.min(...y.map(md)); pool=y.filter(n=>md(n)===best);}   // ближайший сезон, но формат по возрасту
   }else pool=fit.concat(pool.filter(n=>!fit.includes(n)));   // постарше — тема месяца, даже если вещь «малышовая»
   if(!pool.length)pool=all;
   // своё для пола (цветы девочке, герои мальчику) — до 5, остальное — общее (фрукты, привидение)
   const tag=g==='girl'?'g':(g==='boy'?'b':'_');
   const own=pool.filter(n=>GT[n]===tag).slice(0,5), rest=pool.filter(n=>GT[n]!==tag);
-  return own.concat(rest).slice(0,8).map(n=>{const t=themeOf(n).name; return [n,label(t,n)];});
+  return own.concat(rest).slice(0,lim||8).map(n=>{const t=themeOf(n).name; return [n,label(t,n)];});
 }
-const photoItems=d=>themedPick('photo',d,t=>t?`«${t}»`:'образ для фото');
+/* фотосессия: по одному варианту на стиль — цветы или супергерои (по полу) и фрукты.
+   Какой именно костюм — меняется от месяца к месяцу */
+const PHOTO_STYLE={flowers:['lily','sakura','lavender','forgetmenot','peony','daisy','poppy','sunflower','chrysanthemum','tulip','alstroemeria','aster'],
+  heroes:['superman','batman','spiderman','flash','deadpool','hulk','captain','ironman','wolverine','panther','aquaman','thor'],
+  fruits:['carrot','watermelon','blueberry','tomato','lemon','orange','apple','pear','kiwi','banana','avocado','pomegranate']};
+const PHOTO_NAME={flowers:'цветы',heroes:'супергерои',fruits:'фрукты'};
+function styleOf(id){const cap=(id.split('__')[3]||'').split('_'); return Object.keys(PHOTO_STYLE).find(st=>cap.some(c=>PHOTO_STYLE[st].includes(c)));}
+function photoItems(d,mo,used){
+  const order=S.gender==='girl'?['flowers','fruits']:(S.gender==='boy'?['heroes','fruits']:['fruits']);
+  const out=[];
+  order.forEach(st=>{ const L=themedPick('photo',d,t=>t,99,n=>styleOf(n)===st); if(!L.length)return;
+    // каждый месяц — новый костюм: сначала те, что ещё не предлагали, по кругу от номера месяца
+    const start=((mo||0)+new Date(d).getFullYear())%L.length, rot=L.slice(start).concat(L.slice(0,start));
+    const [n,t]=rot.find(([id])=>!(used&&used.has(id)))||rot.find(([id])=>!(used&&used.last&&used.last.has(id)))||rot[0];
+    if(used){used.add(n);}
+    out.push([n,`в стиле «${PHOTO_NAME[st]}»: ${t}`]); });
+  if(used)used.last=new Set(out.map(x=>x[0]));
+  return out;
+}
 const halloweenItems=d=>themedPick('halloween',d,t=>t?`костюм: ${t}`:'костюм');
 const newyearItems=d=>themedPick('newyear',d,t=>t?`«${t}»`:'новогодний образ').concat(fancyItems()).slice(0,8);
 
@@ -160,6 +178,7 @@ function tlEvents(){
       items:fancyItems(),fancy:true});
   }
   // «месяцики» первого года — повод для фотосессии
+  const usedPhoto=new Set();
   for(let mo=1;mo<=11;mo++){
     // 30 апреля + 10 мес = 28 февраля, а не «30 февраля» → 2 марта: берём последний день месяца
     const b0=new Date(S.dob), y=b0.getFullYear(), m=b0.getMonth()+mo;
@@ -167,8 +186,8 @@ function tlEvents(){
     if(!inFuture(d)||new Date(d)>horizon||monthsUntil(d)>12.5)continue;
     ev.push({d,type:'month',title:`${mo} ${monthsWord(mo)}`,
       sub:`Фотосессия «${mo} мес» — образ к размеру ${sizeOn(d)}.`,chips:['образ для фото'],size:sizeOn(d),
-      why:'Фото по месяцам: каждый месяц — своя тема. Девочкам — цветы этого времени года, мальчикам — супергерои, фрукты подойдут всем. До полугода удобнее боди и слипы, потом — кофта со штанишками.',
-      items:photoItems(d),fancy:true});
+      why:'Фото по месяцам: два стиля на выбор — каждый месяц новый костюм. Девочкам — цветы этого времени года, мальчикам — супергерои, фрукты подойдут всем. До полугода — боди и слипы, потом — кофта со штанишками.',
+      items:photoItems(d,mo,usedPhoto),fancy:true});
   }
   // свои события
   CUSTEV.forEach(c=>{
