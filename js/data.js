@@ -45,8 +45,8 @@ function candFor(key,m){
   if(['ovFleece','ovDemi','ovWinter','slipKnit','slip'].includes(key)&&typeof effTemp==='function'&&effTemp()<=3){
     const f=all.filter(n=>!/nofeet/.test(n)); if(f.length)all=f; }
   const age=m==null?ageMonthsExact():m;
-  // до 2 месяцев — без «через голову»: из обычных боди и маек только с кнопками на плече (_btn)
-  if(age<2&&['bodyL','bodyS','bodyT','tank'].includes(key)){const b=all.filter(n=>/_btn/.test(n)); if(b.length)all=b;}
+  // до 3 месяцев кофта — только распашная: картинки, помеченные и свитером (через голову), не берём
+  if(age<3&&key==='cardigan'){const c=all.filter(n=>!(CAND_KINDS[n]||[]).includes('sweater')); if(c.length)all=c;}
   // мальчику розового не предлагаем совсем (в том числе нейтральные вещи розоватого цвета)
   if(g==='boy'&&typeof pinkish==='function'){const np=all.filter(n=>!pinkish(n)); if(np.length)all.splice(0,all.length,...np);}
   const fit=all.filter(n=>{const a=AGE[n];return !a||(age>=a[0]&&age<a[1]);});

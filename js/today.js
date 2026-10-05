@@ -48,19 +48,33 @@ function legsFilter(items){
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
 function lookItems(it){ return newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(legLayer(carFilter(it)))))))))),ageMonthsExact()); }
-/* до 2 месяцев — ничего через голову: боди с кнопками на плече или боди-распашонка (на запах);
-   до 3 месяцев — ползунки вместо штанишек; распашонка — до 3 месяцев включительно */
+/* что с какого возраста. Первые 2 месяца — только слипы, распашонки (и боди-распашонки на запах) и ползунки:
+   ничего через голову, никаких «взрослых» раздельных вещей. Дальше — по мере того, как малыш держит голову,
+   сидит и ползает. Вещь «не по возрасту» заменяем на подходящую того же назначения (или убираем) */
 const OVERHEAD=['bodyL','bodyS','bodyT','tank'];
+const AGE_MIN={bodyL:2,bodyS:2,bodyT:2,tank:2,dress:2,romper:2,      // через голову, боди-платье, песочник — с 2 мес
+  pants:3,suit:3,sweater:3,shorts:3,                                    // раздельные вещи — с 3 мес (штанишки — с носками)
+  dungarees:4, jacket:6, vest:6};                                       // полукомбинезон — когда держит спинку; куртка, жилет — сидя в прогулочной
+function ageSwap(x,m){
+  const [k,l]=x, warm=/тёпл|начёс|шерст/.test(l), dense=/футер|плотн/.test(l);
+  if(OVERHEAD.includes(k)||k==='dress'||k==='romper')return ['wrapbody',warm?'шерстяная боди-распашонка':(k==='bodyL'?'боди-распашонка д/р':'боди-распашонка')];
+  if(k==='pants'||k==='dungarees')return ['footpants',warm?'тёплые ползунки':(dense||k==='dungarees'?'плотные ползунки':'ползунки')];
+  if(k==='suit')return m<2?['slip',warm?'тёплый слип (начёс)':'слип из футера']:['footpants',warm?'тёплые ползунки':'плотные ползунки'];
+  if(k==='sweater')return ['cardigan',warm?'тёплая вязаная кофта':'кофта на кнопках'];
+  if(k==='shorts')return effTemp()>=24?null:['footpants','тонкие ползунки'];
+  if(k==='jacket')return ['ovDemi','демисезонный комбинезон'];
+  if(k==='vest')return null;
+  return x;
+}
 function newbornFilter(items,m){
-  // штанишки — с 3 месяцев, раньше ползунки со стопой (той же плотности)
-  if(m<3)items=items.map(x=>x[0]!=='pants'?x:['footpants',/тёпл|начёс/.test(x[1])?'тёплые ползунки':(/футер|плотн/.test(x[1])?'плотные ползунки':'ползунки')]);
   // распашонка — до 3 месяцев включительно; старше — обычное боди
   if(m>=4)items=items.map(x=>x[0]==='wrap'?['bodyL','боди д/р']:x);
-  // боди через голову (без кнопок на плече) — с 2 месяцев; раньше — с кнопками на плече, а нет такой картинки — боди-распашонка
-  const btn=k=>(CAND[k]||[]).some(n=>IMG[n]&&/_btn/.test(n)&&okFor(n,S.gender));
-  if(m>=2||!items.some(x=>OVERHEAD.includes(x[0])&&!btn(x[0])))return items.filter((x,i,a)=>a.findIndex(y=>y[0]===x[0])===i);
-  const r=[]; items.forEach(x=>{ const y=OVERHEAD.includes(x[0])&&!btn(x[0])?['wrapbody',/шерст/.test(x[1])?'шерстяная боди-распашонка':(x[0]==='bodyL'?'боди-распашонка д/р':'боди-распашонка')]:x;
-    if(!r.some(z=>z[0]===y[0]))r.push(y); });
+  // до 2 месяцев кофта — только на кнопках (как распашонка)
+  if(m<2)items=items.map(x=>x[0]==='cardigan'&&!/кнопк|распаш/.test(x[1])?['cardigan',/тёпл|вязан/.test(x[1])?'тёплая кофта на кнопках':'кофта на кнопках']:x);
+  const r=[];
+  items.forEach(x=>{ let y=x; for(let n=0;n<3&&y&&AGE_MIN[y[0]]>m;n++)y=ageSwap(y,m);
+    if(y&&!r.some(z=>z[0]===y[0]))r.push(y); });
+  // если после замен ножки остались открыты (был песочник/шорты) — в прохладу ползунки
   return r;
 }
 /* насколько плотные нижние слои: зависит от погоды и от того, что сверху.
@@ -179,7 +193,7 @@ function accFilter(items){
   if(S.setIdx%2!==1||items.some(x=>x[0]==='headband'))return items;
   // тепло и не солнечно — панамка не обязательна: девочке вместо неё повязка с бантиком
   const sunny=S.weather==='sun'||uvNow()>=3, warm=effTemp()>16;
-  if(S.gender==='girl'&&warm&&!sunny&&(CAND.headband||[]).length&&!items.some(x=>x[0]==='hat'||x[0]==='hatWarm')){
+  if(S.gender==='girl'&&ageMonthsExact()>=3&&warm&&!sunny&&(CAND.headband||[]).length&&!items.some(x=>x[0]==='hat'||x[0]==='hatWarm')){
     const r=items.filter(x=>x[0]!=='panama');
     if(r.length<=4)return r.concat([['headband','повязка с бантиком']]);
   }
