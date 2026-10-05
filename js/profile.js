@@ -48,6 +48,7 @@ function profPaint(){
       <button class="lnk" onclick="heightFrom='prof';go('o3')"><b>Размер сейчас</b><s>${sz} ›</s></button>
       <button class="lnk" onclick="openSizes()"><b>Все размеры</b><s>шапки, носки, US ›</s></button>
       <button class="lnk" onclick="wdOpen(${sz},'prof')"><b>Гардероб</b><s>${wdKnown(sz)?'отмечен ›':'не отмечен ›'}</s></button>
+      <button class="lnk" onclick="location.href='catalog.html'"><b>Каталог картинок</b><s>тест ›</s></button>
       <div class="pfnote">Пол влияет и на картинки в наборе, и на подсказки по размеру.</div>
       ${KIDS.length>1?`<button class="ghost2" style="margin-top:12px;color:#B0705A" onclick="profDelKid()">Убрать ${esc2(kidLabel(k))} из профиля</button>`:''}
     </div>
