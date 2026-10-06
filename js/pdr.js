@@ -14,7 +14,7 @@ function birthToggle(k){const b=Object.assign({},birthOpt()); b[k]=!b[k]; kid().
 const dischWhy=()=>birthOpt().cs?'после кесарева выписывают обычно на 5-й день':'выписка обычно на 3-й день';
 function birthChips(){const cs=!!birthOpt().cs;
   return `<div class="seg"><button class="${cs?'on':''}" onclick="birthToggle('cs')">${cs?'✓ ':''}будет плановое КС</button></div>
-    <div class="pfnote">${cs?'Выписку посчитаем на 5-й день. Плановое кесарево обычно назначают на 38–39 неделе — если дата известна, укажите её вместо ПДР.':'Если уже знаете, что будет плановое КС, — отметьте: после него выписывают на 5-й день, а не на 3-й.'}</div>`;}
+    <div class="pfnote">${cs?'Выписку посчитаем на 5-й день после даты операции.':'Если уже знаете, что будет плановое КС, — отметьте: после него выписывают на 5-й день, а не на 3-й.'}</div>`;}
 function daysToDue(){return Math.round((new Date(S.dob)-new Date(todayStr()))/MS);}
 function dueWhen(){const d=daysToDue(); return d<14?`через ${d} ${plur(d,'день','дня','дней')}`:`через ${Math.round(d/7)} нед.`;}
 /* где выписываемся: роддом, а если не выбран — город из настроек */
