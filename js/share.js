@@ -7,7 +7,7 @@ function openCard(){
     `<b>${S.temp>0?'+':''}${S.temp}°</b><s>${sc.word}</s>`;
   const n=document.getElementById('tLayers').textContent;
   const ctxP={stroller:'в коляске',sling:'в слинге',car:'в машине'}[S.ctx]||'в коляске';
-  document.getElementById('gTitle').textContent=S.ctx==='home'?personize(`${document.getElementById('bTitle').textContent}: праздничный образ дома`):personize(`Малышу ${ctxP} нужно ${n}`);
+  document.getElementById('gTitle').textContent=S.ctx==='home'?personize(HOMEMODE==='hol'?`${document.getElementById('bTitle').textContent}: праздничный образ дома`:`Малышу ${HOMEMODE==='sleep'?'на ночь':'дома'} при ${S.whyText.replace(/^Дома, в комнате /,'')} нужно`):personize(`Малышу ${ctxP} нужно ${n}`);
   document.getElementById('gItems').textContent=document.getElementById('items').textContent;
   document.getElementById('gWhy').textContent=S.whyText||'';
   document.getElementById('gTip').textContent=S.tipText||'';
@@ -25,7 +25,7 @@ function cardText(){
   const head=`${S.temp>0?'+':''}${S.temp}°, ${sc.word}`;
   const layers=document.getElementById('tLayers').textContent;
   const items=expandAbbr(document.getElementById('items').textContent);
-  if(S.ctx==='home')return personize(`${document.getElementById('bTitle').textContent} — праздничный образ дома:`)+`\n${items}\n\n`+(S.tipText||'')+`\n\nСписок собран в Lookaboo`;
+  if(S.ctx==='home')return personize(HOMEMODE==='hol'?`${document.getElementById('bTitle').textContent} — праздничный образ дома:`:`${HOMEMODE==='sleep'?'На ночь':'Дома'}, в комнате ${homeRoom()}°:`)+`\n${items}\n\n`+(S.tipText||'')+`\n\nСписок собран в Lookaboo`;
   return personize(`${head}. ${cap1(ctxP)} малышу нужно ${layers}:`)+`\n${items}\n\n`
     +`${S.whyText||''}`
     +`${S.tipText?'\n\n'+S.tipText:''}`

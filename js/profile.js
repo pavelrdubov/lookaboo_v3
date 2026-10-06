@@ -53,6 +53,7 @@ function profPaint(){
       </div>
       <button class="lnk" onclick="heightFrom='prof';go('o3')"><b>Размер сейчас</b><s>${sz} ›</s></button>
       <button class="lnk" onclick="openSizes()"><b>Все размеры</b><s>шапки, носки, US ›</s></button>
+      <button class="lnk" onclick="homeOpen()"><b>Дома и сон</b><s>+${homeRoom()}° · сон в ${homeBed()} ›</s></button>
       <div class="seg" style="margin-top:2px"><button class="${wdOn()?'on':''}" onclick="wdToggle(true)">гардероб вкл</button><button class="${wdOn()?'':'on'}" onclick="wdToggle(false)">выкл</button></div>
       ${wdOn()?`<button class="lnk" onclick="wdOpen(${sz},'prof')"><b>Гардероб</b><s>${wdKnown(sz)?'отмечен ›':'не отмечен ›'}</s></button>`:''}
       <div class="pfnote" style="margin-top:2px">${wdOn()?'Отметьте, что уже есть, — подскажем, чего не хватает, и пометим в образах «нет в размере».':'Гардероб выключен: образы и поездки не сравниваем с тем, что у вас есть.'}</div>

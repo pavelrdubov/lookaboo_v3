@@ -108,6 +108,7 @@
 | `muslin` | муслин | `stroller` — в коляску |
 | `blanket` | плед | `stroller` |
 | `raincover` | дождевик на коляску | `stroller` |
+| `sleepbag` | спальник для сна (на молнии, без рукавов) | `sleep` |
 | `toy` | игрушка, грызунок | `toys` |
 | `fancy` | нарядное (добавляется к виду: `dress+fancy`) | `fancy` |
 | `costume` | карнавальный костюм (`costume` или `romper+costume`) | `costume` |

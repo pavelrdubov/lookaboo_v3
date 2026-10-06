@@ -27,7 +27,7 @@ function ctxNow(){
   if(a>=16)return cot?{d:0,why:'малыш лежит в люльке'}:{d:-2,why:'малыш сидит в прогулочной коляске'};
   return cot?{d:-2,why:'малыш лежит в люльке'}:{d:-4,why:'малыш сидит в прогулочной коляске'};
 }
-function setCtx(c){S.ctx=c;store.set('mpp-ctx',c);
+function setCtx(c){S.ctx=c;store.set('mpp-ctx',c);store.set('mpp-ctx-at',String(Date.now()));if(c!=='home')store.set('mpp-ctx-out',c);
   document.querySelectorAll('#ctxRow .c').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
   S.setIdx=0;paintMain();}
 function airTemp(){ return S.live?S.feels:S.temp; }
@@ -307,11 +307,12 @@ function paintMain(){
   document.querySelectorAll('#ctxRow .c:not(.hol)').forEach(b=>b.style.display=ex?'none':'');
   { const wr=document.getElementById('walkRow'); if(wr)wr.innerHTML=''; }
   if(ex){ const hc0=document.getElementById('ctxHome'); if(hc0)hc0.style.display='none'; paintDischarge(sz); return; }
+  homeAuto();                                         // вечером — сами на «на ночь», утром — обратно (js/home.js)
   const hol=holidayToday(), hc=document.getElementById('ctxHome');
-  if(hc)hc.style.display=hol?'':'none';
-  if(S.ctx==='home'&&!hol)S.ctx='stroller';
+  HOMEMODE=homeMode();
+  if(hc){hc.style.display=''; hc.textContent=HOMEMODE==='sleep'?'на ночь':'дома'; hc.classList.toggle('hol',HOMEMODE==='hol');}
   document.querySelectorAll('#ctxRow .c').forEach(b=>b.classList.toggle('on',b.dataset.c===S.ctx));
-  if(S.ctx==='home'){ document.getElementById('tWhy').textContent=personize('Дома — праздничный образ для фото'); paintHoliday(hol,sz); return; }
+  if(S.ctx==='home'){ if(HOMEMODE==='hol'){document.getElementById('tWhy').textContent=personize('Дома — праздничный образ для фото'); paintHoliday(hol,sz);} else paintHome(sz); return; }
 
   const b=bandFor(effTemp());
   const list=setsFor(b);
@@ -362,8 +363,8 @@ function flip(d){
   const p=document.getElementById('tipPop');if(p)p.classList.remove('on');
   const tb=document.getElementById('tipBtn');if(tb)tb.classList.remove('act');
   // стрелки листают и наборы, и другие сочетания картинок (см. lookImgs); дома в праздник — праздничные вещи
-  const hol=S.ctx==='home'&&holidayToday();
-  const n=dischMode()?withDisch(()=>lookTotal(setsFor(bandFor(effTemp())).length)):hol?Math.min(5,holidayPool(hol).length):lookTotal(setsFor(bandFor(effTemp())).length);
+  const hol=S.ctx==='home'&&HOMEMODE==='hol'&&holidayToday();
+  const n=S.ctx==='home'&&!hol&&!dischMode()?homeCount():dischMode()?withDisch(()=>lookTotal(setsFor(bandFor(effTemp())).length)):hol?Math.min(5,holidayPool(hol).length):lookTotal(setsFor(bandFor(effTemp())).length);
   S.setIdx=(S.setIdx+d+n)%n;
   paintMain();
 }
