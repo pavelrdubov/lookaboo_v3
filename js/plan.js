@@ -276,7 +276,7 @@ function evRender(){
       <h3>${e.type==='season'?'Размер к середине сезона':'Размер к этой дате'}${szI(sz)}</h3>
       <div class="sub">${e.type==='season'&&e.szDate&&e.szDate!==e.d?`К середине сезона, ${fmtF(e.szDate)}, `:''}${personize('малышу будет')} ${ageWordAt(e.szDate||e.d)} — берите <b>${sz}</b>, а не тот, что впору сейчас.</div>
     </div>
-    ${e.type==='size'?`<button class="ghost2" onclick="wdOpen(${sz},'ev')">Отметить, что уже есть в ${sz}</button>`:''}
+    ${e.type==='size'&&wdOn()?`<button class="ghost2" onclick="wdOpen(${sz},'ev')">Отметить, что уже есть в ${sz}</button>`:''}
     ${evCanDel(e)?`<button class="ghost2" style="color:#C06A4A;border-color:#E8CBBF" onclick="evDel()">Удалить событие</button>`:''}
     <button class="ghost2" onclick="go('tl')">Назад в план</button>
     <div style="height:14px"></div>`;

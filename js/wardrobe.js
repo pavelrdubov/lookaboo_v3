@@ -17,7 +17,10 @@ const NORM={bodyL:6,bodyS:6,bodyT:4,slip:4,slipKnit:1,footpants:4,wrapbody:3,wra
 function wdAll(){const k=kid();if(!k.wd)k.wd={};return k.wd;}
 function wdFor(sz){return wdAll()[String(sz)]||null;}
 function wdKnown(sz){const s=wdFor(sz);return !!s&&Object.keys(s).length>0;}
-function wdHave(key,sz){const s=wdFor(sz);if(!s)return null;const v=s[key];return v===undefined?null:v;}  // null — эту вещь ещё не отмечали
+/* гардероб можно выключить: тогда приложение ни с чем не сравнивает (ни «нет в 68», ни «добрать» в поездке) */
+const wdOn=()=>store.get('mpp-wd')!=='0';
+function wdToggle(on){try{store.set('mpp-wd',on?'1':'0');}catch(e){} profPaint(); paintMain(); toast(on?'Гардероб включён':'Гардероб выключен — сравнивать с тем, что есть, не будем');}
+function wdHave(key,sz){if(!wdOn())return null;const s=wdFor(sz);if(!s)return null;const v=s[key];return v===undefined?null:v;}  // null — эту вещь ещё не отмечали
 function wdSet(sz,key,n){
   const w=wdAll(), s=String(sz);
   (w[s]=w[s]||{})[key]=Math.max(0,Math.min(30,n));
