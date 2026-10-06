@@ -12,7 +12,7 @@ function go(id){
   if(id==='wd')wdRender();
   S.screen=id;
   const ph=document.getElementById('phone');
-  ph.classList.toggle('hastabs', !!S.onb && TABBED.includes(id));
+  ph.classList.toggle('hastabs', !!S.onb && TABBED.includes(id) && !(id==='o1'&&O1ADD));   // новый малыш — экран знакомства без меню
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===TABOF[id]));
   setTheme(themeFor(id));
   wishBadge();
@@ -41,11 +41,13 @@ function initDateSync(){const d=new Date(S.dob);
   const sd=document.getElementById('selD'),sm=document.getElementById('selM'),sy=document.getElementById('selY');
   if(sd){sd.value=d.getDate();sm.value=d.getMonth();sy.value=d.getFullYear();}}
 function o1Link(){ if(expecting())hospOpen(); else pdrStart(); }
-function o1Next(){ S.onb ? go('main') : go('o2'); }
+/* «+ добавить» в профиле — знакомство с новым малышом на том же экране, но без шага с геопозицией */
+let O1ADD=false;
+function o1Next(){ if(O1ADD){O1ADD=false;paintMain();go('main');toast(personize('Малыш добавлен — имя и фото можно указать в профиле'));return;} S.onb ? go('main') : go('o2'); }
 function paintDate(){
   const c=document.getElementById('o1cta'), l=document.getElementById('o1link');
   if(c)c.textContent=S.onb?'Готово':'Дальше';
-  if(l)l.style.display=S.onb?'none':'';
+  if(l)l.style.display=S.onb&&!O1ADD?'none':'';
   const d=new Date(S.dob);
   document.getElementById('dD').textContent=d.getDate();
   document.getElementById('dM').textContent=MONTHS[d.getMonth()];
