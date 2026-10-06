@@ -22,9 +22,9 @@ function profPaint(){
 
   const kids=KIDS.map((x,i)=>`<button class="kidchip${i===KI?' on':''}" onclick="profSetKid(${i})">
       <div class="av">${kidAv(x)}</div><s>${esc2(kidLabel(x))}</s></button>`).join('')
-    +`<button class="kidchip" onclick="profAddKid()">
+    +(KIDS.length>=5?'':`<button class="kidchip" onclick="profAddKid()">
       <div class="av" style="border:2px dashed #DDD2BF;background:#FCF9F4;color:#B3A08A;font-size:26px">+</div>
-      <s style="color:#B3A08A">добавить</s></button>`;
+      <s style="color:#B3A08A">добавить</s></button>`);
 
   const cityPick = S.geo==='город' ? `
       <div class="fld" style="margin-top:10px"><span>Город</span>
@@ -125,7 +125,7 @@ function profCities(q){
 }
 function profStroller(v){kid().stroller=v==='auto'?undefined:v;kidsSave();profPaint();paintMain();}
 function profSetKid(i){KI=i;kidsSave();profPaint();paintDate();syncHeight();paintMain();}
-function profAddKid(){KIDS.push(blankKid());KI=KIDS.length-1;kidsSave();O1ADD=true;initDateSync();paintGender();paintDate();go('o1');}
+function profAddKid(){if(KIDS.length>=5){toast('Можно добавить до 5 малышей');return;}KIDS.push(blankKid());KI=KIDS.length-1;kidsSave();O1ADD=true;initDateSync();paintGender();paintDate();go('o1');}
 function profDelKid(){
   if(KIDS.length<2)return;
   if(!confirm('Убрать '+kidLabel(kid())+' из профиля? Вишлист и поездки останутся.'))return;

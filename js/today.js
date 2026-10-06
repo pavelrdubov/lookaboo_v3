@@ -351,7 +351,7 @@ function paintMain(){
 function dayWish(key,label,quiet){
   if(SWIPED)return;                       // это был свайп, а не тап по вещи
   const sz=sizeFor(heightNow());
-  const added=wishToggle('day:'+key,{label:label,size:sizeForItem(key,ageMonths(),sz),
+  const added=wishToggle(wk('day:'+key),{label:label,size:sizeForItem(key,ageMonths(),sz),
     src:'На каждый день',img:LASTLOOK[key]||pickImg(key),key:key});
   if(!quiet)toast(added?`«${label}» — в вишлисте`:`«${label}» убрали из вишлиста`);
   paintMain();
@@ -474,7 +474,7 @@ function drawStage(set,sz){
   let html='';
   rects.forEach(r=>{
     const key=r.key, label=(list.find(x=>x[0]===key)||[key,key])[1];
-    const inW=!!WISH['day:'+key];
+    const inW=!!WISH[wk('day:'+key)];
     const lack=wdHave(key,sz)===0;             // мама отметила, что такого нет
     const tap=`onclick="dayWish('${key}','${String(label).replace(/'/g,'')}')"`;
     html+=`<div class="gitem" ${tap} style="left:${Math.round(SIDE+r.left)}px;top:${Math.round(r.top)}px;`

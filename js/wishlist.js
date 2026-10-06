@@ -8,7 +8,7 @@ function openPick(){
   document.getElementById('sheet').innerHTML=
     `<h3>Что докупить?</h3><p>Отметьте вещи из сегодняшнего набора — они попадут в вишлист с размером.</p>`
     + shown.map(([k,l])=>{
-        const id='day:'+k, on=!!WISH[id];
+        const id=wk('day:'+k), on=!!WISH[id];
         return `<div class="item${on?' on':''}" style="margin-bottom:8px">
           <div class="bx" onclick="pickTap('${k}','${l.replace(/'/g,'')}')">${on?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"></path></svg>':''}</div>
           <div class="nm">${l}${(()=>{const s=sizeForItem(k,ageMonths(),sz);return s?' · '+szTxt(s):'';})()}</div></div>`;}).join('')
@@ -23,6 +23,9 @@ function restoreSheet(){ if(SHEETHTML)document.getElementById('sheet').innerHTML
 /* ================= ВИШЛИСТ ================= */
 let WISH={};
 (function(){try{const w=JSON.parse(store.get('mpp-wish')||'{}');if(w&&typeof w==='object')WISH=w;}catch(e){}
+/* старые записи (до раздельных вишлистов) — первому малышу, ключ с ребёнком */
+(function(){let ch=false; Object.keys(WISH).forEach(id=>{ if(/^(day|plan|wd)/.test(id)&&!id.includes('#')){const w=WISH[id], k=w.kid||(KIDS[0]&&KIDS[0].id);
+  if(k!=null){w.kid=k; WISH[id+'#'+k]=w; delete WISH[id]; ch=true;}} }); if(ch)try{store.set('mpp-wish',JSON.stringify(WISH));}catch(e){}})();
   /* миграция: раньше галочка = «куплено» (исключить). Теперь галочка = «в списке».
      старое bought:true → keep:false; всё остальное по умолчанию в списке */
   for(const id in WISH){const x=WISH[id];if(x&&x.keep===undefined){x.keep=!x.bought;delete x.bought;}}
@@ -32,17 +35,23 @@ let WISH={};
 })();
 function inList(x){return x.keep!==false;}          // в списке = отмечено
 function wishSave(){try{store.set('mpp-wish',JSON.stringify(WISH));}catch(e){}wishBadge();}
-function wishCount(){return Object.values(WISH).filter(inList).length;}
+/* у каждого малыша свой вишлист (размеры и планы у детей разные); старые записи без метки видны всем.
+   WLALL — посмотреть списки всех детей сразу */
+let WLALL=false;
+/* ключ записи — с ребёнком: одинаковое «боди» у двух детей — две разные записи */
+function wk(id){return id+'#'+kid().id;}
+function wishMine(w){return WLALL||!w.kid||w.kid===kid().id;}
+function wishCount(){return Object.values(WISH).filter(w=>inList(w)&&wishMine(w)).length;}
 let WLF='';                                           // фильтр вишлиста: '' — все списки, иначе название раздела
 function wishGrp(w){return w.src||'Разное';}
-function wishOutIds(){return Object.keys(WISH).filter(id=>inList(WISH[id])&&(!WLF||wishGrp(WISH[id])===WLF));}
+function wishOutIds(){return Object.keys(WISH).filter(id=>inList(WISH[id])&&wishMine(WISH[id])&&(!WLF||wishGrp(WISH[id])===WLF));}
 function wishBadge(){
   const n=wishCount();
   const t=document.getElementById('tabBdg');
   if(t){t.textContent=n;t.classList.toggle('on',n>0);}
 }
 function wishToggle(id,rec){
-  if(WISH[id])delete WISH[id]; else WISH[id]=Object.assign({keep:true},rec);
+  if(WISH[id])delete WISH[id]; else WISH[id]=Object.assign({keep:true,kid:kid().id},rec);
   wishSave();
   return !!WISH[id];
 }
@@ -60,20 +69,22 @@ let WLG=[];                                           // разделы в по�
 function wlFilter(i){WLF=i<0?'':(WLG[i]||'');wlRender();}
 function wlGroupDel(i){
   const g=WLG[i]; if(g==null)return;
-  const ids=Object.keys(WISH).filter(id=>wishGrp(WISH[id])===g);
+  const ids=Object.keys(WISH).filter(id=>wishGrp(WISH[id])===g&&wishMine(WISH[id]));
   if(!confirm(`Удалить раздел «${g}» целиком? ${ids.length} ${ids.length===1?'вещь':(ids.length<5?'вещи':'вещей')} пропадут из вишлиста.`))return;
   ids.forEach(wishDrop); if(WLF===g)WLF='';
   wishSave();wlRender();toast('Раздел удалён');
 }
 
+function wlKid(i){ if(i<0)WLALL=true; else{WLALL=false;KI=i;kidsSave();paintMain();} wlRender(); wishBadge(); }
 function wlRender(){
-  const ids=Object.keys(WISH);
+  const ids=Object.keys(WISH).filter(id=>wishMine(WISH[id]));
+  const kidRow=KIDS.length>1?`<div class="wlkids">${KIDS.map((x,i)=>`<button class="${!WLALL&&i===KI?'on':''}" onclick="wlKid(${i})">${esc2(kidLabel(x))}</button>`).join('')}<button class="${WLALL?'on':''}" onclick="wlKid(-1)">все</button></div>`:'';
   document.getElementById('wlSub').textContent = ids.length
     ? `${ids.length} ${ids.length===1?'вещь':(ids.length<5?'вещи':'вещей')} · в списке ${wishCount()}`
     : 'что купить малышу';
   const addBtn=`<button class="ghost2" style="margin:0 0 12px;border-color:var(--accent);color:var(--accent)" onclick="waOpen()">+ Добавить вещь</button>`;
   if(!ids.length){
-    document.getElementById('wlBody').innerHTML=addBtn+
+    document.getElementById('wlBody').innerHTML=kidRow+addBtn+
       `<div class="card"><h3>Пока пусто</h3><div class="sub">Нажмите на вещь в наборе на главном экране, на плюсик в списке для поездки — или добавьте руками кнопкой выше.</div></div>`;
     return;
   }
@@ -90,7 +101,8 @@ function wlRender(){
       const dt=w0&&w0.d?' · '+fmtF(w0.d).toUpperCase():'';
       return `<div class="sect wlsect"><span${w0?` class="wlev" data-k="${esc2(w0.ev)}" onclick="evOpenKey(this.dataset.k)"`:''}>${esc2(g.toUpperCase())}${dt}${w0?' ›':''}</span><button onclick="wlGroupDel(${gi})">удалить раздел</button></div>`;})()+
     groups[g].map(id=>{const w=WISH[id];
-      const sub=[szTxt(w.size),(w.qty>1?'×'+w.qty:''),w.note||''].filter(Boolean).join(' · ');
+      const who=WLALL&&w.kid?(KIDS.find(x=>x.id===w.kid)||null):null;
+      const sub=[who?kidLabel(who):'',szTxt(w.size),(w.qty>1?'×'+w.qty:''),w.note||''].filter(Boolean).join(' · ');
       const keep=inList(w);
       return `<div class="wi${keep?'':' off'}">
         <div class="bx2" onclick="wishKeep('${id}')">${keep?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"></path></svg>':''}</div>
@@ -99,7 +111,7 @@ function wlRender(){
         <button class="del" onclick="wishDel('${id}')">×</button>
       </div>`;}).join('')
   ).join('');
-  document.getElementById('wlBody').innerHTML=addBtn+flt+body+
+  document.getElementById('wlBody').innerHTML=kidRow+addBtn+flt+body+
     `<button class="ghost2" style="margin-top:12px" onclick="wishShare()">Отправить картинкой</button>
      <button class="ghost2" style="margin-top:8px;border-color:var(--accent);color:var(--accent)" onclick="copyListLink()">Поделиться ссылкой на список</button>
      <div style="height:12px"></div>`;

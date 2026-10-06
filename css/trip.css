@@ -64,3 +64,9 @@
 #tripCta{width:100%;height:52px;border:none;border-radius:999px;background:var(--accent);color:#FFF6EF;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px}
 .ghost2{width:100%;height:44px;border:2px solid #EAE2D4;border-radius:999px;background:#fff;font-family:inherit;font-size:13px;font-weight:800;color:#7A6450;cursor:pointer;margin-top:8px}
 #err{position:absolute;left:20px;right:20px;top:698px;z-index:9;font-size:11px;font-weight:700;color:#9C8878}
+
+/* вишлист: чей список */
+.wlkids{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;scrollbar-width:none}
+.wlkids::-webkit-scrollbar{display:none}
+.wlkids button{flex:none;border:2px solid #EAE2D4;background:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;font-weight:800;color:#8A7864;cursor:pointer}
+.wlkids button.on{border-color:var(--accent);color:var(--accent);background:#FFF7F1}

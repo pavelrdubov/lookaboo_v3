@@ -244,7 +244,7 @@ function evRender(){
   const cells=items.map(([k,label])=>{
     const direct=!!IMG[k];                       // прямое имя картинки (нарядное)
     const src=direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null);
-    const id='plan'+e.d+':'+k;
+    const id=wk('plan'+e.d+':'+k);
     const on=!!WISH[id];
     const isz=direct?sz:sizeForItem(k,em,sz);
     return `<div class="evcell${on?' in':''}" onclick="evWish('${k}','${String(label).replace(/'/g,'')}',${direct?1:0})">
@@ -258,7 +258,7 @@ function evRender(){
       <h3>${e.type==='size'?'Что закончится первым':'Что пригодится'}</h3>
       <div class="sub">${personize(e.why||e.sub)}</div>
       ${items.length&&!isLook?`<div class="evlist">${items.map(([k,label])=>{
-          const direct=!!IMG[k], src=direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null), on=!!WISH['plan'+e.d+':'+k], isz=direct?sz:sizeForItem(k,em,sz);
+          const direct=!!IMG[k], src=direct?IMG[k]:(CAND[k]?pickImg(k,0,em):null), on=!!WISH[wk('plan'+e.d+':'+k)], isz=direct?sz:sizeForItem(k,em,sz);
           return `<div class="item${on?' wl':''}" onclick="evWish('${k}','${String(label).replace(/'/g,'')}',${direct?1:0})">
             ${src?`<img class="th" src="${src}" alt="" loading="lazy" onerror="this.remove()">`:'<span class="th"></span>'}
             <div class="nm">${label}${isz?`<s>${szTxt(isz)}</s>`:''}</div>
@@ -319,7 +319,7 @@ function evAccHtml(i){
   const ranked=pool.map(n=>({n,s:sc(n)})).sort((a,b)=>b.s-a.s).map(x=>x.n);
   // девочке — 2 повязки и 2 игрушки, лучшие по цвету; мальчику — 4 игрушки
   const hb=ranked.filter(n=>kind(n)==='headband').slice(0,2), ty=ranked.filter(n=>kind(n)==='toy').slice(0,4-hb.length);
-  return hb.concat(ty).map(n=>{const on=!!WISH['plan'+e.d+':'+n], lb=kind(n)==='headband'?'повязка с бантиком':'игрушка';
+  return hb.concat(ty).map(n=>{const on=!!WISH[wk('plan'+e.d+':'+n)], lb=kind(n)==='headband'?'повязка с бантиком':'игрушка';
     return `<div class="ac${on?' in':''}" onclick="evWish('${n}','${lb}',1)"><img src="${IMG[n]}" alt="" onerror="this.remove()"></div>`;}).join('');
 }
 function ageWordAt(d){
@@ -331,7 +331,7 @@ function evWish(k,label,direct){
   const e=EVCUR; if(!e)return;
   const sz=e.size||sizeOn(e.d);
   const em=Math.max(0,monthsUntil(e.szDate||e.d));
-  const id='plan'+e.d+':'+k;
+  const id=wk('plan'+e.d+':'+k);
   const acc=(CAND_KINDS[k]||[]).some(x=>x==='headband'||x==='toy');       // повязка, игрушка — без размера одежды
   const added=wishToggle(id,{label:label,size:acc?'':(direct?sz:sizeForItem(k,em,sz)),
     src:(evCanDel(e)?'Событие · ':'План · ')+e.title,ev:evKey(e),d:e.d,

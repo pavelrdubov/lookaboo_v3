@@ -85,7 +85,7 @@ let WDMISS=[];
 function wdToWish(){
   let n=0;
   WDMISS.forEach(([key,label,short])=>{
-    const id='wd'+WDSZ+':'+key;
+    const id=wk('wd'+WDSZ+':'+key);
     if(WISH[id])return;
     WISH[id]={label:label+(short>1?' ×'+short:''),size:sizeForItem(key,ageMonths(),WDSZ),
       src:'Не хватает в '+WDSZ,img:pickImg(key,0)||null,key:key,keep:true};
