@@ -88,7 +88,7 @@ function wdToWish(){
     const id=wk('wd'+WDSZ+':'+key);
     if(WISH[id])return;
     WISH[id]={label:label+(short>1?' ×'+short:''),size:sizeForItem(key,ageMonths(),WDSZ),
-      src:'Не хватает в '+WDSZ,img:pickImg(key,0)||null,key:key,keep:true};
+      src:'Не хватает в '+WDSZ,img:pickImg(key,0)||null,key:key,keep:true,kid:kid().id};
     n++;
   });
   wishSave();
