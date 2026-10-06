@@ -69,6 +69,11 @@
       <div class="qsub" id="o1s">Возраст и размер посчитаем сами — и будем обновлять каждый месяц.</div>
     </div>
 
+    <div class="bseg" id="bseg">
+      <button data-b="born" onclick="pdrSet(false)">уже родился</button>
+      <button data-b="due" onclick="pdrSet(true)">ждём · ПДР</button>
+    </div>
+
     <div class="dfield">
       <div class="dbox sel" style="flex:0 0 70px"><em>ДЕНЬ</em><b id="dD">24</b><select id="selD"></select></div>
       <div class="dbox m" style="flex:1"><em>МЕСЯЦ</em><b id="dM">апреля</b><select id="selM"></select></div>

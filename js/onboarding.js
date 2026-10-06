@@ -41,6 +41,12 @@ function initDateSync(){const d=new Date(S.dob);
   const sd=document.getElementById('selD'),sm=document.getElementById('selM'),sy=document.getElementById('selY');
   if(sd){sd.value=d.getDate();sm.value=d.getMonth();sy.value=d.getFullYear();}}
 function o1Link(){ if(expecting())hospOpen(); else pdrStart(); }
+/* переключатель над датой: родился ↔ ждём (ПДР). Прошлую дату рождения помним, чтобы вернуть */
+function pdrSet(on){
+  if(on===expecting())return;
+  if(on){kid().bornDob=S.dob; pdrStart();}
+  else{S.dob=kid().bornDob&&kid().bornDob<=todayStr()?kid().bornDob:todayStr(); kid().dw=null; kidsSave(); initDateSync(); paintDate(); paintMain();}
+}
 /* «+ добавить» в профиле — знакомство с новым малышом на том же экране, но без шага с геопозицией */
 let O1ADD=false;
 function o1Next(){ if(O1ADD){O1ADD=false;paintMain();go('main');toast(personize('Малыш добавлен — имя и фото можно указать в профиле'));return;} S.onb ? go('main') : go('o2'); }
@@ -55,7 +61,9 @@ function paintDate(){
   const ex=expecting(), q=document.getElementById('o1q'), qs=document.getElementById('o1s');
   if(q)q.textContent=ex?'Когда ПДР?':'Когда родился малыш?';
   if(qs)qs.textContent=ex?'Подберём образ на выписку по погоде в вашем городе — и подскажем первые размеры.':'Возраст и размер посчитаем сами — и будем обновлять каждый месяц.';
-  if(l){const h=kid().hosp; l.textContent=ex?(h?`Роддом: ${h.name} ›`:'Указать роддом — для погоды на выписку'):'Малыш ещё не родился — указать ПДР';}
+  if(l){const h=kid().hosp; l.textContent=ex?(h?`Роддом: ${h.name} ›`:'Указать роддом — для погоды на выписку'):'';
+    l.style.visibility=ex?'':'hidden';}                 // «ждём / родился» — переключателем над датой
+  document.querySelectorAll('#bseg button').forEach(b=>b.classList.toggle('on',(b.dataset.b==='due')===ex));
   const m=ageMonths();
   document.getElementById('agePill').textContent=ex?`ПДР ${dueWhen()} · первый размер ${sizeFor(heightAt(0))}`
     :personize(`Малышу ${m} ${monthsWord(m)} · размер ${sizeFor(heightNow())}`);
