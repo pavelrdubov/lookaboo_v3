@@ -49,10 +49,10 @@ function pdrSet(on){
 }
 /* «+ добавить» в профиле — знакомство с новым малышом на том же экране, но без шага с геопозицией */
 let O1ADD=false;
-function o1Next(){ if(O1ADD){O1ADD=false;paintMain();go('main');toast(personize('Малыш добавлен — имя и фото можно указать в профиле'));return;} S.onb ? go('main') : go('o2'); }
+function o1Next(){ if(expecting()){ohOpen();return;} if(O1ADD){O1ADD=false;paintMain();go('main');toast(personize('Малыш добавлен — имя и фото можно указать в профиле'));return;} S.onb ? go('main') : go('o2'); }
 function paintDate(){
   const c=document.getElementById('o1cta'), l=document.getElementById('o1link');
-  if(c)c.textContent=S.onb?'Готово':'Дальше';
+  if(c)c.textContent=S.onb&&!O1ADD&&!expecting()?'Готово':'Дальше';
   if(l)l.style.display=S.onb&&!O1ADD?'none':'';
   const d=new Date(S.dob);
   document.getElementById('dD').textContent=d.getDate();
@@ -61,8 +61,7 @@ function paintDate(){
   const ex=expecting(), q=document.getElementById('o1q'), qs=document.getElementById('o1s');
   if(q)q.textContent=ex?'Когда ПДР?':'Когда родился малыш?';
   if(qs)qs.textContent=ex?'Подберём образ на выписку по погоде в вашем городе — и подскажем первые размеры.':'Возраст и размер посчитаем сами — и будем обновлять каждый месяц.';
-  if(l){const h=kid().hosp; l.textContent=ex?(h?`Роддом: ${h.name} ›`:'Указать роддом — для погоды на выписку'):'';
-    l.style.visibility=ex?'':'hidden';}                 // «ждём / родился» — переключателем над датой
+  if(l)l.style.visibility='hidden';                    // «ждём / родился» — переключателем над датой, роддом — следующим шагом
   const ga=document.getElementById('gAny'); if(ga)ga.style.display=ex?'':'none';     // пол «пока не знаем» — пока ждём
   document.querySelectorAll('#bseg button').forEach(b=>b.classList.toggle('on',(b.dataset.b==='due')===ex));
   const m=ageMonths();

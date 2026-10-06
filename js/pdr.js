@@ -7,7 +7,7 @@ const birthOpt=()=>kid().birth||{};
 function dischDays(){const b=birthOpt(); return b.cs||b.twins?5:3;}
 function dischDate(){const d=new Date(S.dob);d.setDate(d.getDate()+dischDays());return locISO(d);}
 function birthToggle(k){const b=Object.assign({},birthOpt()); b[k]=!b[k]; kid().birth=b; kid().dw=null; kidsSave();
-  dischWeather(true); paintMain(); if(S.screen==='prof')profPaint(); const o=document.getElementById('hospOv'); if(o)hospOpen();}
+  dischWeather(true); paintMain(); if(S.screen==='prof')profPaint(); const o=document.getElementById('hospOv'); if(o)hospOpen(); if(S.screen==='oH')ohOpen();}
 const dischWhy=()=>{const b=birthOpt(); return b.cs&&b.twins?'после кесарева и с двойней выписывают обычно на 5-й день'
   :b.cs?'после кесарева выписывают обычно на 5-й день':b.twins?'с двойней выписывают обычно на 5-й день':'выписка обычно на 3-й день';};
 function birthChips(){const b=birthOpt(), c=(k,t)=>`<button class="${b[k]?'on':''}" onclick="birthToggle('${k}')">${t}</button>`;
@@ -83,7 +83,8 @@ function paintDischarge(sz){
   dischWeather();
   const w=kid().dw, s=dischSet(), d=dischDate(), h=kid().hosp;
   document.getElementById('tLayers').textContent='выписка';
-  document.getElementById('tWhy').textContent=`ПДР ${dueWhen()} · выписка около ${fmtDate(d)}${h&&h.name?' · '+h.name:''}`;
+  const tw=document.getElementById('tWhy');
+  tw.innerHTML=`ПДР ${dueWhen()} · выписка около ${fmtDate(d)} · <u onclick="event.stopPropagation();hospOpen()">${h&&h.name?esc2(h.name):'указать роддом'}</u>`;
   document.getElementById('bTitle').textContent='На выписку';
   document.getElementById('bName').textContent=w?`около ${w.t>0?'+':''}${w.t}°${w.src==='hist'?' (обычно)':''}`:'погода уточнится';
   document.getElementById('items').textContent=s.it.map(x=>x[1]).join(' · ');
@@ -111,8 +112,8 @@ function hospOpen(){
   const inp=document.getElementById('hospIn'); inp.oninput=()=>hospSearch(inp.value); if(inp.value)hospSearch(inp.value);
 }
 function hospClose(){const o=document.getElementById('hospOv'); if(o)o.remove();}
-function hospSearch(q){
-  const l=document.getElementById('hospList'); clearTimeout(HOSP_T);
+function hospSearch(q,listId){
+  const l=document.getElementById(listId||'hospList'), onScreen=listId==='ohList'; clearTimeout(HOSP_T);
   if(q.trim().length<3){l.innerHTML='';return;}
   l.innerHTML='<div class="pfnote">Ищем…</div>';
   HOSP_T=setTimeout(async()=>{
@@ -126,7 +127,9 @@ function hospSearch(q){
     // не нашлось на картах — хотя бы город
     if(!hits.length)await new Promise(res=>citySearch(q,5,(m,wait)=>{if(!wait){hits=m.map(c=>({name:c.name,city:c.name,lat:c.lat,lon:c.lon,sub:c.sub}));res();}}));
     HOSP_HITS=hits;
-    l.innerHTML=hits.map((h,i)=>`<button class="ghost2" style="text-align:left;padding:8px 14px;height:auto;line-height:1.3" onclick="hospPick(${i})"><b>${esc2(h.name)}</b><br><span style="font-size:12px;color:#A9987F">${esc2(h.sub||h.city)}</span></button>`).join('')
+    l.innerHTML=hits.map((h,i)=>onScreen
+      ?`<button class="crow" onclick="ohPick(${i})"><div style="flex:1"><b>${esc2(h.name)}</b><s>${esc2(h.sub||h.city)}</s></div></button>`
+      :`<button class="ghost2" style="text-align:left;padding:8px 14px;height:auto;line-height:1.3" onclick="hospPick(${i})"><b>${esc2(h.name)}</b><br><span style="font-size:12px;color:#A9987F">${esc2(h.sub||h.city)}</span></button>`).join('')
       ||'<div class="pfnote">Не нашлось — попробуйте номер роддома и город или просто город.</div>';
   },450);
 }
@@ -157,4 +160,21 @@ function dischEvent(){
     sub:`${h&&h.name?h.name+' · ':''}${w?`около ${w.t>0?'+':''}${w.t}°${w.src==='hist'?', по средним за прошлые годы':''}`:'погода уточнится'}`,
     why:`ПДР — ${fmtDate(S.dob)}, ${dischWhy()}. ${birthOpt().twins?'Соберите два комплекта. ':''}${dischTip()}`,
     chips:w&&w.src==='hist'?['проверить погоду за неделю']:[], items:s.it.filter(x=>x[0]!=='toy'), size:sizeFor(heightAt(0))};
+}
+
+/* ---- шаг знакомства «Где будете рожать?» (после даты, если ждём малыша) ---- */
+function ohOpen(){
+  go('oH'); const h=kid().hosp, inp=document.getElementById('ohInput'), l=document.getElementById('ohList');
+  inp.value=h?h.name:''; inp.oninput=()=>hospSearch(inp.value,'ohList');
+  l.innerHTML=(h?`<button class="crow on"><div style="flex:1"><b>${esc2(h.name)}</b><s>${esc2(h.sub||h.city||'')}</s></div></button>`:'')
+    +`<div style="background:#fff;border-radius:18px;padding:12px 14px">${birthChips()}</div>`;
+}
+function ohPick(i){
+  const h=HOSP_HITS[i]; if(!h)return;
+  kid().hosp=h; kid().dw=null; kidsSave(); dischWeather(true); ohOpen();
+}
+function ohNext(skip){
+  if(O1ADD){O1ADD=false;paintMain();go('main');toast('Малыш добавлен — имя и фото можно указать в профиле');return;}
+  if(S.onb){paintMain();go('main');return;}
+  go('o2');
 }
