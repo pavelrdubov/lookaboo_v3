@@ -38,7 +38,7 @@ function okFor(n,g){
 const SUBST={bodyT:['bodyS'],tank:['bodyS'],wrap:['bodyL'],wrapbody:['bodyL','bodyS'],footpants:['pants'],
   romper:['bodyS'],ovWinter:['ovDemi','ovFleece'],ovDemi:['ovFleece'],slipKnit:['slip']};
 /* картинки вещей, которые надеваются через голову (нет застёжки спереди до конца) — до 2 месяцев не показываем */
-const HEAD_IMG=['8989','9065','9066','9076','9113','9067','9160'];
+const HEAD_IMG=['8989','9065','9066','9076','9113','9067','9160','9584','9585','9586','9587'];
 const headImg=n=>HEAD_IMG.includes((n.split('__')[3]||'').split('_')[0]);
 function candFor(key,m){
   const g=S.gender;
@@ -51,6 +51,8 @@ function candFor(key,m){
   // первые 2 месяца — только то, что расстёгивается спереди до конца (кнопки или молния): голову ни через что не протягиваем.
   // Вязаные слипы без застёжки и слип-худи надеваются через голову — их не берём (номера картинок — HEAD_IMG)
   if(age<2){const f=all.filter(n=>!headImg(n)); if(f.length)all=f; else if(key==='slipKnit')return candFor('slip',m);}
+  // носки: в холод — тёплые пинетки (_booties), в тепло — обычные носочки
+  if(key==='socks'&&typeof effTemp==='function'){const cold=effTemp()<=3, b=all.filter(n=>/booties/.test(n)===cold); if(b.length)all=b;}
   // до 3 месяцев кофта — только распашная: картинки, помеченные и свитером (через голову), не берём
   if(age<3&&key==='cardigan'){const c=all.filter(n=>!(CAND_KINDS[n]||[]).includes('sweater')); if(c.length)all=c;}
   // мальчику розового не предлагаем совсем (в том числе нейтральные вещи розоватого цвета)

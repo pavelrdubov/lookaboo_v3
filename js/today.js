@@ -47,7 +47,9 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(envFilter(legLayer(carFilter(it))))))))))),ageMonthsExact()); }
+function lookItems(it){ return bootiesLabel(newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(envFilter(legLayer(carFilter(it))))))))))),ageMonthsExact())); }
+/* в холод на ножки — тёплые пинетки, а не просто носки */
+function bootiesLabel(items){ return effTemp()>3?items:items.map(x=>x[0]==='socks'?['socks','тёплые пинетки']:x); }
 /* что с какого возраста. Первые 2 месяца — только слипы, распашонки (и боди-распашонки на запах) и ползунки:
    ничего через голову, никаких «взрослых» раздельных вещей. Дальше — по мере того, как малыш держит голову,
    сидит и ползает. Вещь «не по возрасту» заменяем на подходящую того же назначения (или убираем) */
