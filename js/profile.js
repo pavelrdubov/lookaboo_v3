@@ -44,7 +44,8 @@ function profPaint(){
       ${expecting()?`<button class="lnk" onclick="hospOpen()"><b>Роддом</b><s>${k.hosp?esc2(k.hosp.name)+' ›':'выбрать ›'}</s></button>
         ${birthChips()}
         <button class="lnk" onclick="pdrBorn()"><b>Малыш родился!</b><s>указать дату ›</s></button>`
-      :`<button class="lnk" onclick="pdrStart()"><b>Малыш ещё не родился</b><s>указать ПДР ›</s></button>`}
+      :`${dischMode()?`<div class="fld"><span>Дата выписки</span><input type="date" min="${k.dob}" value="${dischDate()}" onchange="dischSetDate(this.value)"></div>`:''}
+        <button class="lnk" onclick="pdrStart()"><b>Малыш ещё не родился</b><s>указать ПДР ›</s></button>`}
       <div class="seg">
         <button class="${S.gender==='girl'?'on':''}" onclick="profGender('girl')">девочка</button>
         <button class="${S.gender==='boy'?'on':''}" onclick="profGender('boy')">мальчик</button>

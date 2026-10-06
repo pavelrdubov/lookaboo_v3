@@ -2,18 +2,19 @@
    Спрашиваем роддом (по нему знаем город и координаты), смотрим погоду на выписку:
    сначала по средним за прошлые годы, за 2 недели — прогноз. Собираем образ на выписку */
 const expecting=()=>!!S.dob&&S.dob>todayStr();
+/* образ на выписку нужен, пока ждём — и после родов, пока не выписались */
+const dischMode=()=>expecting()||(!!kid().disch&&kid().disch>=todayStr());
 /* выписка: после обычных родов — на 3-й день, после кесарева и с двойней — обычно на 5-й */
 const birthOpt=()=>kid().birth||{};
-function dischDays(){const b=birthOpt(); return b.cs||b.twins?5:3;}
-function dischDate(){const d=new Date(S.dob);d.setDate(d.getDate()+dischDays());return locISO(d);}
+function dischDays(){return birthOpt().cs?5:3;}
+/* малыш родился — знаем точную дату выписки (kid().disch); пока ждём — считаем от ПДР */
+function dischDate(){if(kid().disch)return kid().disch; const d=new Date(S.dob);d.setDate(d.getDate()+dischDays());return locISO(d);}
 function birthToggle(k){const b=Object.assign({},birthOpt()); b[k]=!b[k]; kid().birth=b; kid().dw=null; kidsSave();
   dischWeather(true); paintMain(); if(S.screen==='prof')profPaint(); const o=document.getElementById('hospOv'); if(o)hospOpen(); if(S.screen==='oH')ohOpen();}
-const dischWhy=()=>{const b=birthOpt(); return b.cs&&b.twins?'после кесарева и с двойней выписывают обычно на 5-й день'
-  :b.cs?'после кесарева выписывают обычно на 5-й день':b.twins?'с двойней выписывают обычно на 5-й день':'выписка обычно на 3-й день';};
-function birthChips(){const b=birthOpt(), c=(k,t)=>`<button class="${b[k]?'on':''}" onclick="birthToggle('${k}')">${t}</button>`;
-  return `<div class="pfnote" style="margin:0 0 8px">Если уже знаете, что будет плановое КС или двойня, — отметьте: с ними выписывают обычно позже.</div>
-    <div class="seg">${c('cs','плановое КС')}${c('twins','двойня')}</div>
-    ${b.cs||b.twins?`<div class="pfnote">${b.cs?'Плановое кесарево обычно назначают на 38–39 неделе — если дата известна, укажите её вместо ПДР. ':''}Выписку посчитаем на ${dischDays()}-й день.</div>`:''}`;}
+const dischWhy=()=>birthOpt().cs?'после кесарева выписывают обычно на 5-й день':'выписка обычно на 3-й день';
+function birthChips(){const cs=!!birthOpt().cs;
+  return `<div class="seg"><button class="${cs?'on':''}" onclick="birthToggle('cs')">${cs?'✓ ':''}будет плановое КС</button></div>
+    <div class="pfnote">${cs?'Выписку посчитаем на 5-й день. Плановое кесарево обычно назначают на 38–39 неделе — если дата известна, укажите её вместо ПДР.':'Если уже знаете, что будет плановое КС, — отметьте: после него выписывают на 5-й день, а не на 3-й.'}</div>`;}
 function daysToDue(){return Math.round((new Date(S.dob)-new Date(todayStr()))/MS);}
 function dueWhen(){const d=daysToDue(); return d<14?`через ${d} ${plur(d,'день','дня','дней')}`:`через ${Math.round(d/7)} нед.`;}
 /* где выписываемся: роддом, а если не выбран — город из настроек */
@@ -23,7 +24,7 @@ function hospLL(){const h=kid().hosp; if(h&&h.lat!=null)return h;
 /* ---- погода на выписку ---- */
 let DW_LOADING=false;
 async function dischWeather(force){
-  const k=kid(), ll=hospLL(); if(!ll||DW_LOADING||!expecting())return;
+  const k=kid(), ll=hospLL(); if(!ll||DW_LOADING||!dischMode())return;
   const d=dischDate(), key=d+'|'+(+ll.lat).toFixed(2)+','+(+ll.lon).toFixed(2), w=k.dw;
   const days=Math.round((new Date(d)-new Date(todayStr()))/MS);
   const fresh=w&&w.key===key&&(w.src==='hist'?days>15:(Date.now()-w.at<6*36e5));
@@ -78,14 +79,14 @@ function dischTip(){
   const when=!w?'Погода появится, когда выберете роддом или город.'
     :w.src==='hist'?`Погода — по средним за прошлые годы${w.city?' ('+w.city+')':''}. Точный прогноз появится за 2 недели до ПДР — загляните ещё раз за неделю.`
     :'Это прогноз — проверьте ещё раз накануне выписки.';
-  return `${when} ${birthOpt().twins?'Двойня — соберите два комплекта. ':''}${car}`;
+  return `${when} ${car}`;
 }
 function paintDischarge(sz){
   dischWeather();
   const w=kid().dw, s=dischSet(), d=dischDate(), h=kid().hosp;
   document.getElementById('tLayers').textContent='выписка';
   const tw=document.getElementById('tWhy');
-  tw.innerHTML=`ПДР ${dueWhen()} · выписка около ${fmtDate(d)} · <u onclick="event.stopPropagation();hospOpen()">${h&&h.name?esc2(h.name):'указать роддом'}</u>`;
+  tw.innerHTML=`${expecting()?`ПДР ${dueWhen()} · выписка около ${fmtDate(d)}`:`Выписка ${fmtDate(d)}`} · <u onclick="event.stopPropagation();hospOpen()">${h&&h.name?esc2(h.name):'указать роддом'}</u>`;
   document.getElementById('bTitle').textContent='На выписку';
   document.getElementById('bName').textContent=w?`около ${w.t>0?'+':''}${w.t}°${w.src==='hist'?' (обычно)':''}`:'погода уточнится';
   document.getElementById('items').textContent=s.it.map(x=>x[1]).join(' · ');
@@ -144,22 +145,23 @@ function hospClear(){ delete kid().hosp; kid().dw=null; kidsSave(); hospClose();
 
 /* малыш ещё не родился → ПДР; родился → дата рождения */
 function pdrStart(){
+  delete kid().disch;                                  // снова ждём — выписку считаем от ПДР
   if(!expecting()){const d=new Date();d.setDate(d.getDate()+90);S.dob=locISO(d);}
   if(typeof initDateSync==='function')initDateSync();
   paintDate(); paintMain(); if(S.screen==='prof')profPaint();
 }
 function pdrBorn(){
-  S.dob=todayStr(); kid().dw=null; kidsSave();
-  toast('Поздравляем! Дату рождения можно поправить'); if(S.screen==='prof')profPaint(); paintMain();
+  S.dob=todayStr(); const d=new Date();d.setDate(d.getDate()+dischDays()); kid().disch=locISO(d); kid().dw=null; kidsSave();
+  toast('Поздравляем! Дату рождения и выписки можно поправить'); if(S.screen==='prof')profPaint(); paintMain();
 }
 
 /* ---- для «Плана»: выписка — первым событием ---- */
 function dischEvent(){
-  if(!expecting())return null;
+  if(!dischMode())return null;
   const w=kid().dw, s=dischSet(), h=kid().hosp;
   return {d:dischDate(),type:'birth',title:'Выписка из роддома',pin:true,
     sub:`${h&&h.name?h.name+' · ':''}${w?`около ${w.t>0?'+':''}${w.t}°${w.src==='hist'?', по средним за прошлые годы':''}`:'погода уточнится'}`,
-    why:`ПДР — ${fmtDate(S.dob)}, ${dischWhy()}. ${birthOpt().twins?'Соберите два комплекта. ':''}${dischTip()}`,
+    why:`${expecting()?`ПДР — ${fmtDate(S.dob)}, ${dischWhy()}.`:`Выписка — ${fmtDate(dischDate())}.`} ${dischTip()}`,
     chips:w&&w.src==='hist'?['проверить погоду за неделю']:[], items:s.it.filter(x=>x[0]!=='toy'), size:sizeFor(heightAt(0))};
 }
 
@@ -179,3 +181,6 @@ function ohNext(skip){
   if(S.onb){paintMain();go('main');return;}
   go('o2');
 }
+
+/* точная дата выписки (после родов) — из профиля */
+function dischSetDate(v){ if(!v)return; kid().disch=v; kid().dw=null; kidsSave(); dischWeather(true); paintMain(); if(S.screen==='prof')profPaint(); }
