@@ -212,12 +212,13 @@ function tlEvents(){
       why:'Ваше событие — нарядное берите на размер, который будет к этой дате.',
       items:fancyItems(c.d,3),fancy:true});
   });
-  return ev.filter(e=>!EVHIDE.includes(evKey(e))).sort((a,b)=>a.d<b.d?-1:1);
+  const de=(typeof dischEvent==='function')?dischEvent():null; if(de)ev.push(de);   // ждём малыша — выписка
+  return ev.filter(e=>!EVHIDE.includes(evKey(e))).sort((a,b)=>(b.pin?1:0)-(a.pin?1:0)||(a.d<b.d?-1:1));
 }
 function tripCount(t){return Object.keys(t.done||{}).length;}
 
 /* ---- карточка события: что именно покупать ---- */
-const EVGRAD={size:'linear-gradient(168deg,#C4613C,#E8A87C)',season:'linear-gradient(168deg,#7A8C5A,#C3D3A6)',
+const EVGRAD={birth:'linear-gradient(168deg,#6FA8A0,#C6E2D9)',size:'linear-gradient(168deg,#C4613C,#E8A87C)',season:'linear-gradient(168deg,#7A8C5A,#C3D3A6)',
   holiday:'linear-gradient(168deg,#8C6E9E,#D6BFDF)',trip:'linear-gradient(168deg,#6E8FA8,#B9CDD8)',
   month:'linear-gradient(168deg,#C98AA6,#EAC7D8)',custom:'linear-gradient(168deg,#8C6E9E,#D6BFDF)'};
 let EVCUR=null;
@@ -236,7 +237,7 @@ function evRender(){
   const em=Math.max(0,monthsUntil(e.szDate||e.d));
   // вещи — каруселью (свайп вбок), карточки крупные
   const items=(e.items||[]);
-  const isLook=!!e.fancy||evCanDel(e);          // праздник, месяц, своё событие — образами; план (сезон, размер) — списком
+  const isLook=!!e.fancy||evCanDel(e)||e.type==='birth';          // праздник, месяц, своё событие — образами; план (сезон, размер) — списком
   // картинка каждой вещи — по ней подбираем аксессуары в тон
   EVIDS=items.map(([k])=>IMG[k]?k:(CAND[k]?(pickImg(k,0,em).split('/').pop()||'').replace(/\.webp$/,''):''));
   const accRow=isLook&&items.length?`<div class="evacc"><span>к образу</span><div id="evAcc">${evAccHtml(0)}</div></div>`:'';
@@ -339,10 +340,10 @@ function evWish(k,label,direct){
   evRender();
 }
 
-const TLCOL={trip:'#6E8FA8',size:'#7A8C5A',season:'#7A8C5A',   // размер и сезон — один «План», один цвет
+const TLCOL={birth:'#5E9C92',trip:'#6E8FA8',size:'#7A8C5A',season:'#7A8C5A',   // размер и сезон — один «План», один цвет
  holiday:'#B87A9C',month:'#C98AA6',custom:'#B87A9C'};
 /* три рода записей: события (праздники, месяцы, свои) — можно удалить; поездки; план (смена размера/сезона) — не удаляется */
-const TLKIND={trip:'Поездка',size:'План',season:'План',holiday:'Событие',month:'Событие',custom:'Событие'};
+const TLKIND={birth:'Выписка',trip:'Поездка',size:'План',season:'План',holiday:'Событие',month:'Событие',custom:'Событие'};
 const evCanDel=e=>['holiday','month','custom'].includes(e.type);
 const evKey=e=>e.type+'|'+e.title+'|'+e.d;
 let EVHIDE=[]; (function(){try{const a=JSON.parse(store.get('mpp-evhide')||'[]');if(Array.isArray(a))EVHIDE=a;}catch(e){}})();

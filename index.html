@@ -65,8 +65,8 @@
 
   <div class="card2">
     <div>
-      <div class="qtitle">Когда родился малыш?</div>
-      <div class="qsub">Возраст и размер посчитаем сами — и будем обновлять каждый месяц.</div>
+      <div class="qtitle" id="o1q">Когда родился малыш?</div>
+      <div class="qsub" id="o1s">Возраст и размер посчитаем сами — и будем обновлять каждый месяц.</div>
     </div>
 
     <div class="dfield">
@@ -90,7 +90,7 @@
   <div class="dots" style="bottom:calc(var(--obb,172px) - 38px)"><i class="a"></i><i></i></div>
   <div style="position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;font-weight:700;color:#B3A692;z-index:9">© 2026 Ekaterina · Lookaboo</div>
   <button class="cta" id="o1cta" style="bottom:calc(var(--obb,172px)*.38)" onclick="o1Next()">Дальше</button>
-  <button class="link" id="o1link" style="bottom:calc(var(--obb,172px)*.14)" onclick="go('o2')">Малыш ещё не родился — указать ПДР</button>
+  <button class="link" id="o1link" style="bottom:calc(var(--obb,172px)*.14)" onclick="o1Link()">Малыш ещё не родился — указать ПДР</button>
 </section>
 
 <!-- ============ O2 · геопозиция ============ -->
@@ -464,6 +464,7 @@
 <script src="js/sizes.js"></script>
 <script src="js/plan.js"></script>
 <script src="js/trip.js"></script>
+<script src="js/pdr.js"></script>
 <script src="js/kid-name.js"></script>
 <script src="js/wardrobe.js"></script>
 <script src="js/profile.js"></script>

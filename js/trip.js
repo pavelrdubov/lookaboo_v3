@@ -9,7 +9,25 @@ function tripSave(){
   try{store.set('mpp-trips',JSON.stringify(TRIPS));}catch(e){}
 }
 function tripNew(){TRIP=blankTrip();go('trip');}
-function tripOpen(id){const t=TRIPS.find(x=>x.id===id);if(t){TRIP=t;TRIP.mode='result';go('trip');}}
+function tripOpen(id){const t=TRIPS.find(x=>x.id===id);if(t){TRIP=t;TRIP.mode='result';go('trip');tripAutoRefresh();}}
+/* погода в поездке меняется: за 2 недели до выезда появляется прогноз — подтягиваем его сами, потом раз в полдня */
+function tripDaysTo(){return Math.round((new Date(TRIP.from)-new Date(todayStr()))/MS);}
+function tripAutoRefresh(){
+  const d=tripDaysTo(); if(d<0||d>15||!TRIP.lat)return;
+  if(TRIP.src!=='прогноз'||!TRIP.wAt||Date.now()-TRIP.wAt>12*36e5)tripRefresh(true);
+}
+async function tripRefresh(quiet){
+  const w=await tripWeather(); if(!w){if(!quiet)toast('Погода не загрузилась');return;}
+  TRIP.w=w; TRIP.wAt=Date.now(); tripSave(); if(S.screen==='trip')tripRender(); if(!quiet)toast('Погода обновлена');
+}
+function tripCheckNote(){
+  const d=tripDaysTo();
+  if(TRIP.src==='manual'||d<0)return '';
+  const txt=TRIP.src!=='прогноз'
+    ?`Это средние за прошлые годы — погода может отличаться. Точный прогноз появится за 2 недели до поездки: загляните ещё раз за неделю до выезда${d>15?` — ${fmtD((()=>{const x=new Date(TRIP.from);x.setDate(x.getDate()-7);return x;})())}`:''}.`
+    :(d>2?'Прогноз ещё может поменяться — проверьте ещё раз за пару дней до выезда.':'');
+  return txt?`<div class="pfnote" style="margin-top:8px">${txt}</div><button class="ghost2" style="margin-top:8px" onclick="tripRefresh()">Обновить погоду</button>`:'';
+}
 function tripDel(){if(!confirm(`Удалить поездку в ${TRIP.city} из плана? Вещи из неё останутся в вишлисте.`))return;tripDrop(TRIP.id);go('tl');toast('Поездка удалена');}
 function tripDrop(id){TRIPS=TRIPS.filter(t=>t.id!==id);try{store.set('mpp-trips',JSON.stringify(TRIPS));}catch(e){}tlRender();}
 
@@ -111,7 +129,7 @@ async function tripBuild(){
   if(!f||!t||t<f){toast('Выберите даты туда и обратно');return;}
   TRIP.from=f;TRIP.to=t;
   document.getElementById('tripCta').textContent='Смотрим погоду…';
-  TRIP.w=await tripWeather();
+  TRIP.w=await tripWeather(); TRIP.wAt=Date.now();
   if(!TRIP.id)TRIP.id=Date.now();
   TRIP.mode='result';tripSave();tripRender();
 }
@@ -231,6 +249,7 @@ function tripRender(){
       </div>
       <div class="sub" style="margin-top:9px">Разброс ${w.tmin>0?'+':''}${w.tmin}…${w.tmax>0?'+':''}${w.tmax}°${w.uv?' · УФ до '+w.uv:''}. Малышу это как ${w.amax-3>0?'+':''}${w.amax-3}° днём — он лежит в коляске.</div>
       <span class="tag" style="background:${TRIP.src==='прогноз'?'#DDEAD8':'#F2E4CC'};color:#6B5540">${TRIP.src==='прогноз'?'точный прогноз':TRIP.src}</span>
+      ${tripCheckNote()}
     </div>
 
     <div class="card">

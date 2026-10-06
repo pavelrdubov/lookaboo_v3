@@ -261,7 +261,7 @@ function paintMain(){
   const av=document.getElementById('mav');
   av.className='av'+(k.photo||kidName(k)?'':' none');
   av.innerHTML = k.photo ? `<img src="${k.photo}" alt="">` : (kidName(k)?kidLabel(k)[0].toUpperCase():'');
-  document.getElementById('mchipT').textContent=(kidName(k)?kidName(k)+' · ':'')+`${m} мес · ${sz}`;
+  document.getElementById('mchipT').textContent=(kidName(k)?kidName(k)+' · ':'')+(expecting()?`ПДР ${fmtD(S.dob)}`:`${m} мес · ${sz}`);
 
   const tT=document.getElementById('tTemp'), tF=document.getElementById('tFeels');
   document.getElementById('tPlace').textContent=S.city||'город не выбран';
@@ -300,6 +300,10 @@ function paintMain(){
   if(uvNow()>=3)full.push(`УФ-индекс ${uvNow()} — ${uvWord(uvNow())}`);
   full.push(personize(ctxNow().why));
   S.whyText=`${full.join(' · ')} — для ${babyCases().gen} это как ${ef0>0?'+':''}${ef0}°`;
+  // ждём малыша — вместо образа на сегодня образ на выписку
+  const ex=expecting();
+  document.querySelectorAll('#ctxRow .c:not(.hol)').forEach(b=>b.style.display=ex?'none':'');
+  if(ex){ const hc0=document.getElementById('ctxHome'); if(hc0)hc0.style.display='none'; paintDischarge(sz); return; }
   const hol=holidayToday(), hc=document.getElementById('ctxHome');
   if(hc)hc.style.display=hol?'':'none';
   if(S.ctx==='home'&&!hol)S.ctx='stroller';
@@ -355,7 +359,7 @@ function flip(d){
   const tb=document.getElementById('tipBtn');if(tb)tb.classList.remove('act');
   // стрелки листают и наборы, и другие сочетания картинок (см. lookImgs); дома в праздник — праздничные вещи
   const hol=S.ctx==='home'&&holidayToday();
-  const n=hol?Math.min(5,holidayPool(hol).length):lookTotal(setsFor(bandFor(effTemp())).length);
+  const n=expecting()?withDisch(()=>lookTotal(setsFor(bandFor(effTemp())).length)):hol?Math.min(5,holidayPool(hol).length):lookTotal(setsFor(bandFor(effTemp())).length);
   S.setIdx=(S.setIdx+d+n)%n;
   paintMain();
 }

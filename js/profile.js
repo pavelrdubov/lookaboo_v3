@@ -18,7 +18,7 @@ function esc2(t){return String(t==null?'':t).replace(/[<>&"]/g,c=>({'<':'&lt;','
 function profPaint(){
   const k=kid(), m=kidAgeOf(k), sz=sizeFor(heightNow());
   document.getElementById('pfTitle').textContent=kidLabel(k);
-  document.getElementById('pfSub').textContent=`${m} ${monthsWord(m)} · размер ${sz}`;
+  document.getElementById('pfSub').textContent=expecting()?`ПДР ${dueWhen()} · первый размер ${sz}`:`${m} ${monthsWord(m)} · размер ${sz}`;
 
   const kids=KIDS.map((x,i)=>`<button class="kidchip${i===KI?' on':''}" onclick="profSetKid(${i})">
       <div class="av">${kidAv(x)}</div><s>${esc2(kidLabel(x))}</s></button>`).join('')
@@ -39,8 +39,11 @@ function profPaint(){
       ${k.photo?`<div style="text-align:center;margin:-4px 0 10px"><button class="swlink" style="width:auto" onclick="profPhotoDel()">убрать фото</button></div>`:''}
       <div class="fld"><span>Имя</span>
         <input id="pfName" value="${esc2(k.name)}" placeholder="как зовут малыша" maxlength="24"></div>
-      <div class="fld"><span>Дата рождения</span>
-        <input type="date" id="pfDob" max="${todayStr()}" value="${k.dob}"></div>
+      <div class="fld"><span>${expecting()?'ПДР':'Дата рождения'}</span>
+        <input type="date" id="pfDob" ${expecting()?'':`max="${todayStr()}"`} value="${k.dob}"></div>
+      ${expecting()?`<button class="lnk" onclick="hospOpen()"><b>Роддом</b><s>${k.hosp?esc2(k.hosp.name)+' ›':'выбрать ›'}</s></button>
+        <button class="lnk" onclick="pdrBorn()"><b>Малыш родился!</b><s>указать дату ›</s></button>`
+      :`<button class="lnk" onclick="pdrStart()"><b>Малыш ещё не родился</b><s>указать ПДР ›</s></button>`}
       <div class="seg">
         <button class="${S.gender==='girl'?'on':''}" onclick="profGender('girl')">девочка</button>
         <button class="${S.gender==='boy'?'on':''}" onclick="profGender('boy')">мальчик</button>
@@ -105,7 +108,7 @@ function profPaint(){
     document.getElementById('pfTitle').textContent=kidLabel(kid());};
   const db=document.getElementById('pfDob');
   if(db)db.onchange=()=>{if(!db.value)return;
-    if(db.value>todayStr())db.value=todayStr();
+    if(db.value>todayStr()&&!expecting())db.value=todayStr();   // будущая дата — только для ПДР
     S.dob=db.value;paintDate();paintMain();profPaint();};
   const pc=document.getElementById('pfCity');
   if(pc)pc.oninput=()=>profCities(pc.value);

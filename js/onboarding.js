@@ -30,12 +30,17 @@ function initDate(){
   const sd=document.getElementById('selD'),sm=document.getElementById('selM'),sy=document.getElementById('selY');
   for(let i=1;i<=31;i++)sd.insertAdjacentHTML('beforeend',`<option value="${i}">${i}</option>`);
   MONTHS.forEach((m,i)=>sm.insertAdjacentHTML('beforeend',`<option value="${i}">${m}</option>`));
-  const y=new Date().getFullYear();for(let i=y;i>=y-4;i--)sy.insertAdjacentHTML('beforeend',`<option value="${i}">${i}</option>`);
+  const y=new Date().getFullYear();for(let i=y+1;i>=y-4;i--)sy.insertAdjacentHTML('beforeend',`<option value="${i}">${i}</option>`);
   sd.value=d.getDate();sm.value=d.getMonth();sy.value=d.getFullYear();
   [sd,sm,sy].forEach(s=>s.onchange=()=>{
     S.dob=dISO(+sy.value,+sm.value,+sd.value);paintDate();paintMain();});
   paintDate();
 }
+/* выпадающие списки даты — заново из S.dob (после «указать ПДР») */
+function initDateSync(){const d=new Date(S.dob);
+  const sd=document.getElementById('selD'),sm=document.getElementById('selM'),sy=document.getElementById('selY');
+  if(sd){sd.value=d.getDate();sm.value=d.getMonth();sy.value=d.getFullYear();}}
+function o1Link(){ if(expecting())hospOpen(); else pdrStart(); }
 function o1Next(){ S.onb ? go('main') : go('o2'); }
 function paintDate(){
   const c=document.getElementById('o1cta'), l=document.getElementById('o1link');
@@ -45,8 +50,13 @@ function paintDate(){
   document.getElementById('dD').textContent=d.getDate();
   document.getElementById('dM').textContent=MONTHS[d.getMonth()];
   document.getElementById('dY').textContent=d.getFullYear();
+  const ex=expecting(), q=document.getElementById('o1q'), qs=document.getElementById('o1s');
+  if(q)q.textContent=ex?'Когда ПДР?':'Когда родился малыш?';
+  if(qs)qs.textContent=ex?'Подберём образ на выписку по погоде в вашем городе — и подскажем первые размеры.':'Возраст и размер посчитаем сами — и будем обновлять каждый месяц.';
+  if(l){const h=kid().hosp; l.textContent=ex?(h?`Роддом: ${h.name} ›`:'Указать роддом — для погоды на выписку'):'Малыш ещё не родился — указать ПДР';}
   const m=ageMonths();
-  document.getElementById('agePill').textContent=personize(`Малышу ${m} ${monthsWord(m)} · размер ${sizeFor(heightNow())}`);
+  document.getElementById('agePill').textContent=ex?`ПДР ${dueWhen()} · первый размер ${sizeFor(heightAt(0))}`
+    :personize(`Малышу ${m} ${monthsWord(m)} · размер ${sizeFor(heightNow())}`);
 }
 
 /* --- O3 --- */
