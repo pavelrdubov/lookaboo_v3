@@ -97,9 +97,11 @@ function profPaint(){
     </div>
 
     <div class="card">
-      <h3>Обратная связь</h3>
-      <div class="sub">Нашли ошибку или хотите что-то предложить? Напишите — я читаю всё.</div>
-      <button class="ghost2" onclick="sendFeedback()">Написать письмо</button>
+      <h3>Что-то не так? Есть идея?</h3>
+      <div class="sub">Приложение делает мама — и читает каждое письмо. Если что-то сломалось или подобрался странный образ, напишите: к письму само приложится, сколько малышу и какая была погода, чтобы было проще разобраться.</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="ghost2" style="margin:0;flex:1" onclick="sendFeedback('bug')">Сообщить об ошибке</button>
+        <button class="ghost2" style="margin:0;flex:1" onclick="sendFeedback('idea')">Предложить идею</button></div>
     </div>
 
     <div class="card">
@@ -161,9 +163,13 @@ function initProfFile(){
     img.src=url;
   };
 }
-function sendFeedback(){
-  const subj=encodeURIComponent('Lookaboo — обратная связь');
-  const body=encodeURIComponent('\n\n———\nВерсия приложения: '+(window.APPVER||'—'));
+function sendFeedback(kind){
+  const bug=kind==='bug';
+  const subj=encodeURIComponent(bug?'Lookaboo — ошибка':'Lookaboo — идея');
+  // контекст, чтобы разобраться без переписки: возраст, погода, вкладка — без имени и фото
+  const ctx=[`Возраст: ${expecting()?'ждём, ПДР '+S.dob:ageMonths()+' мес'}`,`Погода: ${S.temp>0?'+':''}${S.temp}°, ${S.weather}${S.live?'':' (вручную)'}`,
+    `Вкладка: ${S.ctx}`,`Образ: ${(document.getElementById('items')||{}).textContent||'—'}`,`Версия: ${window.APPVER||'—'}`,`Устройство: ${navigator.userAgent}`].join('\n');
+  const body=encodeURIComponent((bug?'Что случилось:\n\n\nЧто ожидали увидеть:\n\n':'Идея:\n\n\n')+'———\n'+ctx);
   location.href='mailto:kate.kochurova@gmail.com?subject='+subj+'&body='+body;
 }
 function profReset(){
