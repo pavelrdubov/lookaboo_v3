@@ -2,8 +2,17 @@
    Спрашиваем роддом (по нему знаем город и координаты), смотрим погоду на выписку:
    сначала по средним за прошлые годы, за 2 недели — прогноз. Собираем образ на выписку */
 const expecting=()=>!!S.dob&&S.dob>todayStr();
-const DISCH_DAYS=3;                                   // выписка — обычно на 3-й день
-function dischDate(){const d=new Date(S.dob);d.setDate(d.getDate()+DISCH_DAYS);return locISO(d);}
+/* выписка: после обычных родов — на 3-й день, после кесарева и с двойней — обычно на 5-й */
+const birthOpt=()=>kid().birth||{};
+function dischDays(){const b=birthOpt(); return b.cs||b.twins?5:3;}
+function dischDate(){const d=new Date(S.dob);d.setDate(d.getDate()+dischDays());return locISO(d);}
+function birthToggle(k){const b=Object.assign({},birthOpt()); b[k]=!b[k]; kid().birth=b; kid().dw=null; kidsSave();
+  dischWeather(true); paintMain(); if(S.screen==='prof')profPaint(); const o=document.getElementById('hospOv'); if(o)hospOpen();}
+const dischWhy=()=>{const b=birthOpt(); return b.cs&&b.twins?'после кесарева и с двойней выписывают обычно на 5-й день'
+  :b.cs?'после кесарева выписывают обычно на 5-й день':b.twins?'с двойней выписывают обычно на 5-й день':'выписка обычно на 3-й день';};
+function birthChips(){const b=birthOpt(), c=(k,t)=>`<button class="${b[k]?'on':''}" onclick="birthToggle('${k}')">${t}</button>`;
+  return `<div class="seg">${c('cs','плановое КС')}${c('twins','двойня')}</div>
+    <div class="pfnote">${b.cs?'Плановое кесарево обычно назначают на 38–39 неделе — если дата известна, укажите её вместо ПДР. ':''}Выписку посчитаем на ${dischDays()}-й день.</div>`;}
 function daysToDue(){return Math.round((new Date(S.dob)-new Date(todayStr()))/MS);}
 function dueWhen(){const d=daysToDue(); return d<14?`через ${d} ${plur(d,'день','дня','дней')}`:`через ${Math.round(d/7)} нед.`;}
 /* где выписываемся: роддом, а если не выбран — город из настроек */
@@ -68,7 +77,7 @@ function dischTip(){
   const when=!w?'Погода появится, когда выберете роддом или город.'
     :w.src==='hist'?`Погода — по средним за прошлые годы${w.city?' ('+w.city+')':''}. Точный прогноз появится за 2 недели до ПДР — загляните ещё раз за неделю.`
     :'Это прогноз — проверьте ещё раз накануне выписки.';
-  return `${when} ${car}`;
+  return `${when} ${birthOpt().twins?'Двойня — соберите два комплекта. ':''}${car}`;
 }
 function paintDischarge(sz){
   dischWeather();
@@ -92,10 +101,11 @@ function hospOpen(){
   const scr=document.querySelector('.screen.on')||document.body;
   scr.insertAdjacentHTML('beforeend',`<div id="hospOv" style="position:absolute;inset:0;z-index:60;background:rgba(48,38,30,.38);display:flex;align-items:flex-end" onclick="if(event.target===this)hospClose()">
     <div style="background:#fff;border-radius:26px 26px 0 0;padding:18px 20px 26px;width:100%;box-sizing:border-box;max-height:80%;overflow-y:auto">
-    <h3 style="margin:0 0 4px;font-size:17px;font-weight:800;color:var(--ink-strong)">Роддом</h3>
+    <h3 style="margin:0 0 4px;font-size:17px;font-weight:800;color:var(--ink-strong)">Роддом и роды</h3>
     <p style="margin:0 0 12px;font-size:12px;font-weight:600;color:var(--muted)">По роддому узнаем город и посмотрим погоду на выписку. Можно указать просто город.</p>
     <div class="fld"><span>Роддом или город</span><input id="hospIn" placeholder="например, роддом 25 Москва" value="${esc2(h&&h.name||'')}" autocomplete="off"></div>
     <div id="hospList" style="display:flex;flex-direction:column;gap:6px;margin:8px 0 12px"></div>
+    <div style="margin:4px 0 12px">${birthChips()}</div>
     ${h?`<button class="ghost2" onclick="hospClear()">Убрать роддом</button>`:''}
     <button class="ghost2" onclick="hospClose()">Готово</button></div></div>`);
   const inp=document.getElementById('hospIn'); inp.oninput=()=>hospSearch(inp.value); if(inp.value)hospSearch(inp.value);
@@ -145,6 +155,6 @@ function dischEvent(){
   const w=kid().dw, s=dischSet(), h=kid().hosp;
   return {d:dischDate(),type:'birth',title:'Выписка из роддома',pin:true,
     sub:`${h&&h.name?h.name+' · ':''}${w?`около ${w.t>0?'+':''}${w.t}°${w.src==='hist'?', по средним за прошлые годы':''}`:'погода уточнится'}`,
-    why:`ПДР — ${fmtDate(S.dob)}, выписка обычно на 3-й день. ${dischTip()}`,
+    why:`ПДР — ${fmtDate(S.dob)}, ${dischWhy()}. ${birthOpt().twins?'Соберите два комплекта. ':''}${dischTip()}`,
     chips:w&&w.src==='hist'?['проверить погоду за неделю']:[], items:s.it.filter(x=>x[0]!=='toy'), size:sizeFor(heightAt(0))};
 }

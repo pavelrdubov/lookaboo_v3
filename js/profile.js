@@ -42,6 +42,7 @@ function profPaint(){
       <div class="fld"><span>${expecting()?'ПДР':'Дата рождения'}</span>
         <input type="date" id="pfDob" ${expecting()?'':`max="${todayStr()}"`} value="${k.dob}"></div>
       ${expecting()?`<button class="lnk" onclick="hospOpen()"><b>Роддом</b><s>${k.hosp?esc2(k.hosp.name)+' ›':'выбрать ›'}</s></button>
+        ${birthChips()}
         <button class="lnk" onclick="pdrBorn()"><b>Малыш родился!</b><s>указать дату ›</s></button>`
       :`<button class="lnk" onclick="pdrStart()"><b>Малыш ещё не родился</b><s>указать ПДР ›</s></button>`}
       <div class="seg">
