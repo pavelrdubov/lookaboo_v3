@@ -48,6 +48,7 @@ function profPaint(){
       <div class="seg">
         <button class="${S.gender==='girl'?'on':''}" onclick="profGender('girl')">девочка</button>
         <button class="${S.gender==='boy'?'on':''}" onclick="profGender('boy')">мальчик</button>
+        ${expecting()?`<button class="${S.gender!=='girl'&&S.gender!=='boy'?'on':''}" onclick="profGender('any')">не знаем</button>`:''}
       </div>
       <button class="lnk" onclick="heightFrom='prof';go('o3')"><b>Размер сейчас</b><s>${sz} ›</s></button>
       <button class="lnk" onclick="openSizes()"><b>Все размеры</b><s>шапки, носки, US ›</s></button>

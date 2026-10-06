@@ -63,6 +63,7 @@ function paintDate(){
   if(qs)qs.textContent=ex?'Подберём образ на выписку по погоде в вашем городе — и подскажем первые размеры.':'Возраст и размер посчитаем сами — и будем обновлять каждый месяц.';
   if(l){const h=kid().hosp; l.textContent=ex?(h?`Роддом: ${h.name} ›`:'Указать роддом — для погоды на выписку'):'';
     l.style.visibility=ex?'':'hidden';}                 // «ждём / родился» — переключателем над датой
+  const ga=document.getElementById('gAny'); if(ga)ga.style.display=ex?'':'none';     // пол «пока не знаем» — пока ждём
   document.querySelectorAll('#bseg button').forEach(b=>b.classList.toggle('on',(b.dataset.b==='due')===ex));
   const m=ageMonths();
   document.getElementById('agePill').textContent=ex?`ПДР ${dueWhen()} · первый размер ${sizeFor(heightAt(0))}`
