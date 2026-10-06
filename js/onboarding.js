@@ -51,7 +51,7 @@ function pdrSet(on){
 }
 /* «+ добавить» в профиле — знакомство с новым малышом на том же экране, но без шага с геопозицией */
 let O1ADD=false;
-function o1Next(){ if(expecting()&&!kid().hosp){ohOpen();return;} if(expecting()){ohNext();return;} if(O1ADD){O1ADD=false;paintMain();go('main');toast(personize('Малыш добавлен — имя и фото можно указать в профиле'));return;} S.onb ? go('main') : go('o2'); }
+function o1Next(){ if(expecting()){ohNext();return;} /* роддом — по желанию, через жёлтую кнопку */ if(O1ADD){O1ADD=false;paintMain();go('main');toast(personize('Малыш добавлен — имя и фото можно указать в профиле'));return;} S.onb ? go('main') : go('o2'); }
 function paintDate(){
   const c=document.getElementById('o1cta'), l=document.getElementById('o1link');
   if(c)c.textContent=S.onb&&!O1ADD&&!expecting()?'Готово':'Дальше';
@@ -68,8 +68,8 @@ function paintDate(){
   document.querySelectorAll('#bseg button').forEach(b=>b.classList.toggle('on',(b.dataset.b==='due')===ex));
   const m=ageMonths();
   const hh=document.getElementById('o1hand'), hp=kid().hosp;
-  if(hh)hh.textContent=ex?(hp?'нажмите, чтобы сменить':'по нему посмотрим погоду на выписку'):'размер можно уточнить';
-  document.getElementById('agePill').textContent=ex?(hp?`Роддом: ${hp.name} ›`:'Выбрать роддом ›')
+  if(hh)hh.textContent=ex?(hp?'погода на выписку — по роддому':'не выбрали — погода по вашему городу'):'размер можно уточнить';
+  document.getElementById('agePill').textContent=ex?(hp?`Роддом: ${hp.name} ›`:'Роддом · по желанию ›')
     :personize(`Малышу ${m} ${monthsWord(m)} · размер ${sizeFor(heightNow())}`);
 }
 
