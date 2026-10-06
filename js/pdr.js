@@ -90,8 +90,8 @@ function paintDischarge(sz){
   document.getElementById('tLayers').textContent='выписка';
   // в шапке — погода на день выписки, а не сегодняшняя
   const tT=document.getElementById('tTemp'), tF=document.getElementById('tFeels'), tP=document.getElementById('tPlace');
-  if(w){ tT.textContent=(w.t>0?'+':'')+w.t+'°'; tF.textContent=`${fmtD(d)} · ${w.src==='hist'?'обычно в эти дни':'прогноз'}${w.rain>=50?' · дожди':''}`; }
-  else{ tT.textContent='…'; tF.textContent=`${fmtD(d)} · ${DW_LOADING?'смотрим погоду':(hospLL()?'погода не загрузилась':'выберите роддом или город')}`; }
+  if(w){ tT.textContent=(w.t>0?'+':'')+w.t+'°'; tF.textContent=`${w.src==='hist'?'обычно в эти дни':'прогноз'}${w.rain>=50?' · дожди':''}`; }
+  else{ tT.textContent='…'; tF.textContent=DW_LOADING?'смотрим погоду':(hospLL()?'погода не загрузилась':'выберите роддом или город'); }
   if(tP&&(w&&w.city||h&&h.city))tP.textContent=(h&&h.city)||w.city;
   if(w){ // небо в шапке — тоже по дню выписки (сезон и осадки), а не по сегодняшнему
     const sc=w.rain>=50?(w.t<=0?'snow':'rain'):(w.t<=-3?'frost':'cloud'), sk=skyFor(sc);
