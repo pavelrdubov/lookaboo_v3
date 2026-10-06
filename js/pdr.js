@@ -11,8 +11,9 @@ function birthToggle(k){const b=Object.assign({},birthOpt()); b[k]=!b[k]; kid().
 const dischWhy=()=>{const b=birthOpt(); return b.cs&&b.twins?'после кесарева и с двойней выписывают обычно на 5-й день'
   :b.cs?'после кесарева выписывают обычно на 5-й день':b.twins?'с двойней выписывают обычно на 5-й день':'выписка обычно на 3-й день';};
 function birthChips(){const b=birthOpt(), c=(k,t)=>`<button class="${b[k]?'on':''}" onclick="birthToggle('${k}')">${t}</button>`;
-  return `<div class="seg">${c('cs','плановое КС')}${c('twins','двойня')}</div>
-    <div class="pfnote">${b.cs?'Плановое кесарево обычно назначают на 38–39 неделе — если дата известна, укажите её вместо ПДР. ':''}Выписку посчитаем на ${dischDays()}-й день.</div>`;}
+  return `<div class="pfnote" style="margin:0 0 8px">Если уже знаете, что будет плановое КС или двойня, — отметьте: с ними выписывают обычно позже.</div>
+    <div class="seg">${c('cs','плановое КС')}${c('twins','двойня')}</div>
+    ${b.cs||b.twins?`<div class="pfnote">${b.cs?'Плановое кесарево обычно назначают на 38–39 неделе — если дата известна, укажите её вместо ПДР. ':''}Выписку посчитаем на ${dischDays()}-й день.</div>`:''}`;}
 function daysToDue(){return Math.round((new Date(S.dob)-new Date(todayStr()))/MS);}
 function dueWhen(){const d=daysToDue(); return d<14?`через ${d} ${plur(d,'день','дня','дней')}`:`через ${Math.round(d/7)} нед.`;}
 /* где выписываемся: роддом, а если не выбран — город из настроек */
