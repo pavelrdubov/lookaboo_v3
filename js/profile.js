@@ -125,7 +125,7 @@ function profCities(q){
 }
 function profStroller(v){kid().stroller=v==='auto'?undefined:v;kidsSave();profPaint();paintMain();}
 function profSetKid(i){KI=i;kidsSave();profPaint();paintDate();syncHeight();paintMain();}
-function profAddKid(){if(KIDS.length>=5){toast('Можно добавить до 5 малышей');return;}KIDS.push(blankKid());KI=KIDS.length-1;kidsSave();O1ADD=true;initDateSync();paintGender();paintDate();go('o1');}
+function profAddKid(){if(KIDS.length>=5){toast('Можно добавить до 5 малышей');return;}O1PREV=KI;KIDS.push(Object.assign(blankKid(),{draft:true}));KI=KIDS.length-1;kidsSave();O1ADD=true;initDateSync();paintGender();paintDate();go('o1');}
 function profDelKid(){
   if(KIDS.length<2)return;
   if(!confirm('Убрать '+kidLabel(kid())+' из профиля? Вишлист и поездки останутся.'))return;

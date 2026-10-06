@@ -9,7 +9,7 @@ function blankKid(){return{id:Date.now()+Math.floor(Math.random()*1000),name:'',
 let KIDS=[], KI=0;
 (function(){
   try{const a=JSON.parse(store.get('mpp-kids')||'null');
-    if(Array.isArray(a)&&a.length){KIDS=a;KI=Math.min(Math.max(0,+(store.get('mpp-ki')||0)),a.length-1);return;}}catch(e){}
+    if(Array.isArray(a)&&a.length){KIDS=a.filter(k=>!k.draft); if(!KIDS.length)KIDS=a.slice(0,1);KI=Math.min(Math.max(0,+(store.get('mpp-ki')||0)),KIDS.length-1);return;}}catch(e){}
   const h=parseFloat(store.get('mpp-h')||'0');
   KIDS=[{id:1,name:'',photo:null,
     dob:store.get('mpp-dob')||'2026-04-24',

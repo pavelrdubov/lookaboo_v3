@@ -177,7 +177,7 @@ function ohPick(i){
   kid().hosp=h; kid().dw=null; kidsSave(); dischWeather(true); ohOpen();
 }
 function ohNext(skip){
-  if(O1ADD){O1ADD=false;paintMain();go('main');toast('Малыш добавлен — имя и фото можно указать в профиле');return;}
+  if(O1ADD){o1Done();return;}
   if(S.onb){paintMain();go('main');return;}
   go('o2');
 }

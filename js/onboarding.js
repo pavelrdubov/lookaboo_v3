@@ -50,11 +50,16 @@ function pdrSet(on){
   else{S.dob=kid().bornDob&&kid().bornDob<=todayStr()?kid().bornDob:todayStr(); kid().dw=null; kidsSave(); initDateSync(); paintDate(); paintMain();}
 }
 /* «+ добавить» в профиле — знакомство с новым малышом на том же экране, но без шага с геопозицией */
-let O1ADD=false;
-function o1Next(){ if(expecting()){ohNext();return;} /* роддом — по желанию, через жёлтую кнопку */ if(O1ADD){O1ADD=false;paintMain();go('main');toast(personize('Малыш добавлен — имя и фото можно указать в профиле'));return;} S.onb ? go('main') : go('o2'); }
+let O1ADD=false, O1PREV=0;
+/* новый малыш — черновик, пока не нажали «Дальше»; ушли назад — черновик убираем */
+function o1Done(){ O1ADD=false; delete kid().draft; kidsSave(); paintMain(); go('main'); toast(personize('Малыш добавлен — имя и фото можно указать в профиле')); }
+function o1Cancel(){ KIDS=KIDS.filter(k=>!k.draft); KI=Math.min(O1PREV,KIDS.length-1); O1ADD=false; kidsSave(); paintDate(); paintMain(); go('prof'); }
+function o1Next(){ if(expecting()){ohNext();return;} /* роддом — по желанию, через жёлтую кнопку */ if(O1ADD){o1Done();return;} S.onb ? go('main') : go('o2'); }
 function paintDate(){
   const c=document.getElementById('o1cta'), l=document.getElementById('o1link');
   if(c)c.textContent=S.onb&&!O1ADD&&!expecting()?'Готово':'Дальше';
+  const bk=document.getElementById('o1Back'); if(bk)bk.style.display=O1ADD?'flex':'none';
+  const br=document.getElementById('o1Brand'); if(br)br.style.visibility=O1ADD?'hidden':'';   // на месте логотипа — «назад»
   if(l)l.style.display=S.onb&&!O1ADD?'none':'';
   const d=new Date(S.dob);
   document.getElementById('dD').textContent=d.getDate();
