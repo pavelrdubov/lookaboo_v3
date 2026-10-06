@@ -22,25 +22,28 @@ function hospLL(){const h=kid().hosp; if(h&&h.lat!=null)return h;
   if(S.lat!=null)return {lat:S.lat,lon:S.lon,city:S.city}; return null;}
 
 /* ---- погода на выписку ---- */
-let DW_LOADING=false;
+let DW_LOADING=false, DW_FAIL=0;
+/* fetch с таймаутом: зависший запрос не должен навсегда блокировать погоду на выписку */
+function fetchT(u,ms){const c=new AbortController(), t=setTimeout(()=>c.abort(),ms||9000); return fetch(u,{signal:c.signal}).finally(()=>clearTimeout(t));}
 async function dischWeather(force){
   const k=kid(), ll=hospLL(); if(!ll||DW_LOADING||!dischMode())return;
   const d=dischDate(), key=d+'|'+(+ll.lat).toFixed(2)+','+(+ll.lon).toFixed(2), w=k.dw;
   const days=Math.round((new Date(d)-new Date(todayStr()))/MS);
   const fresh=w&&w.key===key&&(w.src==='hist'?days>15:(Date.now()-w.at<6*36e5));
   if(fresh&&!force)return;
+  if(!force&&Date.now()-DW_FAIL<60000)return;          // не загрузилось — повторим через минуту, а не в цикле
   DW_LOADING=true;
   try{
     const sh=(iso,n)=>{const x=new Date(iso);x.setDate(x.getDate()+n);return locISO(x);};
     let sum, src;
     if(days<=15){
-      const j=await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ll.lat}&longitude=${ll.lon}`
+      const j=await (await fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${ll.lat}&longitude=${ll.lon}`
         +`&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,uv_index_max&timezone=auto&start_date=${d}&end_date=${sh(d,1)}`)).json();
       sum=summarise(j.daily); src='forecast';
     }else{
       // неделя вокруг выписки за 3 прошлых года
       const y=new Date(d).getFullYear();
-      const rs=await Promise.all([1,2,3].map(n=>fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${ll.lat}&longitude=${ll.lon}`
+      const rs=await Promise.all([1,2,3].map(n=>fetchT(`https://archive-api.open-meteo.com/v1/archive?latitude=${ll.lat}&longitude=${ll.lon}`
         +`&start_date=${sh(d,-3).replace(String(y),String(y-n))}&end_date=${sh(d,3).replace(String(y),String(y-n))}`
         +`&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`).then(r=>r.json()).catch(()=>null)));
       const m={temperature_2m_max:[],temperature_2m_min:[],precipitation_sum:[]};
@@ -50,8 +53,8 @@ async function dischWeather(force){
     }
     // днём, когда выписывают: ближе к дневному максимуму
     const t=Math.round(sum.amax-(sum.amax-sum.amin)*.3);
-    k.dw=Object.assign({key,at:Date.now(),src,t,city:ll.city||ll.name||S.city},sum); kidsSave();
-  }catch(e){}
+    k.dw=Object.assign({key,at:Date.now(),src,t,city:ll.city||ll.name||S.city},sum); kidsSave(); DW_FAIL=0;
+  }catch(e){DW_FAIL=Date.now(); setTimeout(()=>{if(S.screen==='main'&&dischMode())paintMain();},61000);}
   DW_LOADING=false;
   if(S.screen==='main')paintMain(); else if(S.screen==='tl')tlRender();
 }
@@ -85,6 +88,16 @@ function paintDischarge(sz){
   dischWeather();
   const w=kid().dw, s=dischSet(), d=dischDate(), h=kid().hosp;
   document.getElementById('tLayers').textContent='выписка';
+  // в шапке — погода на день выписки, а не сегодняшняя
+  const tT=document.getElementById('tTemp'), tF=document.getElementById('tFeels'), tP=document.getElementById('tPlace');
+  if(w){ tT.textContent=(w.t>0?'+':'')+w.t+'°'; tF.textContent=`${fmtD(d)} · ${w.src==='hist'?'обычно в эти дни':'прогноз'}${w.rain>=50?' · дожди':''}`; }
+  else{ tT.textContent='…'; tF.textContent=`${fmtD(d)} · ${DW_LOADING?'смотрим погоду':(hospLL()?'погода не загрузилась':'выберите роддом или город')}`; }
+  if(tP&&(w&&w.city||h&&h.city))tP.textContent=(h&&h.city)||w.city;
+  if(w){ // небо в шапке — тоже по дню выписки (сезон и осадки), а не по сегодняшнему
+    const sc=w.rain>=50?(w.t<=0?'snow':'rain'):(w.t<=-3?'frost':'cloud'), sk=skyFor(sc);
+    document.getElementById('wband').style.background=sk.grad;
+    document.getElementById('wart').innerHTML=sceneArt(sc,sk.ph,seasonNow(new Date(d)),{kind:null,wind:false});
+  }
   const tw=document.getElementById('tWhy');
   tw.innerHTML=`${expecting()?`ПДР ${dueWhen()} · выписка около ${fmtDate(d)}`:`Выписка ${fmtDate(d)}`} · <u onclick="event.stopPropagation();hospOpen()">${h&&h.name?esc2(h.name):'указать роддом'}</u>`;
   document.getElementById('bTitle').textContent='На выписку';
