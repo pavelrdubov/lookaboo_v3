@@ -257,6 +257,9 @@ function lookNotes(items,eff){
   add('envelope','ножкам свободно и тепло',9);
   if(S.ctx==='car')add('blanket','поверх ремней, не под них',9);
   if(S.ctx==='stroller'&&strollerKind()==='seat'&&eff<=6)add('blanket','укрыть ножки — в прогулочной дует',9);
+  // вязаный слип с застёжкой только на груди (с 2 месяцев): спереди гладко — удобно лежать на животике
+  const sk=(typeof LASTLOOK!=='undefined'&&LASTLOOK.slipKnit||'').split('/').pop().replace('.webp','');
+  if(has('slipKnit')&&sk&&chestImg(sk))add('slipKnit','удобно на животике',9);
   add('wrap','швы наружу — коже мягко',8);
   add('wrapbody','на запах — не через голову',8);
   add('mittens','на резинке — не потеряются',7);

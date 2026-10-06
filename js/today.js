@@ -459,6 +459,8 @@ function drawStage(set,sz){
   if(!heroes.length)list0=items.slice(0,6);
 
   const {list,LOOK}=lookWithImgs(list0);       // картинки подобраны по сочетанию цветов
+  { const sk=(LOOK.slipKnit||'').split('/').pop().replace('.webp',''), el=document.getElementById('items');
+    if(sk&&chestImg(sk)&&el&&!/животик/.test(el.textContent))el.textContent=el.textContent.replace(/(вязаный (?:слип|комбинезон))/,'$1 (застёжка на груди — удобно на животике)'); }
   LASTSTAGE={list,LOOK,items:set.it.concat(list.filter(x=>x[0]==='socks'&&!set.it.some(y=>y[0]==='socks')).map(x=>[x[0],x[1]]))};          // «показать бабушке» и «в вишлист» берут ровно то, что на экране
   // носки добавились из-за комбинезона без стопы — пишем и в строке под образом
   if(list.some(x=>x[0]==='socks')&&!set.it.some(x=>x[0]==='socks')){const el=document.getElementById('items'); if(el)el.textContent+=' · '+list.find(x=>x[0]==='socks')[1];}

@@ -39,6 +39,9 @@ const SUBST={bodyT:['bodyS'],tank:['bodyS'],wrap:['bodyL'],wrapbody:['bodyL','bo
   romper:['bodyS'],ovWinter:['ovDemi','ovFleece'],ovDemi:['ovFleece'],slipKnit:['slip']};
 /* картинки вещей, которые надеваются через голову (нет застёжки спереди до конца) — до 2 месяцев не показываем */
 const HEAD_IMG=['8989','9065','9066','9076','9113','9067','9160','9584','9585','9586','9587'];
+/* у этих застёжка только на груди: спереди гладко — удобно лежать на животике */
+const CHEST_IMG=['9584','9585','9586','9587'];
+const chestImg=n=>CHEST_IMG.includes((n.split('__')[3]||'').split('_')[0]);
 const headImg=n=>HEAD_IMG.includes((n.split('__')[3]||'').split('_')[0]);
 function candFor(key,m){
   const g=S.gender;
