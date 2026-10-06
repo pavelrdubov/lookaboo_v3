@@ -305,6 +305,7 @@ function paintMain(){
   // ждём малыша — вместо образа на сегодня образ на выписку
   const ex=dischMode();
   document.querySelectorAll('#ctxRow .c:not(.hol)').forEach(b=>b.style.display=ex?'none':'');
+  { const wr=document.getElementById('walkRow'); if(wr)wr.innerHTML=''; }
   if(ex){ const hc0=document.getElementById('ctxHome'); if(hc0)hc0.style.display='none'; paintDischarge(sz); return; }
   const hol=holidayToday(), hc=document.getElementById('ctxHome');
   if(hc)hc.style.display=hol?'':'none';
@@ -345,7 +346,8 @@ function paintMain(){
   dots.innerHTML=tot<=8?Array.from({length:tot},(_,i)=>`<i class="${i===cur?'a':''}"></i>`).join('')
     :`<span class="cnt">${cur+1} / ${tot}</span>`;
   drawStage(set,sz);
-  LASTSTAGE.items=LASTSTAGE.items.concat(extras);    // дождевик, зонт, крем — в вишлист тоже
+  LASTSTAGE.items=LASTSTAGE.items.concat(extras);
+  if(typeof walkPaint==='function')walkPaint();    // дождевик, зонт, крем — в вишлист тоже
 }
 
 function dayWish(key,label,quiet){

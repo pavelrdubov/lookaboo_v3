@@ -84,6 +84,7 @@ async function fetchWeather(lat,lon,skipGeo){
   try{
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
       +`&current=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,weather_code,uv_index`
+      +`&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,uv_index,wind_speed_10m,wind_gusts_10m,is_day&forecast_days=2`
       +`&wind_speed_unit=ms&timezone=auto`;
     const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),9000);
     const r=await fetch(u,{signal:ctl.signal}); clearTimeout(tm);
@@ -96,6 +97,7 @@ async function fetchWeather(lat,lon,skipGeo){
     S.gust=Math.round(c.wind_gusts_10m||0); S.wcode=c.weather_code; S.uv=typeof c.uv_index==='number'?Math.round(c.uv_index):null;
     S.weather=codeToScene(c.weather_code,S.temp);
     S.live=true; S.wx='live';
+    S.hourly=j.hourly||null; walkSaveNow();             // почасовой прогноз — выбрать время прогулки (js/walk.js)
     const tr=document.getElementById('trange'); if(tr)tr.value=S.temp;
     const tl=document.getElementById('tLabel'); if(tl)tl.textContent=(S.temp>0?'+':'')+S.temp+'°';
   }catch(e){ S.live=false; S.wx='fail'; S.wxErr='Погодный сервис недоступен с этой страницы'; }

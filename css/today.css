@@ -131,3 +131,12 @@
 #tabs .bdg.on{display:flex}
 
 .gempty{position:absolute;left:24px;right:24px;top:40%;text-align:center;font-family:'Caveat',cursive;font-size:24px;color:#A9987F}
+
+/* когда гуляем: сейчас · 15:00 ★ · 18:00 */
+#walkRow{display:flex;gap:5px;align-items:center;overflow-x:auto;scrollbar-width:none;margin-bottom:-1px}
+#walkRow::-webkit-scrollbar{display:none}
+#walkRow:empty{display:none}
+#walkRow span{flex:none;font-size:10.5px;font-weight:800;color:#7A6450;letter-spacing:.02em;margin-right:2px}
+#walkRow button{flex:none;border:none;background:rgba(255,255,255,.55);color:#6B5540;border-radius:999px;padding:4px 9px;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+#walkRow button.on{background:#fff;color:var(--accent);box-shadow:0 2px 6px rgba(90,74,58,.14)}
+#walkRow button.best:after{content:' ★';color:#D99A2B}
