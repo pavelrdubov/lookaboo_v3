@@ -91,12 +91,27 @@ function lookTotal(n){ return Math.max(Math.min(3,n*LOOK_VARIANTS),Math.min(5,n*
 function daySeed(){ const d=new Date(); return Math.floor((d-new Date(d.getFullYear(),0,1))/864e5); }
 function curSet(list){ return list[(S.setIdx+daySeed())%list.length]; }
 let LASTLOOK={};
+/* соседние образы при листании не должны быть «теми же картинками»: если у прошлого образа те же боди,
+   шапка и комбинезон — берём другое удачное сочетание. Выбор запоминаем, чтобы при возврате образ не менялся */
+let SEEN={ctx:'',pick:{},ids:{}};
+function seenPick(looks,keys,variant){
+  const ctx=[S.ctx,S.gender,Math.floor(ageMonthsExact()),effTemp(),daySeed(),S.weather].join('|');
+  if(SEEN.ctx!==ctx)SEEN={ctx,pick:{},ids:{}};
+  const me=S.setIdx+'|'+keys.join(','); if(SEEN.pick[me]!=null&&SEEN.pick[me]<looks.length)return SEEN.pick[me];
+  const prev=SEEN.ids[S.setIdx-1]||[], start=variant%looks.length;
+  let best=start, bo=1e9;
+  for(let k=0;k<looks.length;k++){ const i=(start+k)%looks.length, ov=looks[i].filter(id=>id&&prev.includes(id)).length;
+    if(ov<bo){bo=ov;best=i;} if(ov===0)break; }
+  SEEN.pick[me]=best;
+  SEEN.ids[S.setIdx]=Array.from(new Set((SEEN.ids[S.setIdx]||[]).concat(looks[best].filter(Boolean))));
+  return best;
+}
 function lookImgs(keys){
   const n=setsFor(bandFor(effTemp())).length||1, variant=Math.floor(S.setIdx/n)+daySeed();
   const ck=[keys.join(','),S.gender,Math.floor(ageMonthsExact()),effTemp()<=3?'cold':''].join('|');
   if(!LOOK_CACHE[ck])LOOK_CACHE[ck]=bestLooks(keys);
   const looks=LOOK_CACHE[ck];
-  const pick=looks.length?looks[variant%looks.length]:[];
+  const pick=looks.length?looks[seenPick(looks,keys,variant)]:[];
   const out={}; keys.forEach((k,i)=>{out[k]=pick[i]?IMG[pick[i]]:(pickImg(k)||'');});
   return LASTLOOK=out;
 }
