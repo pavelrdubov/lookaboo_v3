@@ -47,11 +47,24 @@ function walkWhy(i,cur){
   if(!r.length)r.push(`${T>0?'+':''}${T}°`);
   return r.join(', ');
 }
-/* звёздочку ставим, только если время заметно лучше, чем сейчас */
-function walkBest(){const sl=walkSlots(); if(sl.length<2)return null; let b=sl[0]; sl.forEach(s=>{if(walkScore(s.i)>walkScore(b.i)+.3)b=s;});
-  if(b!==sl[0])return walkScore(b.i)-walkScore(sl[0].i)>=1?b:null;
-  // лучше всего сейчас — отмечаем, только если дальше заметно хуже (дождь, жара, УФ), а не «всё одинаково»
-  const rest=Math.max(...sl.slice(1).map(x=>walkScore(x.i))); return walkScore(sl[0].i)-rest>=1?b:null;}
+/* хорошие промежутки (★): светло, без дождя, без высокого УФ и сильного ветра — и не сильно хуже лучшего часа дня
+   (утром холоднее, чем днём, — значит, днём и звёзды). Хоть одна звёздочка есть всегда: в плохой день — наименее плохое время */
+function walkGood(){
+  const sl=walkSlots(), H=S.hourly; if(sl.length<2)return [];
+  const g=(k,i)=>H[k]?H[k][i]:null;
+  const sc=sl.map(x=>walkScore(x.i)), top=Math.max(...sc);
+  const ok=sl.filter((x,n)=>{ const pp=g('precipitation_probability',x.i)||0, uv=Math.round(g('uv_index',x.i)||0),
+      uvm=uvMatters(uv,g('weather_code',x.i))?uv:0, day=g('is_day',x.i)!==0, wd=g('wind_speed_10m',x.i)||0;
+    return day&&pp<30&&uvm<6&&wd<10&&sc[n]>=top-.7; });   // .7 ≈ 4° разницы с лучшим часом
+  return ok.length?ok:[sl[sc.indexOf(top)]];
+}
+/* «10:00, 12:00, 14:00» → «с 10:00 до 14:00», если идут подряд */
+function walkRange(list,sl){
+  const idx=list.map(x=>sl.findIndex(y=>y.i===x.i)), parts=[]; let a=0;
+  for(let k=1;k<=idx.length;k++){ if(k===idx.length||idx[k]!==idx[k-1]+1){ const f=list[a],l=list[k-1];
+    parts.push(a===k-1?(f.label==='сейчас'?'сейчас':'в '+f.label):(f.label==='сейчас'?`сейчас и до ${l.label}`:`с ${f.label} до ${l.label}`)); a=k; } }
+  return parts.join(' и ');
+}
 function walkApply(i){
   const H=S.hourly, g=(k,d)=>(H[k]&&H[k][i]!=null)?H[k][i]:d;
   S.temp=Math.round(g('temperature_2m',S.temp)); S.feels=Math.round(g('apparent_temperature',S.temp));
@@ -68,13 +81,16 @@ function walkPaint(){
   const row=document.getElementById('walkRow'); if(!row)return;
   const sl=(S.live&&S.ctx!=='home'&&!(typeof dischMode==='function'&&dischMode()))?walkSlots():[];
   if(sl.length<2){row.innerHTML='';return;}
-  const best=walkBest(), cur=WALK==null?sl[0].i:WALK;
-  if(!best){const wet=sl.filter(x=>(S.hourly.precipitation_probability||[])[x.i]>=30).map(x=>x.label);
-    S.tipText=(wet.length?`Дождь вероятен ${wet.length===1?'в '+wet[0]:'в '+wet.slice(0,-1).join(', ')+' и '+wet.slice(-1)} — в остальное время гуляйте, когда удобно. `:'Погода ровная весь день — гуляйте, когда удобно. ')+(S.tipText||''); const tp0=document.getElementById('tipText'); if(tp0)tp0.textContent=S.tipText;}
-  row.innerHTML='<span>гуляем</span>'+sl.map(s=>`<button class="${s.i===cur?'on':''}${best&&s.i===best.i?' best':''}" onclick="walkPick(${s.i})">${s.label}</button>`).join('');
+  const good=walkGood(), gi=good.map(x=>x.i), cur=WALK==null?sl[0].i:WALK, H=S.hourly;
+  row.innerHTML='<span>гуляем</span>'+sl.map(s=>`<button class="${s.i===cur?'on':''}${gi.includes(s.i)?' best':''}" onclick="walkPick(${s.i})">${s.label}</button>`).join('');
   const on=row.querySelector('button.on')||row.querySelector('button.best'); if(on&&on.offsetLeft>row.clientWidth-60)row.scrollLeft=on.offsetLeft-row.clientWidth/2;
-  if(best){const lab=best.label==='сейчас'?'сейчас':(best.label.startsWith('завтра')?best.label:'в '+best.label);
-    S.tipText=(best.label==='сейчас'?`★ Самое удачное время — сейчас. `:`★ Лучше гулять ${lab}: ${walkWhy(best.i,sl[0].i)}. `)+(S.tipText||'');
-    const tp=document.getElementById('tipText'); if(tp)tp.textContent=S.tipText;}
+  // совет: когда хорошо и почему (сравниваем с худшим из остальных — что именно там хуже)
+  const bad=sl.filter(x=>!gi.includes(x.i)), wet=bad.filter(x=>(H.precipitation_probability||[])[x.i]>=30).map(x=>x.label);
+  const tt=x=>Math.round(H.temperature_2m[x.i]), gt=good.map(tt), lo=Math.min(...gt), hi=Math.max(...gt), f=v=>(v>0?'+':'')+v+'°';
+  const avg=a=>a.reduce((p,v)=>p+v,0)/a.length, warmer=bad.length&&!good.some(x=>x.i===sl[0].i)&&avg(gt)-avg(bad.map(tt))>=2, cooler=bad.length&&avg(bad.map(tt))-avg(gt)>=2&&lo>=22;
+  const whyGood=good.length===sl.length?`погода ровная весь день, ${lo===hi?f(lo):f(lo)+'…'+f(hi)}`
+    :[lo===hi?f(lo):f(lo)+'…'+f(hi), warmer?'теплее всего':(cooler?'не так жарко':''), good.every(x=>(H.precipitation_probability||[])[x.i]<30)?'без дождя':''].filter(Boolean).join(', ');
+  S.tipText=`★ Хорошо гулять ${walkRange(good,sl)}: ${whyGood}${wet.length?`; дождь вероятен ${walkRange(bad.filter(x=>wet.includes(x.label)),sl)}`:''}. `+(S.tipText||'');
+  const tp=document.getElementById('tipText'); if(tp)tp.textContent=S.tipText;
   if(WALK!=null){const s=sl.find(x=>x.i===WALK), tf=document.getElementById('tFeels'); if(s&&tf)tf.textContent+=` · ${s.label.startsWith('завтра')?s.label:'в '+s.label}`;}
 }
