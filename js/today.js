@@ -167,8 +167,13 @@ function headFilter(items){
   const r=items.slice(); r[at]=want; return r;
 }
 /* УФ-индекс: из живой погоды; вручную выбрано «солнце» днём — примерно по сезону */
+/* солнце видно: ясно, малооблачно, переменная облачность (коды Open-Meteo 0–2) */
+const sunnyCode=c=>c!=null&&c<=2;
+/* УФ, на который стоит обращать внимание: при сплошных облаках, дожде, тумане умеренный УФ (до 6) не выпячиваем —
+   панамка от солнца, крем и муслин тогда лишние. Высокий УФ (6+) пробивает и облака — его показываем всегда */
+const uvMatters=(uv,code)=>uv>=6||(uv>=3&&sunnyCode(code));
 function uvNow(){
-  if(S.live&&typeof S.uv==='number')return S.uv;
+  if(S.live&&typeof S.uv==='number')return uvMatters(S.uv,S.wcode)?S.uv:0;
   if(S.weather!=='sun'||dayPhase()!=='day')return 0;
   return {summer:7,spring:4,autumn:3,winter:1}[seasonNow()]||3;
 }

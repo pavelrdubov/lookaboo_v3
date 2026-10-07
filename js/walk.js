@@ -25,14 +25,17 @@ function walkScore(i){
         uv=g('uv_index',0), wind=g('wind_speed_10m',0), day=g('is_day',1);
   let s=0; if(!day)s-=5;
   s-=pp/20+pr*3;
-  s-=uv>=8?4:uv>=6?2.5:uv>=3?(ageMonthsExact()<6?1:.5):0;   // до полугода без крема — УФ важнее
+  const uvm=uvMatters(uv,g('weather_code',3))?uv:0;
+  s-=uvm>=8?4:uvm>=6?2.5:uvm>=3?(ageMonthsExact()<6?1:.5):0;   // до полугода без крема — УФ важнее; при облаках умеренный УФ не считаем
   s-=Math.abs(f-18)/6;                                  // в холод теплее лучше, в жару — прохладнее
   s-=Math.max(0,wind-6)/3;
   return s;
 }
 function walkWhy(i){
-  const H=S.hourly, g=k=>H[k]?H[k][i]:null, f=Math.round(g('apparent_temperature')??g('temperature_2m')), pp=g('precipitation_probability')||0, uv=Math.round(g('uv_index')||0);
-  const r=[`${f>0?'+':''}${f}°`]; r.push(pp<20?'без дождя':`дождь ${pp}%`); if(uv>=3)r.push('УФ '+uv); else if(g('is_day'))r.push('солнце мягкое');
+  // температура — та же, что в шапке (воздух), а не «ощущается как»
+  const H=S.hourly, g=k=>H[k]?H[k][i]:null, f=Math.round(g('temperature_2m')??g('apparent_temperature')), pp=g('precipitation_probability')||0, uv=Math.round(g('uv_index')||0);
+  const r=[`${f>0?'+':''}${f}°`]; r.push(pp<20?'без дождя':`дождь ${pp}%`);
+  if(uvMatters(uv,g('weather_code')))r.push('УФ '+uv); else if(g('is_day')&&sunnyCode(g('weather_code')))r.push('солнце мягкое');
   return r.join(', ');
 }
 function walkBest(){const sl=walkSlots(); if(sl.length<2)return null; let b=sl[0]; sl.forEach(s=>{if(walkScore(s.i)>walkScore(b.i)+.3)b=s;}); return b;}
