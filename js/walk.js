@@ -31,14 +31,27 @@ function walkScore(i){
   s-=Math.max(0,wind-6)/3;
   return s;
 }
-function walkWhy(i){
-  // температура — та же, что в шапке (воздух), а не «ощущается как»
-  const H=S.hourly, g=k=>H[k]?H[k][i]:null, f=Math.round(g('temperature_2m')??g('apparent_temperature')), pp=g('precipitation_probability')||0, uv=Math.round(g('uv_index')||0);
-  const r=[`${f>0?'+':''}${f}°`]; r.push(pp<20?'без дождя':`дождь ${pp}%`);
-  if(uvMatters(uv,g('weather_code')))r.push('УФ '+uv); else if(g('is_day')&&sunnyCode(g('weather_code')))r.push('солнце мягкое');
+/* почему это время лучше, чем сейчас: называем то, что реально отличается */
+function walkWhy(i,cur){
+  const H=S.hourly, g=(k,x)=>H[k]?H[k][x]:null;
+  const t=x=>Math.round(g('temperature_2m',x)??g('apparent_temperature',x)), pp=x=>g('precipitation_probability',x)||0,
+        uv=x=>{const u=Math.round(g('uv_index',x)||0); return uvMatters(u,g('weather_code',x))?u:0;}, wd=x=>g('wind_speed_10m',x)||0;
+  const T=t(i), r=[];
+  if(pp(cur)>=30&&pp(i)<20)r.push(`без дождя (сейчас ${pp(cur)}%)`);
+  else if(pp(i)>=20)r.push(`дождь всего ${pp(i)}%`);
+  const dt=T-t(cur);
+  if(Math.abs(dt)>=2)r.push(T<18?`теплее: ${T>0?'+':''}${T}° вместо ${t(cur)>0?'+':''}${t(cur)}°`:(dt<0?`прохладнее: +${T}° вместо +${t(cur)}°`:`${T>0?'+':''}${T}°`));
+  if(uv(cur)>=3&&uv(i)<uv(cur))r.push(uv(i)>=3?`УФ ниже (${uv(i)})`:'солнце уже мягкое');
+  if(wd(cur)-wd(i)>=3)r.push('ветер тише');
+  if(!g('is_day',cur)&&g('is_day',i))r.push('ещё светло');
+  if(!r.length)r.push(`${T>0?'+':''}${T}°`);
   return r.join(', ');
 }
-function walkBest(){const sl=walkSlots(); if(sl.length<2)return null; let b=sl[0]; sl.forEach(s=>{if(walkScore(s.i)>walkScore(b.i)+.3)b=s;}); return b;}
+/* звёздочку ставим, только если время заметно лучше, чем сейчас */
+function walkBest(){const sl=walkSlots(); if(sl.length<2)return null; let b=sl[0]; sl.forEach(s=>{if(walkScore(s.i)>walkScore(b.i)+.3)b=s;});
+  if(b!==sl[0])return walkScore(b.i)-walkScore(sl[0].i)>=1?b:null;
+  // лучше всего сейчас — отмечаем, только если дальше заметно хуже (дождь, жара, УФ), а не «всё одинаково»
+  const rest=Math.max(...sl.slice(1).map(x=>walkScore(x.i))); return walkScore(sl[0].i)-rest>=1?b:null;}
 function walkApply(i){
   const H=S.hourly, g=(k,d)=>(H[k]&&H[k][i]!=null)?H[k][i]:d;
   S.temp=Math.round(g('temperature_2m',S.temp)); S.feels=Math.round(g('apparent_temperature',S.temp));
@@ -56,10 +69,12 @@ function walkPaint(){
   const sl=(S.live&&S.ctx!=='home'&&!(typeof dischMode==='function'&&dischMode()))?walkSlots():[];
   if(sl.length<2){row.innerHTML='';return;}
   const best=walkBest(), cur=WALK==null?sl[0].i:WALK;
+  if(!best){const wet=sl.filter(x=>(S.hourly.precipitation_probability||[])[x.i]>=30).map(x=>x.label);
+    S.tipText=(wet.length?`Дождь вероятен ${wet.length===1?'в '+wet[0]:'в '+wet.slice(0,-1).join(', ')+' и '+wet.slice(-1)} — в остальное время гуляйте, когда удобно. `:'Погода ровная весь день — гуляйте, когда удобно. ')+(S.tipText||''); const tp0=document.getElementById('tipText'); if(tp0)tp0.textContent=S.tipText;}
   row.innerHTML='<span>гуляем</span>'+sl.map(s=>`<button class="${s.i===cur?'on':''}${best&&s.i===best.i?' best':''}" onclick="walkPick(${s.i})">${s.label}</button>`).join('');
   const on=row.querySelector('button.on')||row.querySelector('button.best'); if(on&&on.offsetLeft>row.clientWidth-60)row.scrollLeft=on.offsetLeft-row.clientWidth/2;
   if(best){const lab=best.label==='сейчас'?'сейчас':(best.label.startsWith('завтра')?best.label:'в '+best.label);
-    S.tipText=`★ Лучше гулять ${lab}: ${walkWhy(best.i)}. `+(S.tipText||'');
+    S.tipText=(best.label==='сейчас'?`★ Самое удачное время — сейчас. `:`★ Лучше гулять ${lab}: ${walkWhy(best.i,sl[0].i)}. `)+(S.tipText||'');
     const tp=document.getElementById('tipText'); if(tp)tp.textContent=S.tipText;}
   if(WALK!=null){const s=sl.find(x=>x.i===WALK), tf=document.getElementById('tFeels'); if(s&&tf)tf.textContent+=` · ${s.label.startsWith('завтра')?s.label:'в '+s.label}`;}
 }
