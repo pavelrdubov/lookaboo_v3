@@ -469,9 +469,10 @@ function drawStage(set,sz){
   const {list,LOOK}=lookWithImgs(list0);       // картинки подобраны по сочетанию цветов
   { const sk=(LOOK.slipKnit||'').split('/').pop().replace('.webp',''), el=document.getElementById('items');
     if(sk&&chestImg(sk)&&el&&!/животик/.test(el.textContent))el.textContent=el.textContent.replace(/(вязаный (?:слип|комбинезон))/,'$1 (застёжка на груди — удобно на животике)'); }
-  LASTSTAGE={list,LOOK,items:set.it.concat(list.filter(x=>x[0]==='socks'&&!set.it.some(y=>y[0]==='socks')).map(x=>[x[0],x[1]]))};          // «показать бабушке» и «в вишлист» берут ровно то, что на экране
+  LASTSTAGE={list,LOOK,items:set.it.filter(x=>!(x[0]==='socks'&&list.some(y=>y[0]==='booties'))).concat(list.filter(x=>(x[0]==='socks'||x[0]==='booties')&&!set.it.some(y=>y[0]===x[0])).map(x=>[x[0],x[1]]))};          // «показать бабушке» и «в вишлист» берут ровно то, что на экране
   // носки добавились из-за комбинезона без стопы — пишем и в строке под образом
   if(list.some(x=>x[0]==='socks')&&!set.it.some(x=>x[0]==='socks')){const el=document.getElementById('items'); if(el)el.textContent+=' · '+list.find(x=>x[0]==='socks')[1];}
+  if(list.some(x=>x[0]==='booties')&&!set.it.some(x=>x[0]==='booties')){const el=document.getElementById('items'); if(el)el.textContent=el.textContent.replace(/ · (тёплые )?носки( или пинетки)?/g,'')+' · тёплые пинетки поверх комбинезона';}
   const SHADOW='drop-shadow(6px 12px 15px rgba(90,74,58,.26))';
   const noteFs=Math.max(19,Math.min(24,Math.min(B.w,B.h)*0.072));
   /* раскладка по правилам (js/layout.js); по бокам место под стрелки */

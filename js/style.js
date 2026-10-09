@@ -163,6 +163,13 @@ function lookWithImgs(list){
     if(drop&&list.length>=5)list=list.filter(x=>x[0]!==drop);
     list=list.concat([['socks',effTemp()<=5?'тёплые пинетки':'носки или пинетки']]); L=lookImgs(list.map(x=>x[0]));
   }
+  // верхний комбинезон без стопы (манжеты) — ножки снаружи открыты: обязательно тёплые пинетки поверх
+  const OUTERK=['ovWinter','ovDemi','envelope'].find(k=>list.some(x=>x[0]===k)&&L[k]&&/nofeet/.test(L[k]));
+  if(OUTERK&&!list.some(x=>x[0]==='booties')&&(CAND.booties||[]).length){
+    const keep=L[OUTERK]; list=list.filter(x=>x[0]!=='socks');
+    if(list.length>=5){const drop=['mittens','toy','muslin','blanket'].find(k=>list.some(x=>x[0]===k)&&!(S.ctx==='car'&&k==='blanket')); if(drop)list=list.filter(x=>x[0]!==drop);}
+    list=list.concat([['booties','тёплые пинетки поверх комбинезона']]); L=lookImgs(list.map(x=>x[0])); L[OUTERK]=keep; LASTLOOK=L;
+  }
   let out=list.filter(x=>L[x[0]]);
   if(out.length<2&&effTemp()<22&&!out.some(x=>x[0]==='socks')&&pickImg('socks'))out.push(['socks','носочки']);
   if(out.length!==list.length)L=lookImgs(out.map(x=>x[0]));

@@ -8,7 +8,9 @@ try{const F=JSON.parse(localStorage.getItem('mpp-catfix')||'{}')||{}; CATALOG.fo
 CATALOG.forEach(c=>{IMG[c.id]=c.file; AGE[c.id]=c.a; COLOR[c.id]=c.c||[]; CAND_KINDS[c.id]=c.kinds; if(c.g!=='n')GT[c.id]=c.g;
   c.kinds.forEach(k=>{if(k==='fancy')FANCY[c.id]=1; (CAND[k]=CAND[k]||[]).push(c.id);});});
 
-const NOTLAYER=['hat','hatWarm','panama','socks','mittens','muslin','blanket','toy','headband','spf','umbrella','raincover'];
+/* тёплые пинетки поверх комбинезона без стопы — те же картинки носков с пометкой booties */
+CAND.booties=(CAND.socks||[]).filter(n=>/booties/.test(n));
+const NOTLAYER=['booties','hat','hatWarm','panama','socks','mittens','muslin','blanket','toy','headband','spf','umbrella','raincover'];
 /* ориентир по утеплителю (синтепон/изософт, г/м²) — у брендов отличается */
 const INS=[
   {max:-26, g:'пух 90/10', note:'Ниже −25 синтетика почти не держит тепло — здесь выигрывает пух.'},
@@ -131,6 +133,7 @@ function accSize(key,m){
 function swaddleFor(t){ return t>=22?['muslin','муслиновая пелёнка']:(t>=17?['muslin','хлопковая пелёнка']:(t>=10?['blanket','тонкий плед']:['blanket','плед'])); }
 function sizeForItem(key,m,clothSize){
   const a=accSize(key,m); if(a!==null)return a;
+  if(key==='booties')key='socks';
   if(key==='muslin'||key==='blanket'||key==='toy'||key==='headband'||key==='raincover'||key==='umbrella'||key==='spf')return '';
   if(key==='costume'){const L=[50,56,62,68,74,80,86,92,98,104];const i=L.indexOf(+clothSize);return i>=0&&i<L.length-1?L[i+1]:clothSize;} // костюм — поверх одежды, на размер больше
   return clothSize;
