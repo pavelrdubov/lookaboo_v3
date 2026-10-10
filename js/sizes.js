@@ -4,7 +4,7 @@ const SIZETBL=[[50,'до 50','Newborn'],[56,'50–56','0–1 мес'],[62,'57–
  [74,'69–74','6–9 мес'],[80,'75–80','9–12 мес'],[86,'81–86','12–18 мес'],[92,'87–92','18–24 мес'],
  [98,'93–98','2–3 года'],[104,'99–104','3–4 года']];
 function sizesData(){const k=kid(),m=ageMonths(),h=Math.round(heightNow());
-  return {nm:kidName(k)||'',m,h,cloth:sizeFor(heightNow()),hat:hatSizeFor(m),sock:sockSizeFor(m),mit:mittenSizeFor(m)};}
+  return {nm:kidName(k)||'',m,h,exp:typeof expecting==='function'&&expecting(),cloth:sizeFor(heightNow()),hat:hatSizeFor(m),sock:sockSizeFor(m),mit:mittenSizeFor(m)};}
 let SZFROM='prof';
 /* таблица размеров открывается отовсюду, где мы называем размер; tgt — размер «к дате» */
 function openSizes(from,tgt){SZFROM=from||'prof';const d=sizesData();if(tgt&&tgt!==d.cloth)d.tgt=tgt;renderSizes(d,false);go('sizes');}
@@ -22,7 +22,7 @@ function renderSizes(d,shared){
   document.getElementById('szTitle').textContent=d.nm?('Размеры '+nameCases(d.nm).gen):'Размеры малыша';
   document.getElementById('szBody').innerHTML=
     `<div class="szcard"><div class="sznow">Сейчас впору</div><div class="szbig">${d.cloth}</div>`
-    +`<div class="szsub">${d.nm?d.nm+' · ':''}${d.m} ${monthsWord(d.m)} · рост ~${d.h} см</div>`
+    +`<div class="szsub">${d.nm?d.nm+' · ':''}${d.exp?'ждём малыша':(d.m?d.m+' '+monthsWord(d.m):'первый месяц')} · рост ~${d.h} см</div>`
     +`<div class="szrow"><span>Шапка (обхват головы)</span><b>${d.hat}</b></div>`
     +`<div class="szrow"><span>Носки (длина стопы)</span><b>${d.sock} см</b></div>`
     +`<div class="szrow"><span>Варежки (обхват ладони)</span><b>${d.mit}</b></div></div>`

@@ -104,9 +104,9 @@ function ageMonthsExact(){return ageAt(null);}
 
 /* ---- считаем от того, что сказала мама: запоминаем её отклонение в сантиметрах ---- */
 function offsetCm(){
-  if(!S.meas)return 0;
+  if(!S.meas||S.meas.d<S.dob)return 0;          // замер до рождения — от старой даты, не считаем
   const d=S.meas.h-heightFor(ageAt(S.meas.d));
-  return Math.max(-15,Math.min(15,d));          // защита от опечатки
+  return Math.abs(d)>10?0:d;                     // +10 см к норме не бывает: дату рождения поменяли, а размер остался старый
 }
 /* рост на возраст m: средний прирост для возраста, отложенный от роста малыша */
 function heightAt(m){return heightFor(m)+offsetCm();}
