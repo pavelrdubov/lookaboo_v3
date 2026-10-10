@@ -28,7 +28,11 @@ function renderSizes(d,shared){
     +`<div class="szrow"><span>Варежки (обхват ладони)</span><b>${d.mit}</b></div></div>`
     +`<div class="szsecth">Одежда — РФ, рост и US</div>`
     +`<table class="sztbl"><thead><tr><th>РФ</th><th>рост, см</th><th>US</th></tr></thead><tbody>${rows}</tbody></table>`
-    +`<div class="szhint">Российский размер одежды равен росту в сантиметрах (как и в Европе). US — по возрасту. Ваш размер выделен${d.tgt?`, размер к дате — <b style="color:#6C5A98">${d.tgt}</b> — сиреневым`:''}.</div>`;
+    +`<div class="szhint">Российский размер одежды равен росту в сантиметрах (как и в Европе). US — по возрасту. Ваш размер выделен${d.tgt?`, размер к дате — <b style="color:#6C5A98">${d.tgt}</b> — сиреневым`:''}.</div>`
+    +`<div class="szsecth" style="margin-top:18px">Шапки</div>`+accTable(HATT,d.hat,'обхват головы, см')
+    +`<div class="szhint">Размер шапки — это обхват головы: измерьте сантиметром над бровями и ушами. На вырост можно взять на 1–2 см больше (сейчас — ${d.hat+1}–${d.hat+2}), лучше с завязками: так она не сползёт. Больше не стоит — шапка съедет на глаза и не закроет уши. До года голова растёт быстро, поэтому тёплую шапку покупайте ближе к сезону.</div>`
+    +`<div class="szsecth" style="margin-top:18px">Варежки</div>`+accTable(MITT,d.mit,'обхват ладони, см')
+    +`<div class="szhint">Обхват ладони меряют по самой широкой части, без большого пальца. Варежки можно смело брать на размер больше — на резинке они не слетят.</div>`;
   // в шапке — фото малыша, если есть (по ссылке фото не передаём — там ростомер)
   const ph=!shared&&kid().photo, av=document.getElementById('szAv');
   av.innerHTML=ph?`<img src="${ph}" alt="">`:''; av.style.display=ph?'block':'none';
@@ -37,6 +41,13 @@ function renderSizes(d,shared){
   document.getElementById('szShareBtn').style.display=shared?'none':'block';
   document.getElementById('szOpenBtn').style.display=shared?'block':'none';
 }
+/* подпись возрастного диапазона строки таблицы: «0–1 мес», «1–1,5 года», «3 года+» */
+function ageSpan(a,b){const f=x=>x<12?x+'':(x%12?String(x/12).replace('.',','):x/12+'');
+  if(b==null)return a<12?a+' мес+':f(a)+' '+(a<60?'года':'лет')+'+';
+  return b<=12?`${a}–${b} мес`:`${f(a)}–${f(b)} ${b<60?'года':'лет'}`;}
+function accTable(T,cur,unit){
+  return `<table class="sztbl"><thead><tr><th>возраст</th><th>${unit}</th></tr></thead><tbody>`
+    +T.map((t,i)=>`<tr class="${t[1]===cur?'cur':''}"><td>${ageSpan(t[0],T[i+1]&&T[i+1][0])}</td><td>${t[1]}</td></tr>`).join('')+`</tbody></table>`;}
 async function copySizesLink(){
   const d=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(sizesData())))));
   const url=await shortLink('sizes',d,location.origin+location.pathname+'#sizes='+d);

@@ -118,9 +118,13 @@ function fmtDate(str){const d=new Date(str);return d.getDate()+' '+['январ�
 function todayStr(){return new Date().toISOString().slice(0,10);}
 function sizeFor(h){for(const s of SIZES){if(s>=h-1)return s;}return 104;}
 /* размеры аксессуаров по возрасту (РФ): шапка = обхват головы, носки = длина стопы, варежки = обхват ладони */
-function hatSizeFor(m){const T=[[0,35],[1,38],[2,40],[3,42],[6,44],[9,46],[12,47],[18,48],[24,49],[36,50]];let s=35;for(const t of T)if(m>=t[0])s=t[1];return s;}
+/* обхват головы и ладони по возрасту (средние; таблицы показываем на странице размеров) */
+const HATT=[[0,35],[1,38],[2,40],[3,42],[6,44],[9,46],[12,47],[18,48],[24,49],[36,50]];
+const MITT=[[0,10],[6,11],[12,12],[24,13]];
+const byAge=(T,m)=>{let s=T[0][1];for(const t of T)if(m>=t[0])s=t[1];return s;};
+function hatSizeFor(m){return byAge(HATT,m);}
 function sockSizeFor(m){return m<3?10:(m<12?12:(m<24?14:16));}
-function mittenSizeFor(m){return m<6?10:(m<12?11:12);}
+function mittenSizeFor(m){return byAge(MITT,m);}
 /* строка размера для вещи: аксессуары — своя сетка, муслин/плед/игрушка — без размера, остальное — размер одежды */
 function accSize(key,m){
   if(key==='hat'||key==='hatWarm'||key==='panama')return 'обхват '+hatSizeFor(m);
