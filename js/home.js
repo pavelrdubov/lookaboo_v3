@@ -56,6 +56,9 @@ function homeCount(){ return homeList().length; }
 function paintHome(sz){
   const t=homeRoom(), sets=homeList(), v=S.setIdx%sets.length, s=sets[v];
   const it=withHome(()=>newbornFilter(s.it.map(x=>x.slice()),ageMonthsExact()));
+  // первые 2 месяца — царапки: ноготки мягкие, но острые, малыш царапает личико
+  const scr=ageMonthsExact()<2&&(CAND.mittens||[]).some(n=>/_scratch/.test(n)&&IMG[n]);
+  if(scr)it.push(['mittens','царапки']);
   const sl=HOMEMODE==='sleep';
   document.getElementById('tTemp').textContent=(t>0?'+':'')+t+'°';
   document.getElementById('tPlace').textContent='дома';
@@ -68,8 +71,8 @@ function paintHome(sz){
   document.getElementById('bTitle').textContent=sl?'На ночь':'Дома';
   document.getElementById('bName').textContent=personize(s.name);
   document.getElementById('items').textContent=it.map(x=>x[1]).join(' · ');
-  const tip=sl?`Для сна лучше всего 18–22° в комнате. Шапочка во сне не нужна, вместо одеяла — спальник: он не сползёт на лицо. Проверьте шею сзади: тёплая и сухая — малышу хорошо, влажная — снимите слой.${ageMonthsExact()<3?' Первые месяцы многие спят в пеленании или коконе — по той же плотности.':''}`
-    :`Дома малышу нужно столько же слоёв, сколько вам. Ручки и стопы бывают прохладными — это нормально; тепло ли малышу, проверяйте по шее сзади.`;
+  const tip=sl?`Для сна лучше всего 18–22° в комнате. Шапочка во сне не нужна, вместо одеяла — спальник: он не сползёт на лицо. Проверьте шею сзади: тёплая и сухая — малышу хорошо, влажная — снимите слой.${ageMonthsExact()<3?' Первые месяцы многие спят в пеленании или коконе — по той же плотности.':''}${scr?' Царапки — чтобы малыш не поцарапал личико во сне.':''}`
+    :`Дома малышу нужно столько же слоёв, сколько вам. Ручки и стопы бывают прохладными — это нормально; тепло ли малышу, проверяйте по шее сзади.${scr?' Первые недели ноготки мягкие, но острые — царапки не дадут поцарапать личико.':''}`;
   S.tipText=personize(tip); S.whyText=`Дома, в комнате ${t>0?'+':''}${t}°`;
   const tp=document.getElementById('tipText'); if(tp)tp.textContent=S.tipText;
   document.getElementById('setDots').innerHTML=sets.length>1?Array.from({length:sets.length},(_,i)=>`<i class="${i===v?'a':''}"></i>`).join(''):'';

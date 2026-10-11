@@ -106,7 +106,8 @@ function density(items){
    зимнего или демисезонного комбинезона, если есть картинка. В машину и слинг конверт не берём */
 function envFilter(items){
   if(ageMonthsExact()>=4||S.ctx!=='stroller'||S.setIdx%2!==1||!(CAND.envelope||[]).some(n=>IMG[n]&&okFor(n,S.gender)))return items;
-  return items.map(x=>x[0]==='ovWinter'?['envelope','зимний конверт']:(x[0]==='ovDemi'?['envelope','демисезонный конверт']:x));
+  const lbl=effTemp()<=0?'зимний конверт':'демисезонный конверт';
+  return items.map(x=>x[0]==='ovWinter'||x[0]==='ovDemi'?['envelope',lbl]:x);
 }
 /* спортивный костюм (кофта + штаны одним комплектом) — с 3 месяцев, в каждом втором образе вместо пары «кофта/свитер + штанишки» */
 function suitFilter(items){

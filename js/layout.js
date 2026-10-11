@@ -253,16 +253,21 @@ function lookNotes(items,eff){
   const add=(k,text,pr,again)=>{ if(has(k)&&(again||!out.some(n=>n.key===k)))out.push({key:k,text,pr,style:/\d/.test(text)?'fact':'hand'}); };
   if(has('ovWinter')||has('ovDemi')){ const g=insFor(eff).g, k=has('ovWinter')?'ovWinter':'ovDemi'; add(k,/пух/.test(g)?g:g+' утеплителя',10);
     add(k,'ножки закрыты — тепло',9,true); }        // у комбинезонов на утеплителе стопа закрыта
-  if(S.ctx==='home'){ if(HOMEMODE==='hol'&&items[0])out.push({key:items[0][0],text:'для праздничного фото',pr:12,style:'hand'}); return out; }
+  const img=k=>(typeof LASTLOOK!=='undefined'&&LASTLOOK[k]||'').split('/').pop();
+  if(/_seamsout/.test(img('hat')))add('hat','швы наружу — не натирают',8);
+  if(S.ctx==='home'){ if(HOMEMODE==='hol'&&items[0])out.push({key:items[0][0],text:'для праздничного фото',pr:12,style:'hand'});
+    else add('mittens','царапки — не поцарапает личико',9); return out; }
+  if(/_disch/.test(img('envelope')))add('envelope','нарядный — для фото на крыльце',10);
   add('envelope','ножкам свободно и тепло',9);
   if(S.ctx==='car')add('blanket','поверх ремней, не под них',9);
   if(S.ctx==='stroller'&&strollerKind()==='seat'&&eff<=6)add('blanket','укрыть ножки — в прогулочной дует',9);
   // вязаный слип с застёжкой только на груди (с 2 месяцев): спереди гладко — удобно лежать на животике
   const sk=(typeof LASTLOOK!=='undefined'&&LASTLOOK.slipKnit||'').split('/').pop().replace('.webp','');
   if(has('slipKnit')&&sk&&chestImg(sk))add('slipKnit','удобно на животике',9);
-  add('wrap','швы наружу — коже мягко',8);
+  if(/_seamsout/.test(img('wrap')+img('wrapbody'))){add('wrap','швы наружу — коже мягко',8);add('wrapbody','швы наружу — коже мягко',8);}
+  add('wrap','на запах — не через голову',7);
   add('wrapbody','на запах — не через голову',8);
-  add('mittens','на резинке — не потеряются',7);
+  add('mittens',/_string/.test(img('mittens'))?'на тесёмке — не потеряются':'на резинке — не слетят',7);
   // муслин в жару — накрыть малыша (ножки, которые не закрывает капор), а не коляску целиком
   if(eff>=22||(eff>=17&&uvNow()>=3)){ add('muslin','ножки от солнца — не всю коляску',6); add('panama','закрывает шею от солнца',5); add('socks','в жару можно без носков',2); }
   else if(eff>=7)add('muslin','накрыть, если подует',3);

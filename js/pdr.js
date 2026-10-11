@@ -60,17 +60,19 @@ async function dischWeather(force){
 }
 
 /* считаем образ «как будто» на улице погода выписки, малыш — новорождённый, едем на машине */
+let DISCH_ON=false;                                  // candFor: на выписку — нарядный конверт
 function withDisch(fn){
   const w=kid().dw, t=w?w.t:(S.temp||10);
   const keep={temp:S.temp,feels:S.feels,weather:S.weather,live:S.live,ctx:S.ctx,uv:S.uv,wcode:S.wcode};
   Object.assign(S,{live:false,temp:t,feels:t,weather:w&&w.rain>=50?'rain':'cloud',ctx:'car',uv:0,wcode:null});
-  try{return fn(t,w);}finally{Object.assign(S,keep);}
+  const was=DISCH_ON; DISCH_ON=true;
+  try{return fn(t,w);}finally{Object.assign(S,keep); DISCH_ON=was;}
 }
 function dischSet(){
   return withDisch(t=>{
     const b=bandFor(effTemp()), set0=curSet(setsFor(b));
     const it=lookItems(set0.it).slice();
-    if(t<=12)it.push(['envelope',t<=0?'тёплый конверт на выписку':'конверт на выписку']);
+    if(t<=22)it.push(['envelope',t<=0?'тёплый конверт на выписку':'нарядный конверт на выписку']);
     return {title:b.title,name:set0.name,it,t};
   });
 }

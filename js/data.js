@@ -56,6 +56,12 @@ function candFor(key,m){
   // первые 2 месяца — только то, что расстёгивается спереди до конца (кнопки или молния): голову ни через что не протягиваем.
   // Вязаные слипы без застёжки и слип-худи надеваются через голову — их не берём (номера картинок — HEAD_IMG)
   if(age<2){const f=all.filter(n=>!headImg(n)); if(f.length)all=f; else if(key==='slipKnit')return candFor('slip',m);}
+  // конверт: на выписку — нарядный с бантом (_disch), в мороз — зимний (_winter); на прогулку — зимний или демисезонный по погоде
+  if(key==='envelope'&&typeof effTemp==='function'){const t=effTemp(), dis=typeof DISCH_ON!=='undefined'&&DISCH_ON;
+    const want=dis&&t>0?'disch':(t<=0?'winter':'demi'), f=all.filter(n=>n.includes('_'+want)); if(f.length)all=f;
+    else if(!dis){const d=all.filter(n=>!/_disch/.test(n)); if(d.length)all=d;}}
+  // варежки: дома — царапки (_scratch, первые 2 месяца), на улице — обычные (с года — на тесёмке, по возрасту)
+  if(key==='mittens'){const home=S.ctx==='home', f=all.filter(n=>/_scratch/.test(n)===home); if(f.length||!home)all=f;}
   // носки: в холод — тёплые пинетки (_booties), в тепло — обычные носочки
   if(key==='socks'&&typeof effTemp==='function'){const cold=effTemp()<=3, b=all.filter(n=>/booties/.test(n)===cold); if(b.length)all=b;}
   // до 3 месяцев кофта — только распашная: картинки, помеченные и свитером (через голову), не берём
@@ -68,7 +74,8 @@ function candFor(key,m){
   // девочковые и мальчиковые вещи не задвигают нейтральные: чуть выше в списке, но вперемешку.
   // Порядок внутри — постоянный «случайный» (по имени), чтобы в подбор попадали разные вещи
   const hs=n=>{let h=0;for(const ch of n)h=(h*31+ch.charCodeAt(0))|0;return (h>>>0)%1000/1000;};
-  const score=n=>(GT[n]===tag?.3:0)-(FANCY[n]?3:0)+hs(n);
+  // первые 2 месяца — вперёд вещи со швами наружу (_seamsout): не натирают нежную кожу
+  const score=n=>(GT[n]===tag?.3:0)-(FANCY[n]&&!(key==='envelope'&&/_disch/.test(n))?3:0)+(age<2&&/_seamsout/.test(n)?1.5:0)+hs(n);
   l.sort((a,b)=>score(b)-score(a));
   return l.length?l:(CAND[src]||[]).filter(n=>IMG[n]).slice(0,1);
 }

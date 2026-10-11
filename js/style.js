@@ -108,7 +108,7 @@ function seenPick(looks,keys,variant){
 }
 function lookImgs(keys){
   const n=setsFor(bandFor(effTemp())).length||1, variant=Math.floor(S.setIdx/n)+daySeed();
-  const ck=[keys.join(','),S.gender,Math.floor(ageMonthsExact()),effTemp()<=3?'cold':''].join('|');
+  const ck=[keys.join(','),S.gender,Math.floor(ageMonthsExact()),effTemp()<=3?'cold':'',effTemp()<=0?'frost':'',S.ctx==='home'?'home':'',typeof DISCH_ON!=='undefined'&&DISCH_ON?'disch':''].join('|');
   if(!LOOK_CACHE[ck])LOOK_CACHE[ck]=bestLooks(keys);
   const looks=LOOK_CACHE[ck];
   const pick=looks.length?looks[seenPick(looks,keys,variant)]:[];
@@ -117,7 +117,7 @@ function lookImgs(keys){
 }
 function bestLooks(keys){
   // виды без картинок пропускаем: сочетание подбираем по тем вещам, что есть
-  const all0=keys.map(k=>{const l=candFor(k).filter(id=>IMG[id]), daily=l.filter(id=>!FANCY[id]); return (daily.length?daily:l).slice(0,8);});
+  const all0=keys.map(k=>{const l=candFor(k).filter(id=>IMG[id]), daily=l.filter(id=>!FANCY[id]||/_disch/.test(id)); return (daily.length?daily:l).slice(0,8);});
   const at=keys.map((k,i)=>i).filter(i=>all0[i].length);
   if(!at.length)return [];
   let lists=at.map(i=>all0[i]); const ks=at.map(i=>keys[i]);
