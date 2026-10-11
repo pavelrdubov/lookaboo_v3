@@ -55,14 +55,28 @@ function walkGood(){
   const sc=sl.map(x=>walkScore(x.i)), top=Math.max(...sc);
   const ok=sl.filter((x,n)=>{ const pp=g('precipitation_probability',x.i)||0, uv=Math.round(g('uv_index',x.i)||0),
       uvm=uvMatters(uv,g('weather_code',x.i))?uv:0, day=g('is_day',x.i)!==0, wd=g('wind_speed_10m',x.i)||0;
-    return day&&pp<30&&uvm<6&&wd<10&&sc[n]>=top-.7; });   // .7 ≈ 4° разницы с лучшим часом
-  return ok.length?ok:[sl[sc.indexOf(top)]];
+    return day&&pp<30&&uvm<6&&wd<10&&walkSev(x.i)===0&&sc[n]>=top-.7; });   // .7 ≈ 4° разницы с лучшим часом
+  // сильный мороз или жара весь день — тоже одна звёздочка: самое тёплое (или прохладное) время, а не «гуляйте когда угодно»
+  const ft=x=>g('apparent_temperature',x.i)??g('temperature_2m',x.i);
+  if(ok.length>1&&ok.every(x=>ft(x)<=-15||ft(x)>=30))return [ok.reduce((a,b)=>sc[sl.indexOf(b)]>sc[sl.indexOf(a)]?b:a)];
+  if(ok.length)return ok;
+  // плохой день (дождь, снег весь день): одна звёздочка — меньшее из зол. Сначала — где осадки слабее
+  // (морось лучше ливня, даже если в ливень теплее), потом — светло, потом — общая оценка
+  const best=sl.map((x,n)=>({x,k:walkSev(x.i)*10+(g('is_day',x.i)===0?30:0)-sc[n]})).sort((a,b)=>a.k-b.k)[0];
+  return [best.x];
+}
+/* насколько сильные осадки в этот час: 0 — нет, морось 1 … ливень, метель, гроза — 7–8 */
+const SEV={51:1,53:1,55:2,56:3,57:4,61:2,63:3,65:5,66:4,67:6,71:2,73:3,75:5,77:2,80:3,81:5,82:7,85:4,86:6,95:8,96:8,99:8};
+function walkSev(i){
+  const H=S.hourly, code=H.weather_code?H.weather_code[i]:null, pp=(H.precipitation_probability||[])[i]||0, pr=(H.precipitation||[])[i]||0;
+  return (SEV[code]||0)+Math.min(4,pr*1.5)+(pp>=60?1:0);
 }
 /* «10:00, 12:00, 14:00» → «с 10:00 до 14:00», если идут подряд */
 function walkRange(list,sl){
   const idx=list.map(x=>sl.findIndex(y=>y.i===x.i)), parts=[]; let a=0;
   for(let k=1;k<=idx.length;k++){ if(k===idx.length||idx[k]!==idx[k-1]+1){ const f=list[a],l=list[k-1];
-    parts.push(a===k-1?(f.label==='сейчас'?'сейчас':'в '+f.label):(f.label==='сейчас'?`сейчас и до ${l.label}`:`с ${f.label} до ${l.label}`)); a=k; } }
+    const z=x=>x.label.replace('завтра ',''), tm=f.label.startsWith('завтра')?'завтра ':'';      // «завтра с 9:00 до 15:00», а не «с завтра 9:00 до завтра 15:00»
+    parts.push(a===k-1?(f.label==='сейчас'?'сейчас':tm+'в '+z(f)):(f.label==='сейчас'?`сейчас и до ${l.label}`:`${tm}с ${z(f)} до ${z(l)}`)); a=k; } }
   return parts.join(' и ');
 }
 function walkApply(i){
@@ -88,9 +102,11 @@ function walkPaint(){
   const bad=sl.filter(x=>!gi.includes(x.i)), wet=bad.filter(x=>(H.precipitation_probability||[])[x.i]>=30).map(x=>x.label);
   const tt=x=>Math.round(H.temperature_2m[x.i]), gt=good.map(tt), lo=Math.min(...gt), hi=Math.max(...gt), f=v=>(v>0?'+':'')+v+'°';
   const avg=a=>a.reduce((p,v)=>p+v,0)/a.length, warmer=bad.length&&!good.some(x=>x.i===sl[0].i)&&avg(gt)-avg(bad.map(tt))>=2, cooler=bad.length&&avg(bad.map(tt))-avg(gt)>=2&&lo>=22;
-  const whyGood=good.length===sl.length?`погода ровная весь день, ${lo===hi?f(lo):f(lo)+'…'+f(hi)}`
+  const allBad=good.length===1&&walkSev(good[0].i)>0;
+  const whyGood=allBad?'осадки весь день, а в это время — слабее всего':good.length===sl.length?`погода ровная весь день, ${lo===hi?f(lo):f(lo)+'…'+f(hi)}`
     :[lo===hi?f(lo):f(lo)+'…'+f(hi), warmer?'теплее всего':(cooler?'не так жарко':''), good.every(x=>(H.precipitation_probability||[])[x.i]<30)?'без дождя':''].filter(Boolean).join(', ');
-  S.tipText=`★ Хорошо гулять ${walkRange(good,sl)}: ${whyGood}${wet.length?`; дождь вероятен ${walkRange(bad.filter(x=>wet.includes(x.label)),sl)}`:''}. `+(S.tipText||'');
+  S.tipText=(allBad?`★ Если гулять, то ${walkRange(good,sl)}: ${whyGood}. `
+    :`★ Хорошо гулять ${walkRange(good,sl)}: ${whyGood}${wet.length?`; дождь вероятен ${walkRange(bad.filter(x=>wet.includes(x.label)),sl)}`:''}. `)+(S.tipText||'');
   const tp=document.getElementById('tipText'); if(tp)tp.textContent=S.tipText;
   if(WALK!=null){const s=sl.find(x=>x.i===WALK), tf=document.getElementById('tFeels'); if(s&&tf)tf.textContent+=` · ${s.label.startsWith('завтра')?s.label:'в '+s.label}`;}
 }
