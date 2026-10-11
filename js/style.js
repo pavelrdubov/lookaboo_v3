@@ -108,7 +108,7 @@ function seenPick(looks,keys,variant){
 }
 function lookImgs(keys){
   const n=setsFor(bandFor(effTemp())).length||1, variant=Math.floor(S.setIdx/n)+daySeed();
-  const ck=[keys.join(','),S.gender,Math.floor(ageMonthsExact()),effTemp()<=3?'cold':'',effTemp()<=0?'frost':'',S.ctx==='home'?'home':'',typeof DISCH_ON!=='undefined'&&DISCH_ON?'disch':''].join('|');
+  const ck=[keys.join(','),S.gender,Math.floor(ageMonthsExact()),effTemp()<=3?'cold':'',effTemp()<=0?'frost':'',S.ctx==='home'?'home':'',typeof DISCH_ON!=='undefined'&&DISCH_ON?'disch':'','d'+(S.ctx==='home'?-1:DENS_LV)].join('|');
   if(!LOOK_CACHE[ck])LOOK_CACHE[ck]=bestLooks(keys);
   const looks=LOOK_CACHE[ck];
   const pick=looks.length?looks[seenPick(looks,keys,variant)]:[];
@@ -173,5 +173,6 @@ function lookWithImgs(list){
   let out=list.filter(x=>L[x[0]]);
   if(out.length<2&&effTemp()<22&&!out.some(x=>x[0]==='socks')&&pickImg('socks'))out.push(['socks','носочки']);
   if(out.length!==list.length)L=lookImgs(out.map(x=>x[0]));
+  out=out.map(x=>{const l=matLabel(x[0],x[1],L[x[0]]); return l===x[1]?x:[x[0],l,x[1]];});       // подпись — по картинке; третий элемент — прежняя подпись
   return {list:out,LOOK:L};
 }

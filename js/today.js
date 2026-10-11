@@ -49,7 +49,7 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ return bootiesLabel(newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(envFilter(legLayer(carFilter(it))))))))))),ageMonthsExact())); }
+function lookItems(it){ DENS_LV=-1; return bootiesLabel(newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(envFilter(legLayer(carFilter(it))))))))))),ageMonthsExact())); }
 /* в холод на ножки — тёплые пинетки, а не просто носки */
 function bootiesLabel(items){ return effTemp()>3?items:items.map(x=>x[0]==='socks'?['socks','тёплые пинетки']:x); }
 /* что с какого возраста. Первые 2 месяца — только слипы, распашонки (и боди-распашонки на запах) и ползунки:
@@ -87,6 +87,7 @@ function density(items){
   const top=['ovWinter','envelope','ovDemi','ovFleece','jacket'].find(k=>items.some(x=>x[0]===k));
   const shift={ovWinter:6,envelope:5,ovDemi:3}[top]||0, v=effTemp()+shift;
   const lv=v<=-6?2:(v<=9?1:0);                                      // 0 — тонкие, 1 — плотные, 2 — тёплые
+  DENS_LV=!top&&effTemp()>16?0:lv;                                   // в тепло — тонкий хлопок, не вязаное                                  // по нему candFor берёт картинку нужной теплоты (js/data.js → MAT)
   const L={pants:['тонкие штанишки','плотные штанишки','тёплые штанишки (начёс, флис)'],
     cardigan:['тонкая кофта','плотная кофта','тёплая вязаная кофта'],
     sweater:['тонкий свитшот','свитер','тёплый шерстяной свитер'],
@@ -470,6 +471,9 @@ function drawStage(set,sz){
   if(!heroes.length)list0=items.slice(0,6);
 
   const {list,LOOK}=lookWithImgs(list0);       // картинки подобраны по сочетанию цветов
+  { const el=document.getElementById('items');  // подпись вещи — по картинке (вязаные, из футера, флисовые)
+    list.forEach(x=>{ if(!x[2])return; if(el)el.textContent=el.textContent.replace(x[2],x[1]);
+      set.it=set.it.map(y=>y[0]===x[0]&&y[1]===x[2]?[y[0],x[1]]:y); }); }
   { const sk=(LOOK.slipKnit||'').split('/').pop().replace('.webp',''), el=document.getElementById('items');
     if(sk&&chestImg(sk)&&el&&!/животик/.test(el.textContent))el.textContent=el.textContent.replace(/(вязаный (?:слип|комбинезон))/,'$1 (застёжка на груди — удобно на животике)'); }
   LASTSTAGE={list,LOOK,items:set.it.filter(x=>!(x[0]==='socks'&&list.some(y=>y[0]==='booties'))).concat(list.filter(x=>(x[0]==='socks'||x[0]==='booties')&&!set.it.some(y=>y[0]===x[0])).map(x=>[x[0],x[1]]))};          // «показать бабушке» и «в вишлист» берут ровно то, что на экране

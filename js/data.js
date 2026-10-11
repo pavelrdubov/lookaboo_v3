@@ -45,6 +45,28 @@ const HEAD_IMG=['8989','9065','9066','9076','9113','9067','9160','9584','9585','
 const CHEST_IMG=['9584','9585','9586','9587'];
 const chestImg=n=>CHEST_IMG.includes((n.split('__')[3]||'').split('_')[0]);
 const headImg=n=>HEAD_IMG.includes((n.split('__')[3]||'').split('_')[0]);
+let DENS_LV=-1;                                       // нужная теплота нижних слоёв: 0 тонкие, 1 плотные, 2 тёплые; −1 — не важно
+const MATK=['pants','footpants','slip','cardigan','sweater','suit'];
+const MATLV={cotton:0,futer:1,knit:1,fleece:2};
+const matOf=n=>((n||'').match(/_(knit|futer|fleece)\b/)||[,'cotton'])[1];
+/* подпись по тому, что на картинке: материал — из имени файла, теплота кофты/слипа — из нужного уровня */
+const MATL={
+  pants:{cotton:'хлопковые штанишки',futer:'штанишки из футера',knit:'вязаные штанишки',fleece:'флисовые штанишки'},
+  footpants:{cotton:'ползунки',futer:'ползунки из футера',knit:'вязаные ползунки',fleece:'флисовые ползунки'},
+  slip:{cotton:'хлопковый слип',futer:'слип из футера',knit:'вязаный слип',fleece:'флисовый слип'},
+  cardigan:{cotton:'тонкая кофта',futer:'кофта из футера',knit:'вязаная кофта',fleece:'флисовая кофта'},
+  sweater:{cotton:'тонкий свитшот',futer:'свитшот из футера',knit:'вязаный свитер',fleece:'флисовый свитшот'},
+  suit:{cotton:'хлопковый костюм',futer:'костюм из футера',knit:'вязаный костюм',fleece:'тёплый костюм с начёсом'}};
+function matLabel(key,label,src){
+  // «шерстяное боди» — совет, а на картинке обычно хлопок: пишем так, чтобы не спорить с картинкой
+  if((key==='bodyL'||key==='wrapbody')&&/шерст/.test(label)&&src&&!/_knit/.test(src))
+    return (key==='bodyL'?'боди д/р':'боди-распашонка')+' (лучше из шерсти)';
+  if(!MATL[key]||!src)return label;
+  const n=src.split('/').pop().replace('.webp',''), m=matOf(n); let l=MATL[key][m];
+  if(key==='cardigan'&&/кнопк/.test(label))l+=' на кнопках';
+  if(m==='knit'&&/тёпл/.test(label)&&key!=='pants')l='тёплая '+l.replace(/^тонк\S+ /,'');
+  return l;
+}
 function candFor(key,m){
   const g=S.gender;
   let src=key; if(!(CAND[key]||[]).some(n=>IMG[n]))src=(SUBST[key]||[]).find(k=>(CAND[k]||[]).some(n=>IMG[n]))||key;
@@ -62,6 +84,9 @@ function candFor(key,m){
     else if(!dis){const d=all.filter(n=>!/_disch/.test(n)); if(d.length)all=d;}}
   // варежки: дома — царапки (_scratch, первые 2 месяца), на улице — обычные (с года — на тесёмке, по возрасту)
   if(key==='mittens'){const home=S.ctx==='home', f=all.filter(n=>/_scratch/.test(n)===home); if(f.length||!home)all=f;}
+  // материал виден на картинке: вязаное (_knit), футер (_futer), флис/начёс (_fleece), без метки — тонкий хлопок.
+  // Берём картинку нужной теплоты, а подпись потом — по картинке (matLabel), чтобы не писать «футер» под вязаными штанами
+  if(MATK.includes(key)&&DENS_LV>=0&&S.ctx!=='home'){const d=n=>Math.abs(MATLV[matOf(n)]-DENS_LV), best=Math.min(...all.map(d)); if(isFinite(best))all=all.filter(n=>d(n)===best);}
   // носки: в холод — тёплые пинетки (_booties), в тепло — обычные носочки
   if(key==='socks'&&typeof effTemp==='function'){const cold=effTemp()<=3, b=all.filter(n=>/booties/.test(n)===cold); if(b.length)all=b;}
   // до 3 месяцев кофта — только распашная: картинки, помеченные и свитером (через голову), не берём
