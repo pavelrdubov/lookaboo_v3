@@ -3,7 +3,9 @@
 function bandFor(eff){for(const b of BANDS){if(eff<=b.max)return b;}return BANDS[BANDS.length-1];}
 function setsFor(b){
   const m=ageMonths();
-  const l=b.sets.filter(s=>(!s.only||s.only===S.gender)&&(!s.min||m>=s.min)&&(!s.max||m<=s.max));
+  // tmin — набор только с этой температуры (для малыша, с поправкой на коляску): кофта с пледом без комбинезона — не ниже +10
+  const t=typeof effTemp==='function'?effTemp():99;
+  const l=b.sets.filter(s=>(!s.only||s.only===S.gender)&&(!s.min||m>=s.min)&&(!s.max||m<=s.max)&&(!s.tmin||t>=s.tmin));
   return l.length?l:b.sets.slice(0,1);
 }
 const CTX={
@@ -61,7 +63,7 @@ function ageSwap(x,m){
   const [k,l]=x, warm=/тёпл|начёс|шерст/.test(l), dense=/футер|плотн/.test(l);
   if(OVERHEAD.includes(k)||k==='dress'||k==='romper')return ['wrapbody',warm?'шерстяная боди-распашонка':(k==='bodyL'?'боди-распашонка д/р':'боди-распашонка')];
   if(k==='pants'||k==='dungarees')return ['footpants',warm?'тёплые ползунки':(dense||k==='dungarees'?'плотные ползунки':'ползунки')];
-  if(k==='suit')return m<2?['slip',warm?'тёплый слип (начёс)':'слип из футера']:['footpants',warm?'тёплые ползунки':'плотные ползунки'];
+  if(k==='suit')return m<2?['slip',warm?'тёплый слип (начёс)':'плотный слип']:['footpants',warm?'тёплые ползунки':'плотные ползунки'];
   if(k==='sweater')return ['cardigan',warm?'тёплая вязаная кофта':'кофта на кнопках'];
   if(k==='shorts')return effTemp()>=24?null:['footpants','тонкие ползунки'];
   if(k==='jacket')return ['ovDemi','демисезонный комбинезон'];
@@ -85,12 +87,12 @@ function density(items){
   const top=['ovWinter','envelope','ovDemi','ovFleece','jacket'].find(k=>items.some(x=>x[0]===k));
   const shift={ovWinter:6,envelope:5,ovDemi:3}[top]||0, v=effTemp()+shift;
   const lv=v<=-6?2:(v<=9?1:0);                                      // 0 — тонкие, 1 — плотные, 2 — тёплые
-  const L={pants:['хлопковые штанишки','штанишки из футера','тёплые штанишки (начёс, флис)'],
+  const L={pants:['тонкие штанишки','плотные штанишки','тёплые штанишки (начёс, флис)'],
     cardigan:['тонкая кофта','плотная кофта','тёплая вязаная кофта'],
     sweater:['тонкий свитшот','свитер','тёплый шерстяной свитер'],
-    slip:['хлопковый слип','слип из футера','тёплый слип (начёс)'],
+    slip:['хлопковый слип','плотный слип','тёплый слип (начёс)'],
     footpants:['ползунки','плотные ползунки','тёплые ползунки'],
-    suit:['хлопковый костюм','костюм из футера','тёплый костюм (начёс)']};
+    suit:['лёгкий костюм','плотный костюм','тёплый костюм (начёс)']};
   if(!top&&effTemp()>16)return items;                                // летом подписи из набора
   return items.map(x=>{
     if(L[x[0]])return [x[0],L[x[0]][lv]];
