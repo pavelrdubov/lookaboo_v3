@@ -69,6 +69,7 @@ const CATALOG=[
   {"id":"socks__n__0-12__9140","file":"img/acc/socks__n__0-12__9140.webp","kinds":["socks"],"g":"n","a":[0,12],"b":[0.266,0.253,0.764,0.771],"r":0.671,"c":["#a2a29e"]},
   {"id":"socks__n__0-12__9573_booties","file":"img/acc/socks__n__0-12__9573_booties.webp","kinds":["socks"],"g":"n","a":[0,12],"b":[0.173,0.302,0.844,0.695],"r":0.671,"c":["#d9cdb8"]},
   {"id":"socks__n__0-12__9575_booties","file":"img/acc/socks__n__0-12__9575_booties.webp","kinds":["socks"],"g":"n","a":[0,12],"b":[0.153,0.284,0.832,0.72],"r":0.671,"c":["#b9a897","#e4dbcb"]},
+  {"id":"spf__n__6-36__9870","file":"img/acc/spf__n__6-36__9870.webp","kinds":["spf"],"g":"n","a":[6,36],"b":[0.371,0.207,0.629,0.792],"r":1.0,"c":["#e1d7c4","#c9a886"]},
   {"id":"umbrella__n__0-36__9868","file":"img/acc/umbrella__n__0-36__9868.webp","kinds":["umbrella"],"g":"n","a":[0,36],"b":[0.409,0.145,0.636,0.863],"r":1.0,"c":["#cdc3ae","#edece2"]},
   {"id":"umbrella__n__0-36__9869","file":"img/acc/umbrella__n__0-36__9869.webp","kinds":["umbrella"],"g":"n","a":[0,36],"b":[0.412,0.145,0.636,0.863],"r":1.0,"c":["#3c4459"]},
   {"id":"bodyL__b__0-12__8971","file":"img/base/bodyL__b__0-12__8971.webp","kinds":["bodyL"],"g":"b","a":[0,12],"b":[0.045,0.134,0.95,0.854],"r":0.671,"c":["#8b9eaf"]},
