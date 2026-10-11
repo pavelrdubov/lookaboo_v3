@@ -85,14 +85,14 @@ function solveLayout(items,tpl,W,H,arch,noteKeys,swapTo){
     const q2=q>=0?q:order.findIndex((jj,r2)=>r2>0&&r2<slots.length&&!TALL.includes(items[jj].key)&&!corner(slots[r2])&&!(noteKeys||[]).includes(items[jj].key));
     if(q2>=0){const t=order[rank];order[rank]=order[q2];order[q2]=t;}
   });
-  const R=items.map(()=>null);
+  const R=items.map(()=>null), FREEROT=['spf'];
   order.forEach((ii,rank)=>{
     const it=items[ii], sl=slots[Math.min(rank,slots.length-1)], bx=BOX[it.src]||{b:[0,0,1,1],r:1};
     const cw=bx.b[2]-bx.b[0], ch=bx.b[3]-bx.b[1], a=Math.max(.25,Math.min(4,cw*bx.r/ch));   // пропорция самой вещи
     const bw=sl.w*U, bh=sl.h*U, w0=Math.min(bw,bh*a);                                       // вписываем в слот
     R[ii]={key:it.key,src:it.src,f:roleOf(it.key),a,bx,w0,h0:w0/a,
       ax:sl.x*W, ay:sl.y*H-H*.05, x:sl.x*W, y:sl.y*H-H*.05,
-      rot:sl.r, main:rank===0,
+      rot:sl.r+(FREEROT.includes(it.key)?[-38,32,-55,48,-20][((S.setIdx||0)%5+5)%5]:0), main:rank===0,   // тюбик лежит как попало — у него нет верха и низа
       z:sl.z+(FLAT.includes(it.key)?-3:(NOTLAYER.includes(it.key)?3:0))};
   });
   // мелочь не раздуваем: аксессуар не больше, чем положено ему рядом с главной вещью
