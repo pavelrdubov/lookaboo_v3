@@ -191,7 +191,8 @@ function sunFilter(items){
 function extrasNow(){
   if(S.ctx==='home')return [];
   const r=[], u=uvNow(), dt=wxDetail();
-  if(['drizzle','rain','shower','heavy','thunder','sleet'].includes(dt.kind)||S.weather==='rain')
+  const soon=S.live&&WALK==null&&typeof rainSoon==='function'?rainSoon():null;     // дождь через час-два — дождевик с собой
+  if(['drizzle','rain','shower','heavy','thunder','sleet'].includes(dt.kind)||S.weather==='rain'||(soon&&!soon.snow&&soon.inH<=2))
     r.push(S.ctx==='stroller'?['raincover','дождевик на коляску']:S.ctx==='sling'?['umbrella','зонт или слингокуртка']:['umbrella','зонт — дойти до машины']);
   if(u>=3&&S.ctx!=='car'&&ageMonths()>=6)r.push(['spf','детский крем SPF 50+']);
   return r;
@@ -281,7 +282,8 @@ function paintMain(){
   const wind=S.wind>=10?` · сильный ветер ${S.wind} м/с`:(S.wind>=5?` · ветер ${S.wind} м/с`:'');
   if(S.wx==='live'){
     tT.textContent=(S.temp>0?'+':'')+S.temp+'°';
-    tF.textContent=word+wind+uvL;
+    const rs=WALK==null&&typeof rainSoon==='function'?rainSoon():null;
+    tF.textContent=word+(rs?` · ${rs.snow?'снег':'дождь'} с ${rs.at}`:'')+wind+uvL;
   }else if(S.wx==='loading'){
     tT.textContent='…'; tF.textContent='ищем погоду';
   }else if(S.wx==='manual'){

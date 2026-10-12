@@ -83,7 +83,7 @@ async function fetchWeather(lat,lon,skipGeo){
   if(!skipGeo)reverseGeo(lat,lon);
   try{
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
-      +`&current=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,weather_code,uv_index`
+      +`&current=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,weather_code,uv_index,precipitation`
       +`&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,uv_index,wind_speed_10m,wind_gusts_10m,is_day&forecast_days=2`
       +`&wind_speed_unit=ms&timezone=auto`;
     const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),9000);
@@ -94,8 +94,8 @@ async function fetchWeather(lat,lon,skipGeo){
     S.temp=Math.round(c.temperature_2m);
     S.feels=Math.round(c.apparent_temperature);
     S.wind=Math.round(c.wind_speed_10m);
-    S.gust=Math.round(c.wind_gusts_10m||0); S.wcode=c.weather_code; S.uv=typeof c.uv_index==='number'?Math.round(c.uv_index):null;
-    S.weather=codeToScene(c.weather_code,S.temp);
+    S.gust=Math.round(c.wind_gusts_10m||0); S.wcode=dryNow(c,j.hourly); S.uv=typeof c.uv_index==='number'?Math.round(c.uv_index):null;
+    S.weather=codeToScene(S.wcode,S.temp);
     S.live=true; S.wx='live';
     S.hourly=j.hourly||null; walkSaveNow();             // почасовой прогноз — выбрать время прогулки (js/walk.js)
     const tr=document.getElementById('trange'); if(tr)tr.value=S.temp;
@@ -116,6 +116,22 @@ async function retryWeather(){
     p=>fetchWeather(p.coords.latitude,p.coords.longitude),
     err=>{S.wx='fail';S.wxErr=err&&err.code===1?'Геопозиция запрещена в настройках':'Не удалось определить геопозицию';paintMain();},
     {timeout:9000});
+}
+/* «сейчас ливень», а с неба ничего не капает: код погоды у модели часто опережает дождь на пару часов.
+   Если осадков сейчас нет (ни в текущих данных, ни в прогнозе на этот час) — пишем «пасмурно», а дождь — «с 13:00» (rainSoon) */
+const PRECIP=[51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86];
+function dryNow(c,H){
+  const code=c.weather_code; if(!PRECIP.includes(code))return code;
+  let hr=0; if(H&&H.time){const i=H.time.indexOf(hourKey(new Date())+':00'); if(i>=0)hr=(H.precipitation||[])[i]||0;}
+  return (c.precipitation||0)<.1&&hr<.2?3:code;
+}
+/* когда начнётся дождь или снег в ближайшие 6 часов: {at:'13:00', i, snow} или null */
+function rainSoon(){
+  const H=S.hourly; if(!H||!H.time||PRECIP.includes(S.wcode))return null;
+  const cur=H.time.indexOf(hourKey(new Date())+':00'); if(cur<0)return null;
+  for(let i=cur+1;i<=cur+6&&i<H.time.length;i++){ const pr=(H.precipitation||[])[i]||0, pp=(H.precipitation_probability||[])[i]||0, code=(H.weather_code||[])[i];
+    if(PRECIP.includes(code)&&(pr>=.2||pp>=60))return {at:H.time[i].slice(11,16),i,snow:[71,73,75,77,85,86].includes(code),inH:i-cur}; }
+  return null;
 }
 function codeToScene(code,t){
   if([71,73,75,77,85,86].includes(code))return 'snow';
