@@ -246,6 +246,8 @@ function carFilter(items){
   if(!r.some(x=>!NOTLAYER.includes(x[0])))r.unshift(['bodyL','боди д/р']);
   // до +5 без тёплого слоя до машины не донести — тонкий флис (он под ремни можно)
   if(airTemp()<=5&&!r.some(x=>['ovFleece','slipKnit','cardigan','sweater'].includes(x[0]))){const at=r.findIndex(x=>NOTLAYER.includes(x[0])); r.splice(at<0?r.length:at,0,['ovFleece','флисовый комбинезон']);}
+  // до +14 в машине тепло, но до неё идти по улице — кофта сверху (в машине её легко снять)
+  else if(airTemp()<=14&&!r.some(x=>['ovFleece','slipKnit','cardigan','sweater','suit'].includes(x[0]))){const at=r.findIndex(x=>NOTLAYER.includes(x[0])); r.splice(at<0?r.length:at,0,['cardigan','кофта — дойти до машины']);}
   return r;
 }
 /* время суток меняется — раз в 10 минут перерисовываем шапку, если экран открыт */

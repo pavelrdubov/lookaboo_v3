@@ -276,6 +276,7 @@ function lookNotes(items,eff){
   if(eff>=11&&eff<=16)add('hat','тонкая шапочка — до +16',4);
   if(eff<=-5){ add('hatWarm','закрывает уши',4); add('socks','тёплые — стопы мёрзнут первыми',3); }
   if(eff<=1)add('slipKnit','вязаный — греет под комбинезоном',3);
+  if(S.ctx==='car')add('cardigan','до машины, в машине снять',7);
   add('cardigan','снять в магазине за секунду',2);
   return out.sort((a,b)=>b.pr-a.pr);
 }
