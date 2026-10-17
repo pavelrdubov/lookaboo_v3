@@ -118,7 +118,7 @@ const CATALOG=[
   {"id":"slipKnit__n__0-12__9699","file":"img/base/slipKnit__n__0-12__9699.webp","kinds":["slipKnit"],"g":"n","a":[0,12],"b":[0.134,0.114,0.866,0.892],"r":0.671,"c":["#f2e0a3"]},
   {"id":"slipKnit__n__0-12__9702","file":"img/base/slipKnit__n__0-12__9702.webp","kinds":["slipKnit"],"g":"n","a":[0,12],"b":[0.117,0.106,0.885,0.889],"r":0.671,"c":["#aaa9a7"]},
   {"id":"slipKnit__n__0-12__9706","file":"img/base/slipKnit__n__0-12__9706.webp","kinds":["slipKnit"],"g":"n","a":[0,12],"b":[0.108,0.12,0.894,0.892],"r":0.671,"c":["#5a5838"]},
-  {"id":"slip__b__0-12__9086","file":"img/base/slip__b__0-12__9086.webp","kinds":["slip"],"g":"b","a":[0,12],"b":[0.142,0.094,0.855,0.896],"r":0.671,"c":["#151e34"]},
+  {"id":"slip__b__0-12__9086_fleece","file":"img/base/slip__b__0-12__9086_fleece.webp","kinds":["slip"],"g":"b","a":[0,12],"b":[0.142,0.094,0.855,0.896],"r":0.671,"c":["#151e34"]},
   {"id":"slip__g__0-12__8947","file":"img/base/slip__g__0-12__8947.webp","kinds":["slip"],"g":"g","a":[0,12],"b":[0.121,0.084,0.877,0.91],"r":0.671,"c":["#f1cdcb"]},
   {"id":"slip__g__0-12__9163","file":"img/base/slip__g__0-12__9163.webp","kinds":["slip"],"g":"g","a":[0,12],"b":[0.095,0.104,0.903,0.894],"r":0.671,"c":["#efc3c4"]},
   {"id":"slip__g__0-12__9187","file":"img/base/slip__g__0-12__9187.webp","kinds":["slip"],"g":"g","a":[0,12],"b":[0.091,0.094,0.911,0.904],"r":0.671,"c":["#b4b9a4"]},

@@ -170,6 +170,11 @@ function lookWithImgs(list){
     if(list.length>=5){const drop=['mittens','toy','muslin','blanket'].find(k=>list.some(x=>x[0]===k)&&!(S.ctx==='car'&&k==='blanket')); if(drop)list=list.filter(x=>x[0]!==drop);}
     list=list.concat([['booties','тёплые пинетки поверх комбинезона']]); L=lookImgs(list.map(x=>x[0])); L[OUTERK]=keep; LASTLOOK=L;
   }
+  // флисовый слип на голое тело не надевают — под него боди (или хотя бы маечка)
+  if(/_fleece/.test(L.slip||'')&&!list.some(x=>['bodyL','bodyS','bodyT','wrapbody','wrap','tank'].includes(x[0]))){
+    if(list.length>=6){const drop=['toy','mittens','muslin','blanket'].find(k=>list.some(x=>x[0]===k)&&!(S.ctx==='car'&&k==='blanket')); if(drop)list=list.filter(x=>x[0]!==drop);}
+    const keep=L.slip; list=[[ageMonthsExact()<2?'wrapbody':'bodyL',ageMonthsExact()<2?'боди-распашонка д/р':'боди д/р']].concat(list); L=lookImgs(list.map(x=>x[0])); L.slip=keep; LASTLOOK=L;
+  }
   let out=list.filter(x=>L[x[0]]);
   if(out.length<2&&effTemp()<22&&!out.some(x=>x[0]==='socks')&&pickImg('socks'))out.push(['socks','носочки']);
   if(out.length!==list.length)L=lookImgs(out.map(x=>x[0]));

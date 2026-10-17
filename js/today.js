@@ -486,7 +486,10 @@ function drawStage(set,sz){
   const {list,LOOK}=lookWithImgs(list0);       // картинки подобраны по сочетанию цветов
   { const el=document.getElementById('items');  // подпись вещи — по картинке (вязаные, из футера, флисовые)
     list.forEach(x=>{ if(!x[2])return; if(el)el.textContent=el.textContent.replace(x[2],x[1]);
-      set.it=set.it.map(y=>y[0]===x[0]&&y[1]===x[2]?[y[0],x[1]]:y); }); }
+      set.it=set.it.map(y=>y[0]===x[0]&&y[1]===x[2]?[y[0],x[1]]:y); });
+    // под флисовый слип добавили боди — пишем его первым и в строке
+    const nb=list.find(x=>['bodyL','wrapbody'].includes(x[0])&&!set.it.some(y=>y[0]===x[0]));
+    if(nb){ if(el)el.textContent=nb[1]+' · '+el.textContent; set.it=[nb.slice(0,2)].concat(set.it); } }
   { const sk=(LOOK.slipKnit||'').split('/').pop().replace('.webp',''), el=document.getElementById('items');
     if(sk&&chestImg(sk)&&el&&!/животик/.test(el.textContent))el.textContent=el.textContent.replace(/(вязаный (?:слип|комбинезон))/,'$1 (застёжка на груди — удобно на животике)'); }
   LASTSTAGE={list,LOOK,items:set.it.filter(x=>!(x[0]==='socks'&&list.some(y=>y[0]==='booties'))).concat(list.filter(x=>(x[0]==='socks'||x[0]==='booties')&&!set.it.some(y=>y[0]===x[0])).map(x=>[x[0],x[1]]))};          // «показать бабушке» и «в вишлист» берут ровно то, что на экране
