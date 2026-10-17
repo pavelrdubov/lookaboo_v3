@@ -49,7 +49,18 @@ function legsFilter(items){
   return items.concat([['blanket','плед на ножки']]);
 }
 /* вещи образа с поправками на то, где малыш: машина, прогулочная коляска */
-function lookItems(it){ DENS_LV=-1; return bootiesLabel(newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(envFilter(legLayer(carFilter(it))))))))))),ageMonthsExact())); }
+function lookItems(it){ DENS_LV=-1; return blanketLimit(bootiesLabel(newbornFilter(oneCloth(sunFilter(coverFilter(headFilter(legsFilter(density(socksFilter(suitFilter(envFilter(legLayer(carFilter(it))))))))))),ageMonthsExact()))); }
+/* плед — не в каждом образе: только где без него никак (машина в холод — куртку сняли; лёгкая одежда в коляске;
+   прогулочная в холод), иначе — в каждом четвёртом, чтобы образы не были одинаковыми */
+function blanketLimit(items){
+  if(!items.some(x=>x[0]==='blanket'))return items;
+  const OUTER=['ovWinter','ovDemi','envelope','ovFleece','jacket','slipKnit'], e=effTemp();
+  const need=S.ctx==='car'?airTemp()<=10
+    :S.ctx==='stroller'?((!items.some(x=>OUTER.includes(x[0]))&&e<=10)||(strollerKind()==='seat'&&e<=6)||e<=-10)
+    :false;
+  if(need||((S.setIdx||0)%4)===2)return items;
+  return items.filter(x=>x[0]!=='blanket');
+}
 /* в холод на ножки — тёплые пинетки, а не просто носки */
 function bootiesLabel(items){ return effTemp()>3?items:items.map(x=>x[0]==='socks'?['socks','тёплые пинетки']:x); }
 /* что с какого возраста. Первые 2 месяца — только слипы, распашонки (и боди-распашонки на запах) и ползунки:
